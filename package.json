@@ -12,6 +12,8 @@
     "vite": "^6.0.5"
   },
   "dependencies": {
-    "aframe": "^1.6.0"
+    "aframe": "^1.6.0",
+    "jsroot": "^7.8.1",
+    "rxjs": "^7.8.1"
   }
 }
