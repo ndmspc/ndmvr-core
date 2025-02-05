@@ -3,11 +3,9 @@ import {ReplaySubject} from "rxjs";
 let functionSubject;
 
 class FunctionSubject {
-   #state;
    #subject;
 
    constructor() {
-      this.#state = new Map();
       //replay subject, as only new functions are promoted to updated subscribers
       // and all functions are promoted to new subscriber
       this.#subject = new ReplaySubject();
@@ -26,14 +24,6 @@ class FunctionSubject {
          functions = Array.of(input);
       }
       functions.forEach(func => {
-         let functionSet = this.#state.get(func.event)
-         if (!functionSet) {
-            const set = new Set();
-            this.#state.set(func.event, set);
-            functionSet = set;
-         }
-         if (functionSet.has(func.function)) return;
-         functionSet.add(func.function);
          let id = func.target.id;
          if (!(id instanceof Array)) {
             id = Array.of(id);
@@ -62,16 +52,12 @@ class FunctionSubject {
          functions = Array.of(input);
       }
       functions.forEach(func => {
-         let functionSet = this.#state.get(func.event)
-         if (!functionSet) return;
-         if (!functionSet.has(func.function)) return;
-         functionSet.delete(func.function);
          let id = func.target.id;
          if (!(id instanceof Array)) {
             id = Array.of(id);
          }
          this.#subject.next({
-            flag: 'delete',
+            flag: 'remove',
             target: {
                entity: func.target.entity,
                id: id

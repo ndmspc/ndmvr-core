@@ -1,4 +1,4 @@
-import {ReplaySubject} from "rxjs";
+import {parse} from "jsroot";
 
 export class Broker {
    constructor(url, autoConnect, channel) {
@@ -11,7 +11,7 @@ export class Broker {
    connect() {
       if (this.ws === null) this.ws = new WebSocket(this.url);
       this.ws.onmessage = (event) => {
-         this.channel.next(event.data);
+         this.channel.next(parse(event.data));
       };
       return this;
    }
@@ -25,12 +25,14 @@ export class Broker {
       if (this.ws === null) this.connect();
       this.ws.send(data);
    }
+
    subscribe(callback) {
       const sub = this.channel.subscribe({
          next: (v) => callback(v),
       });
       return sub;
    }
+
    unsubscribe(sub) {
       sub.unsubscribe();
    }
