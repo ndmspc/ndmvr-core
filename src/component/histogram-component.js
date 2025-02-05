@@ -23,11 +23,9 @@ const registerHistogramComponent = () => {
             .pipe(filter(e =>
                (e.target.entity === this.attrName) && ((e.target.id.includes('*')) || (e.target.id.includes(this.data.id)))))
             .subscribe((f) => {
-               // console.log(f.target.id.includes(this.data.id))
-               // console.log('this: ', this.data.id, ' , id: ', f.target.id)
                if (f.flag === 'add') {
                   box.addEventListener(f.event, f.function);
-               } else if (f.flag === 'delete') {
+               } else if (f.flag === 'remove') {
                   box.removeEventListener(f.event, f.function);
                }
             });

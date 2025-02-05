@@ -4,37 +4,37 @@
  * */
 export default function registerVRModeDetector(setInputDevice) {
    if (AFRAME.components['vr-mode-detector']){
-      setInputDevice('keyboard')
+      setInputDevice({inputDevice: 'keyboard'})
       if (AFRAME.utils.device.isMobile()) {
-         setInputDevice('mobile')
+         setInputDevice({inputDevice: 'mobile'})
       } else if(window.AFRAME.utils.device.checkHeadsetConnected()){
-         setInputDevice('oculus')
+         setInputDevice({inputDevice: 'oculus'})
       }
       return
    }
 
    AFRAME.registerComponent('vr-mode-detector', {
       init: function () {
-         setInputDevice('keyboard')
+         setInputDevice({inputDevice: 'keyboard'})
          if (AFRAME.utils.device.isMobile()) {
-            setInputDevice('mobile')
+            setInputDevice({inputDevice: 'mobile'})
          }
          this.el.sceneEl.addEventListener('enter-vr', () => {
             if (window.AFRAME.utils.device.checkHeadsetConnected()) {
                if (AFRAME.utils.device.isMobile()) {
-                  setInputDevice('mobile')
+                  setInputDevice({inputDevice: 'mobile'})
                } else {
-                  setInputDevice('oculus')
+                  setInputDevice({inputDevice: 'oculus'})
                }
             } else {
-               setInputDevice('keyboard')
+               setInputDevice({inputDevice: 'keyboard'})
             }
          });
          this.el.sceneEl.addEventListener('exit-vr', () => {
             if (AFRAME.utils.device.isMobile()) {
-               setInputDevice('mobile')
+               setInputDevice({inputDevice: 'mobile'})
             } else {
-               setInputDevice('keyboard')
+               setInputDevice({inputDevice: 'keyboard'})
             }
          });
       }

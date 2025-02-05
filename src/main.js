@@ -2,7 +2,7 @@ import "aframe";
 import functionSubjectGet from "./rxjs/FunctionSubject.js";
 import dispatchSubjectGet from "./rxjs/DispatchSubject.js";
 import brokerManagerGet from "./service/brokerManager.js";
-
+import {fullAframeScene} from "./core/registerComponents.js";
 
 /**
  * --------------------NOTE--------------------
@@ -13,21 +13,25 @@ import brokerManagerGet from "./service/brokerManager.js";
  * Main initialization provides ndmvr-aframe-core.js.
  * --------------------NOTE--------------------
  * */
+
+document.querySelector("#app").appendChild(fullAframeScene());
+
+
 const functions = [
    {
       event: 'click',
       target: {
          entity: 'histogram',
-         id: '*'
+         id: [1]
       },
-      // function: function (data) {
-      //    data.srcElement.setAttribute('color', getRandomColor());
-      // }
       function: function (data) {
-         brokerManagerGet().getBrokerByUrl('ws://localhost:8080', false)
-            .send(JSON.stringify({id: data.srcElement.parentNode.components.histogram.data.id}))
-         console.log(data.srcElement.parentNode.components.histogram.data.id)
+         data.srcElement.setAttribute('color', getRandomColor());
       }
+      // function: function (data) {
+      //    brokerManagerGet().getBrokerByUrl('ws://localhost:8080', false)
+      //       .send(JSON.stringify({id: data.srcElement.parentNode.components.histogram.data.id}))
+      //    console.log(data.srcElement.parentNode.components.histogram.data.id)
+      // }
    }
    , {
       event: 'mouseenter',
@@ -51,6 +55,10 @@ const functions = [
 ]
 
 setTimeout(() => functionSubjectGet().addFunctions(functions), 100);
+// setTimeout(() => {
+//    functions[0].target.id = ['1','2'];
+//    functionSubjectGet().addFunctions(functions);
+// }, 300);
 
 const functions2 = [
    {
@@ -91,9 +99,9 @@ setTimeout(() => dispatchSubjectGet().dispatch(customEvent), 1000);
 setTimeout(() => {
    functionSubjectGet().removeFunctions(functions);
 }, 2000);
-setTimeout(() => functionSubjectGet().addFunctions(functions2), 3000);
-setTimeout(() => document.querySelector("a-entity").remove(), 8000);
-setTimeout(() => addHistogram(), 10000);
+setTimeout(() => functionSubjectGet().addFunctions(functions2), 2000);
+setTimeout(() => document.querySelector("a-entity").remove(), 2500);
+setTimeout(() => addHistogram(), 3000);
 setTimeout(() => brokerManagerGet().disconnectWsByUrl("ws://localhost:8080"), 8000);
 
 function addHistogram() {
