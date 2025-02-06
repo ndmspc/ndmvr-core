@@ -73,9 +73,7 @@ class FunctionSubject {
    }
 }
 
-const functionSubjectGet = () => {
+export const functionSubjectGet = () => {
    if (!functionSubject) functionSubject = new FunctionSubject();
    return functionSubject;
 }
-
-export default functionSubjectGet;

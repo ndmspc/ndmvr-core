@@ -1,5 +1,5 @@
 import { createHistogram, version } from 'jsroot';
-import subject from "../rxjs/FunctionSubject.js";
+import {subject} from "../rxjs/FunctionSubject.js";
 
 const initJsroot = () => {
    console.log(version);
