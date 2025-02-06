@@ -24,9 +24,7 @@ class StateSubject {
    }
 }
 
-const stateSubjectGet = () => {
+export const stateSubjectGet = () => {
    if (!stateSubject) stateSubject = new StateSubject();
    return stateSubject;
 }
-
-export default stateSubjectGet;

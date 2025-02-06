@@ -1,6 +1,6 @@
 import registerHistogramComponent from "/src/component/histogram-component";
 import registerVRModeDetector from "../component/device-detector-component.js";
-import stateSubjectGet from "../rxjs/StateSubject.js";
+import {stateSubjectGet} from "../rxjs/StateSubject.js";
 
 export const registerComponents = () => {
    registerHistogramComponent();

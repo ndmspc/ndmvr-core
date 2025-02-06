@@ -70,9 +70,7 @@ class BrokerManager {
    }
 }
 
-const brokerManagerGet = () => {
+export const brokerManagerGet = () => {
    if (!brokerManager) brokerManager = new BrokerManager();
    return brokerManager;
 }
-
-export default brokerManagerGet;

@@ -1,7 +1,7 @@
 import "aframe";
-import functionSubjectGet from "./rxjs/FunctionSubject.js";
-import dispatchSubjectGet from "./rxjs/DispatchSubject.js";
-import brokerManagerGet from "./service/brokerManager.js";
+import {functionSubjectGet} from "./rxjs/FunctionSubject.js";
+import {dispatchSubjectGet} from "./rxjs/DispatchSubject.js";
+import {brokerManagerGet} from "./service/brokerManager.js";
 import {fullAframeScene} from "./core/registerComponents.js";
 
 /**

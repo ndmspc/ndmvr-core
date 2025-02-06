@@ -18,9 +18,7 @@ class DispatchSubject {
    }
 }
 
-const dispatchSubjectGet = () => {
+export const dispatchSubjectGet = () => {
    if (!dispatchSubject) dispatchSubject = new DispatchSubject();
    return dispatchSubject;
 }
-
-export default dispatchSubjectGet;
