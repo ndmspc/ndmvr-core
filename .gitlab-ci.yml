@@ -26,8 +26,6 @@ build:
 pages:
   stage: deploy
   image: alpine
-  dependencies:
-    - build
   script:
     - cp -a dist/. public/
   artifacts:
