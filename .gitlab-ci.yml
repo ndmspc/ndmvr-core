@@ -25,6 +25,7 @@ build:
 
 pages:
   stage: deploy
+  image: alpine
   dependencies:
     - build
   script:
@@ -39,7 +40,7 @@ pages:
 
 deploy-npm:
   stage: deploy
-  image: node:20
+  image: node:22.11.0
   script:
     - "sed -i -e 's/^  \\\"version\\\".*/  \\\"version\\\": \\\"'${CI_COMMIT_REF_NAME/v/}'\\\",/g' package.json"
     - npm config set legacy-peer-deps=true
