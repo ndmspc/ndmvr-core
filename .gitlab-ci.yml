@@ -25,11 +25,15 @@ build:
 
 pages:
   stage: deploy
+  dependencies:
+    - build
   script:
     - cp -a dist/. public/
   artifacts:
     paths:
       - public
+  except:
+    - tags
 #  rules:
 #    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
 
