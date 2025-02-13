@@ -12,11 +12,11 @@ cache:
   paths:
     - node_modules/
 
-build:
+build-pages:
   stage: build
   script:
     - npm install
-    - npm run build
+    - npm run build -- --mode pages
   artifacts:
     paths:
       - dist/
