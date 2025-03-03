@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Histogram renderer</title>
+    </head>
+    <body>
+    <div id="app"></div>
+    <script type="module" src="./src/core/ndmvr-aframe-core.js"></script>
+    <script type="module">
+        console.log(`Random Histogram renderer`);
+        // the following import doesn't work, used a modified .js vesion in src/component/external/instanced-mesh-component.js instead.
+        // import "aframe-instanced-mesh";
+        import {generate_AFrame_min_scene_html, generate_AFrame_rand_hist_scene_html} from "./src/utils/htmlGenerators.js";
+
+
+        let sceneElm = undefined;
+
+        //Choose your scene:
+
+        //basic A-Frame scene, just for test
+        // sceneElm = generate_AFrame_min_scene_html();
+
+        //Randomly generated "Borg cube" histograms:
+        sceneElm = generate_AFrame_rand_hist_scene_html();
+
+        //Histograms from jsroot JSON files:
+        //WIP
+
+        if (sceneElm) {
+            document.querySelector("#app").appendChild(sceneElm);
+        }
+
+
+    </script>
+    </body>
+</html>

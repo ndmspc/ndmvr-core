@@ -9,7 +9,9 @@
     "import": "./dist/index.es.js",
     "require": "./dist/index.cjs"
   },
-  "files": ["dist"],
+  "files": [
+    "dist"
+  ],
   "publishConfig": {
     "ignore": [
       "!build/",
