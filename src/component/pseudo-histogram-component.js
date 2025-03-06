@@ -194,15 +194,8 @@ const registerPseudoHistogramComponent = () => {
           return;
         }
       }
-      
       requestAnimationFrame(this.render_histogram_batch);
-      
-      
-
-
    }
-
-
 });
 }
 

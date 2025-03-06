@@ -20,14 +20,15 @@ class BrokerManager {
     * */
    createWsFromParams = (searchParams) => {
       const autoConnect = searchParams.get("autoConnect") === "true";
+      const timeout = Number(searchParams.get("timeout"));
       searchParams.getAll("ws").forEach((url) => {
-         this.createWs(url, autoConnect);
+         this.createWs(url, autoConnect, timeout);
       });
    };
 
-   createWs = (url, autoConnect) => {
+   createWs = (url, autoConnect, timeout) => {
       if (this.#gBrokers.has(url)) this.#gBrokers.delete(url);
-      const b = new Broker(url, autoConnect, this.#subject);
+      const b = new Broker(url, autoConnect, this.#subject, timeout);
       this.#gBrokers.set(url, b);
    };
 

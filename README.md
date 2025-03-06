@@ -111,3 +111,51 @@ Arguments of this function is string of URL and boolean value for autoConnect.
   brokerManagerGet().getBrokerByUrl(URL, autoConnect)
          .send(JSON.stringify({"your data goes here"}));
   ```
+  
+### Histogram render example
+
+You can see example of rendered histogram at: our [Gitlab pages](https://ndmvr-aframe-af55bd.gitlab.io/hrend.html)
+
+This example uses **Histogram-skor** component. If you want to use it in your app you can pass root json object to it via:
+
+- **histogram_source_url** which is part of the schema of this component.
+    ```html
+      <a-entity id="histogram18bins" position="-140 0 0"
+        histogram-skor="histogram_source_url:../../public/histograms/TH3variableBinning55x57x34.json;">
+      </a-entity>
+  ```
+- Assigning id to it and passing the root json object by rxjs **histogramSubject**.
+  ```html
+    <a-entity id="histogram1" position="0 0 0"
+      histogram-skor>
+    </a-entity>
+  ```
+  ```javascript
+  import {parse} from "jsroot";
+  histogramSubjectGet().next({id: 'histogram1', histogram: parse(v)});
+  ```
+  
+### Dynamic rendering of histogram
+
+**histogram-skor** component also supports dynamic rendering of histogram.
+
+On how to set it up yourself you can get inspired with our stress test.
+
+- **Prerequisites**
+  - Pull **NdmSpc** Docker image from repository: [registry.gitlab.com/ndmspc/ndmspc:v0.20250304.0]()
+  - Run the image via Docker or your preferred container tool.
+  ```shell 
+  docker run --rm --init --name ndmspc -p 8080:8080 registry.gitlab.com/ndmspc/ndmspc:v0.20250304.0 ndmspc-cli serve stress -t 1000
+  ```
+  - You can set parameter of **t** which sets frequency with which histograms will be sent.
+- With prerequisites completed you can head over to our [Gitlab Pages]((https://ndmvr-aframe-af55bd.gitlab.io/stress.html).
+- Address that internal websocket will try to connect to is defined in **URL params**. Available parameters are:
+  - **ws** Defines address websocket will connect to
+  - **autoConnect** Defines whether websocket should connect automatically. If not you either have to call:
+    - **connectWsByUrl** from brokerManager.
+    - **getBrokerByUrl.connect()** from brokerManager.
+  - **timeout** Defines timeout (amount of time client will be trying to connect to server from start, or after disconnect).
+- Final address can then look like this:
+   ```url
+  https://ndmvr-aframe-af55bd.gitlab.io/stress.html?ws=ws://localhost:8080autoConnect=true&timeout=60000
+  ```

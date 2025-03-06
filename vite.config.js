@@ -8,7 +8,11 @@ export default defineConfig(({ mode }) => {
             outDir: "dist",
             emptyOutDir: true,
             rollupOptions: {
-               input: "index.html",
+               input: {
+                  main: path.resolve(__dirname, "index.html"),
+                  hrend: path.resolve(__dirname, "hrend.html"),
+                  stress: path.resolve(__dirname, "stress.html"),
+               },
             },
          },
       };

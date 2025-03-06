@@ -1,38 +1,64 @@
 import "aframe";
+import {parse} from "jsroot";
+import {computeAFrameBinSizePos} from "../utils/histogramRenderUtils.js";
+import {histogramSubjectGet} from "../rxjs/HistogramSubject.js";
+import {filter} from "rxjs";
 
 const registerHistogramSKorComponent = () => {
 
-AFRAME.registerComponent("histogram-skor", {
-    schema: {
-        histogram_source_url: {type: "string", default: ""}, //url for the http request
-        bin_padding_x: {type: "number", default: 0.5},
-        bin_padding_y: {type: "number", default: 0.5},
-        bin_padding_z: {type: "number", default: 0.5},
-    },
+   AFRAME.registerComponent("histogram-skor", {
+      schema: {
+         histogram_source_url: {type: "string", default: ""}, //url for the http request
+         bin_padding_x: {type: "number", default: 0.5},
+         bin_padding_y: {type: "number", default: 0.5},
+         bin_padding_z: {type: "number", default: 0.5},
+         content_min: {type: "number", default: 1},
+         bin_scale: {type: "number", default: 5}
+      },
 
-    rootObj: undefined,
+      rootObj: undefined,
+      instancedMesh: undefined,
+      color: new THREE.Color(),
 
+      init: function () {
+         if (this.data.histogram_source_url) {
+            this.loadAndRenderHistogramByHttpRequest(this.data.histogram_source_url);
+         }
+         this.raycaster = new THREE.Raycaster();
+         this.mouse = new THREE.Vector2();
+         this.raycaster.setFromCamera(this.mouse, this.el.sceneEl.camera);
+         this.setupRaycasting();
+         this.histoSub = histogramSubjectGet().getStream()
+            .pipe(
+               filter(e => e.id === this.el.id)
+            )
+            .subscribe((histo) => {
+            this.el.object3D.remove(this.instancedMesh);
+            this.rootObj = histo.histogram;
+            this.renderHistogram();
+         })
+      },
 
-    init: function() {
-      if(this.data.histogram_source_url){
-        this.loadAndRenderHistogramByHttpRequest(this.data.histogram_source_url);              
-      }
-    },
+      remove: function () {
+         this.histoSub.unsubscribe();
+      },
 
-  
-    loadAndRenderHistogramByHttpRequest: function(url){
-          if(url !== ""){
+      loadAndRenderHistogramByHttpRequest: function (url) {
+         if (url !== "") {
             fetch(url)
-            .then(response =>response.json())
-            .then(histJsObj => {
-                //We use JSRoot's parse instead of httpRequest to be able to process JSRoot's json 
-                //from various sources (http, socket, ...)
-                //JSRoot's parse accepts both json string and an object parsed from it
-                this.rootObj = window.jsRootProvider.parse(histJsObj);
-                this.renderHistogram();
-            })
-            .catch(error => console.error('Error when fetching and rendering histogram:', error));
-            
+               .then(response => response.json())
+               .then(histJsObj => {
+                  //We use JSRoot's parse instead of httpRequest to be able to process JSRoot's json
+                  //from various sources (http, socket, ...)
+                  //JSRoot's parse accepts both json string and an object parsed from it
+                  this.rootObj = parse(histJsObj);
+                  console.log(this.rootObj);
+                  this.renderHistogram();
+
+
+               })
+               .catch(error => console.error('Error when fetching and rendering histogram:', error));
+
             //alternate form of fetching, using SRoot's httpRequest:
             //(we need )
             // window.jsRootProvider.httpRequest(url,"object")
@@ -40,52 +66,144 @@ AFRAME.registerComponent("histogram-skor", {
             //     this.rootObj = histObj;
             //     this.renderHistogram();
             //   });
-          }
-    },
+         }
+      },
 
 
-    renderHistogram: function () {
-      if(this.rootObj){
-        console.log("renderHistogram>", this.el.id, this.data.histogram_source_url, "rootMinMaxBinSizes:", getRootMinMaxBinSizes(this.rootObj));
-        
-        const binNoX = this.rootObj.fXaxis.fNbins;
-        const binNoY = this.rootObj.fYaxis.fNbins;
-        const binNoZ = this.rootObj.fZaxis.fNbins;
-        
-        const padding = {
-          x:this.data.bin_padding_x,
-          y:this.data.bin_padding_y,
-          z:this.data.bin_padding_z,
-        };
-        
-        let histogram_html="";
-        let relPos = undefined;
-        let aFrameBinSizePos = undefined;
-        for (let relZ=1;relZ<=binNoZ;relZ++){
-          for (let relY=1;relY<=binNoY;relY++){
-            for (let relX=1;relX<=binNoX;relX++){
-              relPos = {x:relX,y:relY,z:relZ};
-              aFrameBinSizePos = computeAFrameBinSizePos(this.rootObj,relPos,padding);
-              // console.log(aFrameBinSizePos);
-              // histogram_html+=generate_bin_html(relPos,aFrameBinSizePos,"true");
-              histogram_html+=generate_bin_html_v1(relPos,aFrameBinSizePos,"true");
-            }          
-          }         
-        }
-      // console.log("histogram > render_histogram: histogram_html=\n"+histogram_html);
-      
-      const refBoxHtml = `
-      <a-box color="white" 
-        position="0 0 0" 
-        width="1" height="1" depth="1"
-        visible="true"></a-box>`  
-        
-      this.el.innerHTML = histogram_html+refBoxHtml;
+      renderHistogram: function () {
+         if (this.rootObj) {
+            // console.log("renderHistogram>", this.el.id, this.data.histogram_source_url, "rootMinMaxBinSizes:", getRootMinMaxBinSizes(this.rootObj));
+
+            const fXbins = this.rootObj.fXaxis.fNbins;
+            const fYbins = this.rootObj.fYaxis.fNbins;
+            const fZbins = this.rootObj.fZaxis.fNbins;
+
+            const padding = {
+               x: this.data.bin_padding_x,
+               y: this.data.bin_padding_y,
+               z: this.data.bin_padding_z,
+            };
+            const geometry = new THREE.BoxGeometry(1, 1, 1);
+            const material = new THREE.MeshPhongMaterial({color: 0xffffff});
+            this.instancedMesh = new THREE.InstancedMesh(geometry, material, fXbins * fYbins * fZbins);
+            const dummy = new THREE.Object3D();
+            const entriesMax = Math.max(...this.rootObj.fArray);
+            const isTH3 = this.rootObj._typename.substring(0,3) === 'TH3';
+            let max;
+            isTH3 ? max = entriesMax : max = entriesMax / this.data.bin_scale;
+
+            let index = 0;
+
+            for (let relZ = 1; relZ <= fZbins; relZ++) {
+               for (let relY = 1; relY <= fYbins; relY++) {
+                  for (let relX = 1; relX <= fXbins; relX++) {
+
+                     const content = this.rootObj.fArray[index];
+                     if (content < this.data.content_min){
+                        dummy.scale.set(0, 0, 0);
+                        dummy.updateMatrix();
+                        this.instancedMesh.setMatrixAt(index, dummy.matrix);
+                        index += 1;
+                        continue;
+                     }
+
+                     const relPos = {x: relX, y: relY, z: relZ};
+                     const scaleFactor = content / max;
+                     const pos = computeAFrameBinSizePos(this.rootObj, relPos, padding);
+
+                     pos.y.size *= scaleFactor;
+                     if (isTH3) {
+                        pos.x.size *= scaleFactor;
+                        pos.z.size *= scaleFactor;
+                     }
+
+                     dummy.scale.set(pos.x.size, pos.y.size, pos.z.size);
+                     dummy.position.set(pos.x.pos, pos.y.pos + (pos.y.size / 2), pos.z.pos);
+                     dummy.updateMatrix();
+                     this.instancedMesh.setMatrixAt(index, dummy.matrix);
+                     this.instancedMesh.setColorAt(index, this.color);
+                     index += 1;
+                  }
+               }
+            }
+            this.el.object3D.add(this.instancedMesh)
+         }
+         this.el.object3D.add(this.instancedMesh);
+      },
+
+      setupRaycasting: function () {
+         let lastCheck = 0; // Timestamp tracker
+         const checkInterval = 100; // 100ms delay
+
+
+
+         window.addEventListener("mousemove", (event) => {
+            const now = performance.now();
+            if (now - lastCheck < checkInterval) return; // Skip if too soon
+            lastCheck = now;
+
+            this.updateRaycaster(event);
+         });
+
+         window.addEventListener("click", (event) => {
+            this.mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+            this.mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+
+            this.raycaster.setFromCamera(this.mouse, this.el.sceneEl.camera);
+            const intersects = this.raycaster.intersectObject(this.instancedMesh, true);
+
+            if (intersects.length > 0) {
+               const instanceId = intersects[0].instanceId;
+               console.log(`Clicked on instance ${instanceId}`);
+               this.computePositionFromIndex(instanceId +1);
+               // // console.log(intersects[0])
+               let dum = new THREE.Object3D();
+               this.instancedMesh.getMatrixAt(instanceId, dum.matrix);
+               dum.matrix.decompose(dum.position, dum.quaternion, dum.scale);
+               dum.scale.set(2,2,2);
+               dum.updateMatrix();
+               this.instancedMesh.setMatrixAt(instanceId, dum.matrix);
+               this.instancedMesh.instanceMatrix.needsUpdate = true;
+            }
+         });
+      },
+
+      updateRaycaster: function (event) {
+         this.mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+         this.mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+
+         this.raycaster.setFromCamera(this.mouse, this.el.sceneEl.camera);
+         const intersects = this.raycaster.intersectObject(this.instancedMesh, true);
+
+         if (intersects.length > 0) {
+            const instanceId = intersects[0].instanceId;
+            // console.log(`Hovered over instance ${instanceId}`);
+            this.instancedMesh.getColorAt(instanceId, this.color);
+            this.instancedMesh.setColorAt(instanceId, this.color.setHex(Math.random() * 0xffffff))
+            this.instancedMesh.instanceColor.needsUpdate = true;
+         }
+      },
+
+      computePositionFromIndex: function (index) {
+         const dimensions = {
+            x: this.rootObj.fXaxis.fNbins,
+            y: this.rootObj.fYaxis.fNbins,
+            z: this.rootObj.fZaxis.fNbins
+         }
+         const medzi = index % (dimensions.x * dimensions.y);
+
+         let x = medzi % dimensions.x;
+         if (x === 0) x = dimensions.x;
+         const y = Math.ceil(medzi / dimensions.x);
+         const z = Math.floor(index / (dimensions.x * dimensions.y));
+         console.log(`pos: x: ${x}, y: ${y}, z: ${z + 1}`);
       }
-    }
 
+      // const z = Math.floor(index / (dimensions.x * dimensions.y));
+      // const y = Math.floor((index % (dimensions.x * dimensions.y)) / dimensions.x);
+      // const x = index % dimensions.x;
 
-});
+   });
 }
 
 export default registerHistogramSKorComponent;
