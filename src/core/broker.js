@@ -1,22 +1,54 @@
-import {parse} from "jsroot";
 
 export class Broker {
-   constructor(url, autoConnect, channel) {
+   constructor(url, autoConnect, channel, timeout) {
       this.url = url;
-      this.ws = autoConnect ? new WebSocket(url) : null;
+      this.ws = null;
       this.channel = channel;
       if (autoConnect) this.connect();
+      this.initTime = Date.now();               //start of timeout counter
+      this.timeout = timeout ? timeout : 60000;  //timeout time (time to wait will no longer will try to connect)
+      this.timeFlag = true;                     //flag if initTime has been newly set after failed connection
    }
 
    connect() {
       if (this.ws === null) this.ws = new WebSocket(this.url);
+
+      this.ws.onerror = (event) => {
+         if (!this.timeFlag) {
+            this.initTime = Date.now();
+            this.timeFlag = true;
+         }
+         setTimeout(() => {
+            if (this.initTime + this.timeout < Date.now()) return;
+            this.connect();
+         }, 500);
+      }
+
+      this.ws.onclose = (event) => {
+         this.disconnect();
+         if (!this.timeFlag) {
+            this.initTime = Date.now();
+            this.timeFlag = true;
+         }
+         setTimeout(() => {
+            if (this.initTime + this.timeout < Date.now()) return;
+            this.connect();
+         }, 500);
+      }
+
       this.ws.onmessage = (event) => {
-         this.channel.next(parse(event.data));
+         this.channel.next(event.data);
       };
+
+      this.ws.onopen = () => {
+         this.timeFlag = false;
+      }
+
       return this;
    }
 
    disconnect() {
+      if (!this.ws) return;
       this.ws.close();
       this.ws = null;
    }

@@ -1,6 +1,3 @@
-
-
-
 /**
 *Instead of GetBinCoord, which is added to the JSRoot object only when rendered by JSRoot.
 *
@@ -35,7 +32,7 @@ function getRootMinMaxBinSizeByAxis(rootObjAxis){
   return (minMaxBinSizeByAxis);
 }
 
-function getRootMinMaxBinSizes(rootObj){
+export function getRootMinMaxBinSizes(rootObj){
   const rootMinMaxBinSizes = {
     x:undefined,
     y:undefined,
@@ -128,7 +125,7 @@ function rootSizePosToAFrame(jsrootSizePos){
 * - bins start at 0 in all axes
 * - 1 is the smallest bin dimension in all axes
 */
-function computeAFrameBinSizePos(rootObj,rootBinRelPos,padding){
+export function computeAFrameBinSizePos(rootObj,rootBinRelPos,padding){
   
   const absRootBinSizePos = getRootBinSizePos(rootObj,rootBinRelPos);
   
