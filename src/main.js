@@ -23,7 +23,7 @@ const functions = [
    {
       event: 'instance-hover',
       target: {
-         entity: 'histogram-skor',
+         entity: 'histogram',
          id: '*'
       },
       function: function (event) {
@@ -40,13 +40,13 @@ const functions = [
    {
       event: 'instance-click',
       target: {
-         entity: 'histogram-skor',
+         entity: 'histogram',
          id: '*'
       },
       function: function (event) {
          const instancedMesh = event.detail.instancedMesh;
          const instanceId = event.detail.instanceId;
-         const histogram = instancedMesh.parent.el.components['histogram-skor'];
+         const histogram = instancedMesh.parent.el.components['histogram'];
          const pos = histogram.computePositionFromIndex(instanceId);
 
          console.log(pos);

@@ -82,19 +82,19 @@ function generateScene() {
   scene.innerHTML = scene.innerHTML + `
 
       <a-entity id="histogram18bins" position="0 0 0"
-        histogram-skor>
+        histogram>
       </a-entity>
 
 <!--      <a-entity id="histogram18bins" position="0 0 140"-->
-<!--        histogram-skor>-->
+<!--        histogram>-->
 <!--      </a-entity>-->
 <!--      -->
 <!--      <a-entity id="histogram18bins" position="-140 0 0"-->
-<!--        histogram-skor>-->
+<!--        histogram>-->
 <!--      </a-entity>-->
 <!--      -->
 <!--      <a-entity id="histogram18bins" position="-140 0 140"-->
-<!--        histogram-skor>-->
+<!--        histogram>-->
 <!--      </a-entity>-->
     `;
   return scene;
