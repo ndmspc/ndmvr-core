@@ -1,6 +1,12 @@
 import histogram55x57x34 from "../../public/histograms/TH3variableBinning55x57x34.json";
 import {parse} from "jsroot";
 import {histogramSubjectGet} from "../rxjs/HistogramSubject.js";
+import MobileController from "../controllers/mobile/mobileController.js";
+import arrow from "../assets/mobileControls/arrow.png";
+import joystickBase from "../assets/mobileControls/joystick-base.png";
+import joystickBlue from "../assets/mobileControls/joystick-blue.png";
+import '../controllers/mobile/mobileController.css'
+import {getCameraComponent} from "../component/camera.component.js";
 export function generate_AFrame_min_scene_html(){
   const scene = document.createElement('a-scene');
   scene.id = "a-min-scene";
@@ -26,19 +32,59 @@ export function generate_AFrame_min_scene_html(){
 }
 
 export function generate_AFrame_rand_hist_scene_html(){
+  const container = document.createElement('div');
+  container.id = 'container';
+  new MobileController();
+  container.appendChild(generateScene());
+  return container;
+
+}
+
+export function generate_AFrame_blank_scene_html(){
+  const container = document.createElement('div');
+  container.id = 'container';
+  new MobileController();
+  const scene = generateBlankScene();
+  container.appendChild(scene);
+  return scene;
+
+}
+
+function generateBlankScene() {
   const scene = document.createElement('a-scene');
   scene.id = "a-min-scene";
   scene.setAttribute('stats', '');
+  scene.setAttribute('device-detector', '');
+  scene.setAttribute('screen-controls', '');
+  scene.setAttribute('ndmvr-raycaster', '');
   scene.style.cssText= "position: absolute; height: 100%; width: 100%;";
 
+  const camera = getCameraComponent();
+  scene.appendChild(camera);
+
+  return scene;
+}
+
+function generateScene() {
+  const scene = document.createElement('a-scene');
+  scene.id = "a-min-scene";
+  scene.setAttribute('stats', '');
+  scene.setAttribute('device-detector', '');
+  scene.setAttribute('screen-controls', '');
+  scene.setAttribute('ndmvr-raycaster', '');
+  scene.style.cssText= "position: absolute; height: 100%; width: 100%;";
+
+  const camera = getCameraComponent();
+  scene.appendChild(camera);
 
   histogramSubjectGet().next({id: 'histogram18bins', histogram: parse(histogram55x57x34)});
 
   scene.innerHTML = scene.innerHTML + `
+
       <a-entity id="histogram18bins" position="0 0 0"
         histogram-skor>
       </a-entity>
-      
+
 <!--      <a-entity id="histogram18bins" position="0 0 140"-->
 <!--        histogram-skor>-->
 <!--      </a-entity>-->
@@ -50,31 +96,6 @@ export function generate_AFrame_rand_hist_scene_html(){
 <!--      <a-entity id="histogram18bins" position="-140 0 140"-->
 <!--        histogram-skor>-->
 <!--      </a-entity>-->
-    `;
-  return scene;
-}
-
-export function generate_AFrame_blank_scene_html(){
-  const scene = document.createElement('a-scene');
-  scene.id = "a-min-scene";
-  scene.setAttribute('stats', '');
-  scene.style.cssText= "position: absolute; height: 100%; width: 100%;";
-
-
-  scene.innerHTML = scene.innerHTML + `
-<!--        ref box-->
-<!--      <a-box position="-1 0.5 -3" rotation="0 45 0" color="#4CC3D9"></a-box>-->
-      <a-entity id="histogram1" position="0 0 0"
-        histogram-skor>
-      </a-entity>
-      
-      <a-entity id="histogram2" position="0 0 -20"
-        histogram-skor>
-      </a-entity>
-      
-      <a-entity id="histogram3" position="-20 0 0"
-        histogram-skor>
-      </a-entity>
     `;
   return scene;
 }

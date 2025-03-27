@@ -1,29 +1,29 @@
-.mainUI {
-    border: 0px solid pink;
-    position: fixed;
-    top: 0px;
-    width: 99%;
-    height: 99%;
-    z-index: 1;
-    pointer-events: none; /* allow click-through in transparent areas */
-}
+/*.mainUI {*/
+/*    border: 0px solid pink;*/
+/*    position: fixed;*/
+/*    top: 0px;*/
+/*    width: 99%;*/
+/*    height: 99%;*/
+/*    z-index: 1;*/
+/*    pointer-events: none; !* allow click-through in transparent areas *!*/
+/*}*/
 
-.regionUI {
-    border: 0px solid yellow;
-    position: absolute;
-    display: flex;
-    flex-direction: row;
-    pointer-events: none;
-}
+/*.regionUI {*/
+/*    border: 0px solid yellow;*/
+/*    position: absolute;*/
+/*    display: flex;*/
+/*    flex-direction: row;*/
+/*    pointer-events: none;*/
+/*}*/
 
-.buttonUI {
-    border: 0px solid lime;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    pointer-events: auto;
-    filter: drop-shadow(0px 0px 20px white);
-}
+/*.buttonUI {*/
+/*    border: 0px solid lime;*/
+/*    display: flex;*/
+/*    flex-direction: column;*/
+/*    justify-content: center;*/
+/*    pointer-events: auto;*/
+/*    filter: drop-shadow(0px 0px 20px white);*/
+/*}*/
 
 .skyColor {
     filter: hue-rotate(240deg) saturate(100%) brightness(100%) drop-shadow(0px 0px 20px white);
@@ -35,6 +35,13 @@
 
 .grayColor {
     filter: hue-rotate(0deg) saturate(0%) brightness(100%) drop-shadow(0px 0px 20px white);
+}
+
+img {
+    width: 50px; /* Set the desired width for your image */
+    height: 50px; /* Set the desired height for your image */
+    cursor: pointer;
+    transform: rotate(90deg);
 }
 
 .mainUI {

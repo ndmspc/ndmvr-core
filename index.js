@@ -7,3 +7,7 @@ export * from "./src/service/brokerManager";
 export * from "./src/rxjs/DispatchSubject";
 export * from "./src/rxjs/StateSubject";
 export * from "./src/rxjs/FunctionSubject";
+export * from "./src/rxjs/HistogramSubject";
+export * from "./src/component/camera.component";
+export * from "./src/controllers/mobile/mobileController";
+export * from "./src/utils/htmlGenerators";

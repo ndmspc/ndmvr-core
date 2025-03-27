@@ -3,7 +3,7 @@
  * Takes setter function as argument.
  * */
 export default function registerVRModeDetector(setInputDevice) {
-   if (AFRAME.components['vr-mode-detector']){
+   if (AFRAME.components['device-detector']){
       setInputDevice({inputDevice: 'keyboard'})
       if (AFRAME.utils.device.isMobile()) {
          setInputDevice({inputDevice: 'mobile'})
@@ -13,7 +13,7 @@ export default function registerVRModeDetector(setInputDevice) {
       return
    }
 
-   AFRAME.registerComponent('vr-mode-detector', {
+   AFRAME.registerComponent('device-detector', {
       init: function () {
          setInputDevice({inputDevice: 'keyboard'})
          if (AFRAME.utils.device.isMobile()) {
