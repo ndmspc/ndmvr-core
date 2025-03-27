@@ -1,8 +1,4 @@
-import "aframe";
-import {functionSubjectGet} from "./rxjs/FunctionSubject.js";
-import {dispatchSubjectGet} from "./rxjs/DispatchSubject.js";
-import {brokerManagerGet} from "./service/brokerManager.js";
-import {fullAframeScene} from "./core/registerComponents.js";
+
 
 /**
  * --------------------NOTE--------------------
@@ -14,113 +10,57 @@ import {fullAframeScene} from "./core/registerComponents.js";
  * --------------------NOTE--------------------
  * */
 
-document.querySelector("#app").appendChild(fullAframeScene());
+import {generate_AFrame_rand_hist_scene_html} from "./utils/htmlGenerators.js";
+import {functionSubjectGet} from "./rxjs/FunctionSubject.js";
 
+const sceneElm = generate_AFrame_rand_hist_scene_html();
+
+if (sceneElm) {
+   document.querySelector("#app").appendChild(sceneElm);
+}
 
 const functions = [
    {
-      event: 'click',
+      event: 'instance-hover',
       target: {
-         entity: 'histogram',
-         id: [1]
-      },
-      function: function (data) {
-         data.srcElement.setAttribute('color', getRandomColor());
-      }
-      // function: function (data) {
-      //    brokerManagerGet().getBrokerByUrl('ws://localhost:8080', false)
-      //       .send(JSON.stringify({id: data.srcElement.parentNode.components.histogram.data.id}))
-      //    console.log(data.srcElement.parentNode.components.histogram.data.id)
-      // }
-   }
-   , {
-      event: 'mouseenter',
-      target: {
-         entity: 'histogram',
+         entity: 'histogram-skor',
          id: '*'
       },
-      function: function (data) {
-         console.log(data.target.object3D.id);
+      function: function (event) {
+         const instancedMesh = event.detail.instancedMesh;
+         const instanceId = event.detail.instanceId;
+
+         let color = new THREE.Color();
+         instancedMesh.getColorAt(instanceId, color);
+         color.setHex(Math.random() * 0xffffff);
+         instancedMesh.setColorAt(instanceId, color);
+         instancedMesh.instanceColor.needsUpdate = true;
       }
-   }, {
-      event: 'custom-event',
+   },
+   {
+      event: 'instance-click',
       target: {
-         entity: 'histogram',
+         entity: 'histogram-skor',
          id: '*'
       },
-      function: function (data) {
-         console.log('custom event triggered', data);
+      function: function (event) {
+         const instancedMesh = event.detail.instancedMesh;
+         const instanceId = event.detail.instanceId;
+         const histogram = instancedMesh.parent.el.components['histogram-skor'];
+         const pos = histogram.computePositionFromIndex(instanceId);
+
+         console.log(pos);
+         console.log(histogram.rootObj.fArray.at(instanceId));
+         // let dum = new THREE.Object3D();
+
+         // instancedMesh.getMatrixAt(instanceId, dum.matrix);
+         // dum.matrix.decompose(dum.position, dum.quaternion, dum.scale);
+         // dum.scale.set(2,2,2);
+         // dum.updateMatrix();
+         // instancedMesh.setMatrixAt(instanceId, dum.matrix);
+         // instancedMesh.instanceMatrix.needsUpdate = true;
       }
    }
-]
+];
 
 setTimeout(() => functionSubjectGet().addFunctions(functions), 100);
-// setTimeout(() => {
-//    functions[0].target.id = ['1','2'];
-//    functionSubjectGet().addFunctions(functions);
-// }, 300);
-
-const functions2 = [
-   {
-      event: 'click',
-      target: {
-         entity: 'histogram',
-         id: [1, 2]
-      },
-      function: function (data) {
-         const scale = data.target.object3D.scale;
-         if (scale.x > 3) {
-            scale.x = 1;
-            scale.y = 1;
-            scale.z = 1;
-         }
-         data.target.object3D.scale.set(scale.x * 1.1, scale.y * 1.1, scale.z * 1.1);
-      }
-   }, {
-      event: 'mouseenter',
-      target: {
-         entity: 'histogram',
-         id: '*'
-      },
-      function: function (data) {
-         console.log(data);
-      }
-   }
-]
-
-const customEvent = {
-   target: 'histogram',
-   event: new Event('custom-event'),
-   data: {'args': 'hello custom events'}
-}
-setTimeout(() => dispatchSubjectGet().dispatch(customEvent), 1000);
-
-
-setTimeout(() => {
-   functionSubjectGet().removeFunctions(functions);
-}, 2000);
-setTimeout(() => functionSubjectGet().addFunctions(functions2), 2000);
-setTimeout(() => document.querySelector("a-entity").remove(), 2500);
-setTimeout(() => addHistogram(), 3000);
-setTimeout(() => brokerManagerGet().disconnectWsByUrl("ws://localhost:8080"), 8000);
-
-function addHistogram() {
-   const scene = document.querySelector('a-scene');
-   console.log(scene);
-   const histogram = document.createElement('a-entity')
-
-   histogram.innerHTML = `
-    <a-entity histogram></a-entity>`;
-   console.log(histogram instanceof Element)
-   scene.appendChild(histogram);
-}
-
-
-function getRandomColor() {
-   const letters = '0123456789ABCDEF';
-   let color = '#';
-   for (let i = 0; i < 6; i++) {
-      color += letters[Math.floor(Math.random() * 16)];
-   }
-   return color;
-}

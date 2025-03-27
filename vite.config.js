@@ -10,11 +10,15 @@ export default defineConfig(({ mode }) => {
             rollupOptions: {
                input: {
                   main: path.resolve(__dirname, "index.html"),
-                  hrend: path.resolve(__dirname, "hrend.html"),
                   stress: path.resolve(__dirname, "stress.html"),
                },
             },
          },
+         // server: {
+         //    host: true,
+         //    cors: true,
+         //    strictPort: false,
+         // },
       };
    } else {
       return {
@@ -35,6 +39,11 @@ export default defineConfig(({ mode }) => {
                   },
                },
             },
+            // server: {
+            //    host: true,
+            //    cors: true,
+            //    strictPort: false,
+            // },
          },
       };
    }

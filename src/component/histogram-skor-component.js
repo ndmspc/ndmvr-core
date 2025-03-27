@@ -3,6 +3,7 @@ import {parse} from "jsroot";
 import {computeAFrameBinSizePos} from "../utils/histogramRenderUtils.js";
 import {histogramSubjectGet} from "../rxjs/HistogramSubject.js";
 import {filter} from "rxjs";
+import {functionSubjectGet} from "../rxjs/FunctionSubject.js";
 
 const registerHistogramSKorComponent = () => {
 
@@ -26,8 +27,18 @@ const registerHistogramSKorComponent = () => {
          }
          this.raycaster = new THREE.Raycaster();
          this.mouse = new THREE.Vector2();
-         this.raycaster.setFromCamera(this.mouse, this.el.sceneEl.camera);
-         this.setupRaycasting();
+
+         this.sub = functionSubjectGet().getObservable()
+            .pipe(filter(e =>
+               (e.target.entity === this.attrName) && ((e.target.id.includes('*')) || (e.target.id.includes(this.data.id)))))
+            .subscribe((f) => {
+               if (f.flag === 'add') {
+                  this.el.addEventListener(f.event, f.function);
+               } else if (f.flag === 'remove') {
+                  this.el.removeEventListener(f.event, f.function);
+               }
+            });
+
          this.histoSub = histogramSubjectGet().getStream()
             .pipe(
                filter(e => e.id === this.el.id)
@@ -131,77 +142,22 @@ const registerHistogramSKorComponent = () => {
          this.el.object3D.add(this.instancedMesh);
       },
 
-      setupRaycasting: function () {
-         let lastCheck = 0; // Timestamp tracker
-         const checkInterval = 100; // 100ms delay
-
-
-
-         window.addEventListener("mousemove", (event) => {
-            const now = performance.now();
-            if (now - lastCheck < checkInterval) return; // Skip if too soon
-            lastCheck = now;
-
-            this.updateRaycaster(event);
-         });
-
-         window.addEventListener("click", (event) => {
-            this.mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
-            this.mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
-
-            this.raycaster.setFromCamera(this.mouse, this.el.sceneEl.camera);
-            const intersects = this.raycaster.intersectObject(this.instancedMesh, true);
-
-            if (intersects.length > 0) {
-               const instanceId = intersects[0].instanceId;
-               console.log(`Clicked on instance ${instanceId}`);
-               this.computePositionFromIndex(instanceId +1);
-               // // console.log(intersects[0])
-               let dum = new THREE.Object3D();
-               this.instancedMesh.getMatrixAt(instanceId, dum.matrix);
-               dum.matrix.decompose(dum.position, dum.quaternion, dum.scale);
-               dum.scale.set(2,2,2);
-               dum.updateMatrix();
-               this.instancedMesh.setMatrixAt(instanceId, dum.matrix);
-               this.instancedMesh.instanceMatrix.needsUpdate = true;
-            }
-         });
-      },
-
-      updateRaycaster: function (event) {
-         this.mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
-         this.mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
-
-         this.raycaster.setFromCamera(this.mouse, this.el.sceneEl.camera);
-         const intersects = this.raycaster.intersectObject(this.instancedMesh, true);
-
-         if (intersects.length > 0) {
-            const instanceId = intersects[0].instanceId;
-            // console.log(`Hovered over instance ${instanceId}`);
-            this.instancedMesh.getColorAt(instanceId, this.color);
-            this.instancedMesh.setColorAt(instanceId, this.color.setHex(Math.random() * 0xffffff))
-            this.instancedMesh.instanceColor.needsUpdate = true;
-         }
-      },
-
       computePositionFromIndex: function (index) {
          const dimensions = {
             x: this.rootObj.fXaxis.fNbins,
             y: this.rootObj.fYaxis.fNbins,
             z: this.rootObj.fZaxis.fNbins
          }
-         const medzi = index % (dimensions.x * dimensions.y);
+         const level = 1 + index % (dimensions.x * dimensions.y);
 
-         let x = medzi % dimensions.x;
+         let x = level % dimensions.x;
          if (x === 0) x = dimensions.x;
-         const y = Math.ceil(medzi / dimensions.x);
+         const y = Math.ceil(level / dimensions.x);
          const z = Math.floor(index / (dimensions.x * dimensions.y));
-         console.log(`pos: x: ${x}, y: ${y}, z: ${z + 1}`);
+         const position = {x: x, y: y, z: z + 1};
+         // console.log(`pos: x: ${x}, y: ${y}, z: ${z}`);
+         return(position)
       }
-
-      // const z = Math.floor(index / (dimensions.x * dimensions.y));
-      // const y = Math.floor((index % (dimensions.x * dimensions.y)) / dimensions.x);
-      // const x = index % dimensions.x;
 
    });
 }
