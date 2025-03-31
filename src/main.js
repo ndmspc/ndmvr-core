@@ -35,6 +35,9 @@ const functions = [
          color.setHex(Math.random() * 0xffffff);
          instancedMesh.setColorAt(instanceId, color);
          instancedMesh.instanceColor.needsUpdate = true;
+
+         console.log(event.detail.getBinContent());
+         console.log(event.detail.getBinPosition());
       }
    },
    {
@@ -44,13 +47,15 @@ const functions = [
          id: '*'
       },
       function: function (event) {
-         const instancedMesh = event.detail.instancedMesh;
-         const instanceId = event.detail.instanceId;
-         const histogram = instancedMesh.parent.el.components['histogram'];
-         const pos = histogram.computePositionFromIndex(instanceId);
-
-         console.log(pos);
-         console.log(histogram.rootObj.fArray.at(instanceId));
+         console.log(event.detail.getBinContent());
+         console.log(event.detail.getBinPosition());
+         // const instancedMesh = event.detail.instancedMesh;
+         // const instanceId = event.detail.instanceId;
+         // const histogram = instancedMesh.parent.el.components['histogram'];
+         // const pos = histogram.computePositionFromIndex(instanceId);
+         //
+         // console.log(pos);
+         // console.log(histogram.rootObj.fArray.at(instanceId));
          // let dum = new THREE.Object3D();
 
          // instancedMesh.getMatrixAt(instanceId, dum.matrix);
