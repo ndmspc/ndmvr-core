@@ -12,6 +12,9 @@
 
 import {generate_AFrame_rand_hist_scene_html} from "./utils/htmlGenerators.js";
 import {functionSubjectGet} from "./rxjs/FunctionSubject.js";
+import {initNdmvrAframe} from "./core/ndmvr-aframe-core.js";
+
+initNdmvrAframe();
 
 const sceneElm = generate_AFrame_rand_hist_scene_html();
 

@@ -76,6 +76,7 @@ function generateScene() {
 
   const camera = getCameraComponent();
   scene.appendChild(camera);
+  console.log(parse(histogram55x57x34))
 
   histogramSubjectGet().next({id: 'histogram18bins', histogram: parse(histogram55x57x34)});
 
