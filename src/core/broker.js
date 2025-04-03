@@ -11,7 +11,10 @@ export class Broker {
    }
 
    connect() {
-      if (this.ws === null) this.ws = new WebSocket(this.url);
+      if (this.ws === null) {
+         console.log('Trying to establish websocket connection on address: '+ this.url);
+         this.ws = new WebSocket(this.url);
+      }
 
       this.ws.onerror = (event) => {
          if (!this.timeFlag) {
@@ -41,6 +44,7 @@ export class Broker {
       };
 
       this.ws.onopen = () => {
+         console.log('Websocket connection established on address: '+ this.url);
          this.timeFlag = false;
       }
 

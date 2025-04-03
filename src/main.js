@@ -12,6 +12,9 @@
 
 import {generate_AFrame_rand_hist_scene_html} from "./utils/htmlGenerators.js";
 import {functionSubjectGet} from "./rxjs/FunctionSubject.js";
+import {initNdmvrAframe} from "./core/ndmvr-aframe-core.js";
+
+initNdmvrAframe();
 
 const sceneElm = generate_AFrame_rand_hist_scene_html();
 
@@ -23,7 +26,7 @@ const functions = [
    {
       event: 'instance-hover',
       target: {
-         entity: 'histogram-skor',
+         entity: 'histogram',
          id: '*'
       },
       function: function (event) {
@@ -35,22 +38,27 @@ const functions = [
          color.setHex(Math.random() * 0xffffff);
          instancedMesh.setColorAt(instanceId, color);
          instancedMesh.instanceColor.needsUpdate = true;
+
+         // console.log('bin content: ', event.detail.getBinContent());
+         // console.log('bin position: ', event.detail.getBinPosition());
       }
    },
    {
       event: 'instance-click',
       target: {
-         entity: 'histogram-skor',
+         entity: 'histogram',
          id: '*'
       },
       function: function (event) {
-         const instancedMesh = event.detail.instancedMesh;
-         const instanceId = event.detail.instanceId;
-         const histogram = instancedMesh.parent.el.components['histogram-skor'];
-         const pos = histogram.computePositionFromIndex(instanceId);
-
-         console.log(pos);
-         console.log(histogram.rootObj.fArray.at(instanceId));
+         console.log('bin content: ', event.detail.getBinContent());
+         console.log('bin position: ', event.detail.getBinPosition());
+         // const instancedMesh = event.detail.instancedMesh;
+         // const instanceId = event.detail.instanceId;
+         // const histogram = instancedMesh.parent.el.components['histogram'];
+         // const pos = histogram.computePositionFromIndex(instanceId);
+         //
+         // console.log(pos);
+         // console.log(histogram.rootObj.fArray.at(instanceId));
          // let dum = new THREE.Object3D();
 
          // instancedMesh.getMatrixAt(instanceId, dum.matrix);
