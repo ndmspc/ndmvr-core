@@ -1,7 +1,7 @@
 /**
  * This file is only used for building npm package to export and publish.
  * */
-export * from "./src/core/registerComponents";
+export * from "./src/core/ndmvr-aframe-core";
 export * from "./src/service/httpService";
 export * from "./src/service/brokerManager";
 export * from "./src/rxjs/DispatchSubject";

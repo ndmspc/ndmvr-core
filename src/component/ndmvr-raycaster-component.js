@@ -39,11 +39,18 @@ const registerNdmvrRaycasterComponent = () => {
 
                if (intersects[0].object.isInstancedMesh === true) {
                   // console.log(intersects[0].object.parent.el);
+                  const histogram = intersects[0].object.parent.el.components['histogram'];
 
                   intersects[0].object.parent.el.dispatchEvent(new CustomEvent("instance-click", {
                      detail: {
                         instancedMesh: intersects[0].object,
                         instanceId: intersects[0].instanceId,
+                        getBinContent: function () {
+                           return histogram.rootObj.fArray.at(intersects[0].instanceId);
+                        },
+                        getBinPosition: function () {
+                           return histogram.computePositionFromIndex(intersects[0].instanceId);
+                        }
                      }
                   }))
                }
@@ -61,10 +68,17 @@ const registerNdmvrRaycasterComponent = () => {
             if (intersects[0].object.isInstancedMesh === true){
                if (this.dirtyInstance === intersects[0].instanceId) return;
                this.dirtyInstance = intersects[0].instanceId;
+               const histogram = intersects[0].object.parent.el.components['histogram'];
                intersects[0].object.parent.el.dispatchEvent(new CustomEvent("instance-hover", {
                   detail: {
                      instancedMesh: intersects[0].object,
-                     instanceId: intersects[0].instanceId
+                     instanceId: intersects[0].instanceId,
+                     getBinContent: function () {
+                        return histogram.rootObj.fArray.at(intersects[0].instanceId);
+                     },
+                     getBinPosition: function () {
+                        return histogram.computePositionFromIndex(intersects[0].instanceId);
+                     }
                   }
                }))
             }
