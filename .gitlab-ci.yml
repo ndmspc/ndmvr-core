@@ -1,3 +1,6 @@
+variables:
+  PUBLIC_URL: "/ndmvr-aframe/" # slash is important
+
 image: node:22.11.0
 
 stages:
@@ -21,7 +24,7 @@ build-pages:
     paths:
       - dist/
   except:
-    - tags  # No need to rebuild for npm deployment
+    - tags # No need to rebuild for npm deployment
 
 pages:
   stage: deploy
@@ -31,10 +34,10 @@ pages:
   artifacts:
     paths:
       - public
-  except:
-    - tags
-#  rules:
-#    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+  # except:
+  #   - tags
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
 
 deploy-npm:
   stage: deploy
