@@ -1,5 +1,3 @@
-
-
 /**
  * --------------------NOTE--------------------
  * You can remove whole content of this file, as it serves as demo page.
@@ -10,17 +8,40 @@
  * --------------------NOTE--------------------
  * */
 
-import {generate_AFrame_rand_hist_scene_html} from "./utils/htmlGenerators.js";
+import {generate_AFrame_blank_scene_html} from "./utils/htmlGenerators.js";
 import {functionSubjectGet} from "./rxjs/FunctionSubject.js";
 import {initNdmvrAframe} from "./core/ndmvr-aframe-core.js";
+import histogramRecursive from "../public/histograms/THrecursive.json";
+import histogram2x2x3 from "../public/histograms/TH3variableBinning2x2x3OnlyInsideContent.json";
+import {histogramSubjectGet} from "./rxjs/HistogramSubject.js";
+import {parse} from "jsroot";
 
 initNdmvrAframe();
 
-const sceneElm = generate_AFrame_rand_hist_scene_html();
+const sceneElm = generate_AFrame_blank_scene_html();
 
-if (sceneElm) {
-   document.querySelector("#app").appendChild(sceneElm);
+
+document.querySelector("#app").appendChild(sceneElm);
+
+const histogram = document.createElement('a-entity');
+histogram.id = "histogram1";
+histogram.setAttribute('histogram', '');
+histogram.setAttribute('position', "0 0 0");
+sceneElm.appendChild(histogram);
+
+stdBin();
+
+function stdBin() {
+   histogramSubjectGet().next({id: 'histogram1', histogram: parse(histogram2x2x3)});
+   setTimeout(() => histoBin(), 5000);
 }
+
+function histoBin() {
+   histogramSubjectGet().next({id: 'histogram1', histogram: parse(histogramRecursive)});
+   setTimeout(() => stdBin(), 5000);
+}
+
+
 
 const functions = [
    {
