@@ -53,6 +53,7 @@ const functions = [
          console.log('bin content: ', event.detail.getBinContent());
          console.log('bin position: ', event.detail.getBinPosition());
          // const instancedMesh = event.detail.instancedMesh;
+         // console.log(instancedMesh);
          // const instanceId = event.detail.instanceId;
          // const histogram = instancedMesh.parent.el.components['histogram'];
          // const pos = histogram.computePositionFromIndex(instanceId);

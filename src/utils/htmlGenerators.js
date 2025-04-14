@@ -1,4 +1,9 @@
 import histogram55x57x34 from "../../public/histograms/TH3variableBinning55x57x34.json";
+import histogramTHX from "../../public/histograms/THXvariableBinning.json";
+import histogramArray from "../../public/histograms/THArray.json";
+import histogram2x2x3 from "../../public/histograms/TH3variableBinning2x2x3OnlyInsideContent.json"
+import histogram2x2x3Negative from "../../public/histograms/TH3variableBinning2x2x3Negative.json"
+import histogramRecursive from "../../public/histograms/THrecursive.json"
 import {parse} from "jsroot";
 import {histogramSubjectGet} from "../rxjs/HistogramSubject.js";
 import MobileController from "../controllers/mobile/mobileController.js";
@@ -76,15 +81,48 @@ function generateScene() {
 
   const camera = getCameraComponent();
   scene.appendChild(camera);
-  console.log(parse(histogram55x57x34))
+  // console.log(parse(histogram55x57x34));
 
-  histogramSubjectGet().next({id: 'histogram18bins', histogram: parse(histogram55x57x34)});
+
+  // histogramSubjectGet().next({id: 'histogram18bins', histogram: parse(histogram55x57x34)});
+  // histogramSubjectGet().next({id: 'histogram18bins', histogram: parse(histogram55x57x34)});
+  // histogramSubjectGet().next({id: 'histogram18bins', histogram: parse(histogram2x2x3Negative)});
+  // histogramSubjectGet().next({id: 'histogram18bins', histogram: parse(histogramTHX)});
+  histogramSubjectGet().next({id: 'histogram18bins', histogram: parse(histogramRecursive)});
+  // histogramSubjectGet().next({id: 'histogram19bins', histogram: parse(histogram2x2x3)});
+
+  // console.log(parse(histogramTHX));
 
   scene.innerHTML = scene.innerHTML + `
 
-      <a-entity id="histogram18bins" position="0 0 0"
-        histogram>
+<!--      <a-entity id="histogram18bins" position="0 0 0"-->
+<!--        histogram="content_min: 0; bin_padding_x: 2; bin_padding_y: 1; bin_padding_z: 3">-->
+<!--      </a-entity>-->
+      
+      <a-entity id="histogram18bins" position="0 2 0"
+        histogram=" bin_padding_x: 1; bin_padding_y: 1; bin_padding_z: 1">
       </a-entity>
+      
+<!--      <a-entity id="histogram19bins" position="0 2 0"-->
+<!--        histogram="bin_padding_x: 1; bin_padding_y: 1; bin_padding_z: 1">-->
+<!--      </a-entity>-->
+<!--      -->
+<!--      <a-entity id="histogram18bins" position="2 1.5 0.5"-->
+<!--        histogram="size: 1 1 1; bin_padding_x: 0; bin_padding_y: 0; bin_padding_z: 0">-->
+<!--      </a-entity>-->
+      
+<!--      <a-entity id="histogram18bins" position="1 0 0"-->
+<!--        histogram="size: 1 1 1; bin_scale: 1">-->
+<!--      </a-entity>-->
+      
+<!--      <a-box position="0 2 0" depth="1" height="1" width="1">-->
+<!--      </a-box>-->
+      
+/
+      
+<!--      <a-entity id="histogram18bins" position="10 0 0"-->
+<!--        histogram="size: 10 10 10; bin_padding_x: 0; bin_padding_y: 0; bin_padding_z: 0">-->
+<!--      </a-entity>-->
 
 <!--      <a-entity id="histogram18bins" position="0 0 140"-->
 <!--        histogram>-->

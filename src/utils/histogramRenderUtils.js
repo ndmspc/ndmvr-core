@@ -1,145 +1,172 @@
 /**
-*Instead of GetBinCoord, which is added to the JSRoot object only when rendered by JSRoot.
-*
-*/
-function GetBinUpperEdge(rootObjAxis,rootBinRelPosOnAxis){
-  if (rootBinRelPosOnAxis <= 0) return rootObjAxis.fXmin;
-  if (rootBinRelPosOnAxis > rootObjAxis.fNbins) return rootObjAxis.fXmax;
-  // console.log(`GetBinUpperEdge: ${rootObjAxis.GetBinLowEdge(rootBinRelPosOnAxis)} > ${rootObjAxis.GetBinLowEdge(rootBinRelPosOnAxis+1)}`);
-  return(rootObjAxis.GetBinLowEdge(rootBinRelPosOnAxis+1)); 
+ *Instead of GetBinCoord, which is added to the JSRoot object only when rendered by JSRoot.
+ *
+ */
+function GetBinUpperEdge(rootObjAxis, rootBinRelPosOnAxis) {
+   if (rootBinRelPosOnAxis <= 0) return rootObjAxis.fXmin;
+   if (rootBinRelPosOnAxis > rootObjAxis.fNbins) return rootObjAxis.fXmax;
+   // console.log(`GetBinUpperEdge: ${rootObjAxis.GetBinLowEdge(rootBinRelPosOnAxis)} > ${rootObjAxis.GetBinLowEdge(rootBinRelPosOnAxis+1)}`);
+   return (rootObjAxis.GetBinLowEdge(rootBinRelPosOnAxis + 1));
 }
 
 
-function getRootMinMaxBinSizeByAxis(rootObjAxis){
-  const minMaxBinSizeByAxis ={
-    min:undefined,
-    max:undefined
-  }
-  let binSize = 0;
-  const varBinsNo = rootObjAxis.fXbins.length;
-  if (varBinsNo>1){ //variable binning with at least two bins
-    minMaxBinSizeByAxis.min = rootObjAxis.fXbins[1]-rootObjAxis.fXbins[0];
-    minMaxBinSizeByAxis.max = minMaxBinSizeByAxis.min;
-    for (let i = 2 ; i < varBinsNo ; i++) {
-        binSize = rootObjAxis.fXbins[i]-rootObjAxis.fXbins[i-1];
-        minMaxBinSizeByAxis.min = Math.min(minMaxBinSizeByAxis.min, binSize);
-        minMaxBinSizeByAxis.max = Math.max(minMaxBinSizeByAxis.max, binSize);
-    }    
-  }else{//standard binning or variable binning with 1 bin
-    minMaxBinSizeByAxis.min = (rootObjAxis.fXmax - rootObjAxis.fXmin)/rootObjAxis.fNbins;
-    minMaxBinSizeByAxis.max = minMaxBinSizeByAxis.min;
-  }
-  return (minMaxBinSizeByAxis);
+function getRootMinMaxBinSizeByAxis(rootObjAxis) {
+   const minMaxBinSizeByAxis = {
+      min: undefined,
+      max: undefined
+   }
+   let binSize = 0;
+   const varBinsNo = rootObjAxis.fXbins.length;
+   if (varBinsNo > 1) { //variable binning with at least two bins
+      minMaxBinSizeByAxis.min = rootObjAxis.fXbins[1] - rootObjAxis.fXbins[0];
+      minMaxBinSizeByAxis.max = minMaxBinSizeByAxis.min;
+      for (let i = 2; i < varBinsNo; i++) {
+         binSize = rootObjAxis.fXbins[i] - rootObjAxis.fXbins[i - 1];
+         minMaxBinSizeByAxis.min = Math.min(minMaxBinSizeByAxis.min, binSize);
+         minMaxBinSizeByAxis.max = Math.max(minMaxBinSizeByAxis.max, binSize);
+      }
+   } else {//standard binning or variable binning with 1 bin
+      minMaxBinSizeByAxis.min = (rootObjAxis.fXmax - rootObjAxis.fXmin) / rootObjAxis.fNbins;
+      minMaxBinSizeByAxis.max = minMaxBinSizeByAxis.min;
+   }
+   return (minMaxBinSizeByAxis);
 }
 
-export function getRootMinMaxBinSizes(rootObj){
-  const rootMinMaxBinSizes = {
-    x:undefined,
-    y:undefined,
-    z:undefined
-  }
-  if(rootObj.fXaxis){
-    rootMinMaxBinSizes.x = getRootMinMaxBinSizeByAxis(rootObj.fXaxis);
-  }
-  if(rootObj.fYaxis){
-    rootMinMaxBinSizes.y = getRootMinMaxBinSizeByAxis(rootObj.fYaxis);
-  }
-  if(rootObj.fZaxis){
-    rootMinMaxBinSizes.z = getRootMinMaxBinSizeByAxis(rootObj.fZaxis);
-  }
-  return rootMinMaxBinSizes;
+export function getRootMinMaxBinSizes(rootObj) {
+   const rootMinMaxBinSizes = {
+      x: undefined,
+      y: undefined,
+      z: undefined
+   }
+   if (rootObj.fXaxis) {
+      rootMinMaxBinSizes.x = getRootMinMaxBinSizeByAxis(rootObj.fXaxis);
+   }
+   if (rootObj.fYaxis) {
+      rootMinMaxBinSizes.y = getRootMinMaxBinSizeByAxis(rootObj.fYaxis);
+   }
+   if (rootObj.fZaxis) {
+      rootMinMaxBinSizes.z = getRootMinMaxBinSizeByAxis(rootObj.fZaxis);
+   }
+   return rootMinMaxBinSizes;
 }
-
-
-
-function getRootBinSizePosByAxis(rootObjAxis,rootBinRelPosOnAxis){
-  const rootBinSizePosByAxis={
-    size: undefined,
-    pos:  undefined
-  }
-  const binFromByAxis = rootObjAxis.GetBinLowEdge(rootBinRelPosOnAxis);
-  // const binToByAxis = rootObjAxis.GetBinCoord(rootBinRelPosOnAxis);
-  const binToByAxis = GetBinUpperEdge(rootObjAxis,rootBinRelPosOnAxis);
-  const binSizeByAxis = binToByAxis - binFromByAxis;
-  
-  rootBinSizePosByAxis.size = binSizeByAxis;
-  rootBinSizePosByAxis.pos  = binFromByAxis + binSizeByAxis/2; //pos=position
-  
-  return(rootBinSizePosByAxis);  
-}
-
-function getRootBinSizePos(rootObj,rootBinRelPos){
-  const rootBinSizePos = {
-    x:undefined,
-    y:undefined,
-    z:undefined
-  }
-  if(rootObj.fXaxis){
-    rootBinSizePos.x = getRootBinSizePosByAxis(rootObj.fXaxis,rootBinRelPos.x);
-  }
-  if(rootObj.fYaxis){
-    rootBinSizePos.y = getRootBinSizePosByAxis(rootObj.fYaxis,rootBinRelPos.y);
-  }
-  if(rootObj.fZaxis){
-    rootBinSizePos.z = getRootBinSizePosByAxis(rootObj.fZaxis,rootBinRelPos.z);
-  }
-  
-  return rootBinSizePos;
-  
-}
-
-function rootSizePosToAFrame(jsrootSizePos){
-  const aframeSizePos = {
-    x:undefined,
-    y:undefined,
-    z:undefined
-  }
-  //x is left unchanged
-  if(jsrootSizePos.x){
-    aframeSizePos.x ={
-      size: jsrootSizePos.x.size,
-      pos: jsrootSizePos.x.pos
-    };
-  }
-  //z becomes y
-  if(jsrootSizePos.z){
-    aframeSizePos.y ={
-      size: jsrootSizePos.z.size,
-      pos: jsrootSizePos.z.pos
-    };
-  }
-  //-y becomes z
-  if(jsrootSizePos.y){
-    aframeSizePos.z ={
-      size: jsrootSizePos.y.size,
-      pos: -jsrootSizePos.y.pos
-    };    
-  }    
-  return (aframeSizePos);
-}
-
 
 
 /**
-* This version assumes that 
-* - bins start at 0 in all axes
-* - 1 is the smallest bin dimension in all axes
-*/
-export function computeAFrameBinSizePos(rootObj,rootBinRelPos,padding){
-  
-  const absRootBinSizePos = getRootBinSizePos(rootObj,rootBinRelPos);
-  
-  for (let axis in absRootBinSizePos){
-    if(absRootBinSizePos[axis]){
-      absRootBinSizePos[axis].pos = absRootBinSizePos[axis].pos + padding[axis]*(rootBinRelPos[axis]-1);
-      // console.log(axis, absRootBinSizePos[axis], padding[axis], rootBinRelPos[axis]);      
-    }
-  }
-  
-  //TODO: resolve TH1 and TH2 (height = content); for TH3 height = scale
-  
-  return rootSizePosToAFrame(absRootBinSizePos);
+ * Get bin's size and position relative to histogram axis.
+ * @param rootObjAxis defines on which axis position and size is returned.
+ * @param rootBinRelPosOnAxis index of bin on axis.
+ * @param size defines size of dimension on axis.
+ * @param padding defines padding on axis.
+ * */
+function getRootBinSizePosByAxis(rootObjAxis, rootBinRelPosOnAxis, size, padding) {
+   const rootBinSizePosByAxis = {
+      size: undefined,
+      pos: undefined
+   }
+   const binLowEdge = rootObjAxis.GetBinLowEdge(rootBinRelPosOnAxis);
+   const binUpperEdge = GetBinUpperEdge(rootObjAxis, rootBinRelPosOnAxis);
+   const binSizeByAxis = Math.abs(binUpperEdge - binLowEdge);
+
+   rootBinSizePosByAxis.size = binSizeByAxis;
+
+   //bin low edge + half of width * scale relative to size of whole histogram
+   rootBinSizePosByAxis.pos = binLowEdge + (binSizeByAxis / 2);
+   if (size) {
+      const wholeSize = ((rootObjAxis.fXmax - rootObjAxis.fXmin) + (padding * (rootObjAxis.fNbins - 1)));
+      if (rootObjAxis.fName !== 'zaxis') {
+         rootBinSizePosByAxis.pos -= wholeSize / 2;
+      }
+      rootBinSizePosByAxis.pos += padding * (rootBinRelPosOnAxis - 1);
+      rootBinSizePosByAxis.pos /= (wholeSize / size);
+      rootBinSizePosByAxis.size /= (wholeSize / size);
+   }
+
+   if (rootObjAxis.fXmin < 0) {
+      rootBinSizePosByAxis.pos += (0 - rootObjAxis.fXmin) / Math.abs(rootObjAxis.fXmax - rootObjAxis.fXmin);
+   }
+
+   return (rootBinSizePosByAxis);
 }
 
+/**
+ * Get bin's size and position relative to histogram axis.
+ * */
+function getRootBinSizePos(rootObj, rootBinRelPos, size, padding) {
+   const rootBinSizePos = {
+      x: undefined,
+      y: undefined,
+      z: undefined
+   }
+   if (rootObj.fXaxis) {
+      rootBinSizePos.x = getRootBinSizePosByAxis(rootObj.fXaxis, rootBinRelPos.x, size?.x, padding?.x);
+   }
+   if (rootObj.fYaxis) {
+      rootBinSizePos.y = getRootBinSizePosByAxis(rootObj.fYaxis, rootBinRelPos.y, size?.y, padding?.y);
+   }
+   if (rootObj.fZaxis) {
+      rootBinSizePos.z = getRootBinSizePosByAxis(rootObj.fZaxis, rootBinRelPos.z, size?.z, padding?.z);
+   }
+
+   return rootBinSizePos;
+
+}
+
+function rootSizePosToAFrame(jsrootSizePos) {
+   const aframeSizePos = {
+      x: undefined,
+      y: undefined,
+      z: undefined
+   }
+   //x is left unchanged
+   if (jsrootSizePos.x) {
+      aframeSizePos.x = {
+         size: jsrootSizePos.x.size,
+         pos: jsrootSizePos.x.pos
+      };
+   }
+   //z becomes y
+   if (jsrootSizePos.z) {
+      aframeSizePos.y = {
+         size: jsrootSizePos.z.size,
+         pos: jsrootSizePos.z.pos
+      };
+   }
+   //-y becomes z
+   if (jsrootSizePos.y) {
+      aframeSizePos.z = {
+         size: jsrootSizePos.y.size,
+         pos: -jsrootSizePos.y.pos
+      };
+   }
+   return (aframeSizePos);
+}
+
+
+/**
+ * This version assumes that
+ * - bins start at 0 in all axes
+ * - 1 is the smallest bin dimension in all axes
+ */
+export function computeAFrameBinSizePos(rootObj, rootBinRelPos, padding, size) {
+
+   const absRootBinSizePos = getRootBinSizePos(rootObj, rootBinRelPos, size, padding);
+   // console.log(absRootBinSizePos);
+
+   if (!size) {
+      for (let axis in absRootBinSizePos) {
+         absRootBinSizePos[axis].pos = absRootBinSizePos[axis].pos + padding[axis] * (rootBinRelPos[axis] - 1);
+         // console.log(axis, absRootBinSizePos[axis], padding[axis], rootBinRelPos[axis]);
+      }
+   }
+
+   //TODO: resolve TH1 and TH2 (height = content); for TH3 height = scale
+
+   return rootSizePosToAFrame(absRootBinSizePos);
+}
+
+export function stringToXYZ(str) {
+   const [x, y, z] = str.split(' ').map(Number);
+   return {x, y, z};
+}
 
 
