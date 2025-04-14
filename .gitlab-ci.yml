@@ -15,27 +15,15 @@ cache:
   paths:
     - node_modules/
 
-build-pages:
-  stage: build
-  script:
-    - npm install
-    - npm run build -- --mode pages
-  artifacts:
-    paths:
-      - dist/
-  except:
-    - tags # No need to rebuild for npm deployment
-
 pages:
   stage: deploy
-  image: alpine
   script:
+    - npm install
+    - npm run build -- --mode pages --base=$PUBLIC_URL
     - cp -a dist/. public/
   artifacts:
     paths:
       - public
-  # except:
-  #   - tags
   rules:
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
 
