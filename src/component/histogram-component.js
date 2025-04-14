@@ -1,25 +1,28 @@
 import "aframe";
 import {parse} from "jsroot";
-import {computeAFrameBinSizePos} from "../utils/histogramRenderUtils.js";
+import {computeAFrameBinSizePos, stringToXYZ} from "../utils/histogramRenderUtils.js";
 import {histogramSubjectGet} from "../rxjs/HistogramSubject.js";
 import {filter} from "rxjs";
 import {functionSubjectGet} from "../rxjs/FunctionSubject.js";
+import histogramRecursive from "../../public/histograms/THrecursive.json";
 
 const registerHistogramComponent = () => {
 
    AFRAME.registerComponent("histogram", {
       schema: {
          histogram_source_url: {type: "string", default: ""}, //url for the http request
-         bin_padding_x: {type: "number", default: 0.5},
-         bin_padding_y: {type: "number", default: 0.5},
-         bin_padding_z: {type: "number", default: 0.5},
+         size: {type: "string", default: ""},
+         bin_padding_x: {type: "number", default: 1},
+         bin_padding_y: {type: "number", default: 1},
+         bin_padding_z: {type: "number", default: 1},
          content_min: {type: "number", default: 1},
-         bin_scale: {type: "number", default: 5}
+         bin_scale: {type: "number", default: 1},
       },
 
       rootObj: undefined,
       instancedMesh: undefined,
       color: new THREE.Color(),
+      size: undefined,
 
       init: function () {
          if (this.data.histogram_source_url) {
@@ -27,6 +30,9 @@ const registerHistogramComponent = () => {
          }
          this.raycaster = new THREE.Raycaster();
          this.mouse = new THREE.Vector2();
+         if (this.data.size){
+            this.size = stringToXYZ(this.data.size);
+         }
 
          this.sub = functionSubjectGet().getObservable()
             .pipe(filter(e =>
@@ -101,15 +107,17 @@ const registerHistogramComponent = () => {
             const entriesMax = Math.max(...this.rootObj.fArray);
             const isTH3 = this.rootObj._typename.substring(0,3) === 'TH3';
             let max;
-            isTH3 ? max = entriesMax : max = entriesMax / this.data.bin_scale;
+            isTH3 ? max = entriesMax : max = entriesMax / 5;
 
             let index = 0;
+            let recursiveFlag = true;
 
             for (let relZ = 1; relZ <= fZbins; relZ++) {
                for (let relY = 1; relY <= fYbins; relY++) {
                   for (let relX = 1; relX <= fXbins; relX++) {
 
                      const content = this.rootObj.fArray[index];
+
                      if (content < this.data.content_min){
                         dummy.scale.set(0, 0, 0);
                         dummy.updateMatrix();
@@ -119,17 +127,38 @@ const registerHistogramComponent = () => {
                      }
 
                      const relPos = {x: relX, y: relY, z: relZ};
-                     const scaleFactor = content / max;
-                     const pos = computeAFrameBinSizePos(this.rootObj, relPos, padding);
+                     const scaleFactor = (content / max) * this.data.bin_scale;
+                     const pos = computeAFrameBinSizePos(this.rootObj, relPos, padding, this.size);
 
-                     pos.y.size *= scaleFactor;
-                     if (isTH3) {
-                        pos.x.size *= scaleFactor;
-                        pos.z.size *= scaleFactor;
+                     // pos.y.size *= scaleFactor;
+                     // if (isTH3) {
+                     //    pos.x.size *= scaleFactor;
+                     //    pos.z.size *= scaleFactor;
+                     // }
+
+                     if (content?._typename){
+                        const histoRecursive = document.createElement('a-entity');
+                        histoRecursive.setAttribute('histogram',
+                           'size: ' + `${pos.x.size} ${pos.z.size} ${pos.y.size}`);
+                        histoRecursive.id = `${this.el.id}x${relX}${relY}${relZ}`;
+                        histoRecursive.setAttribute('position',
+                           `${pos.x.pos } ${pos.y.pos - (pos.y.size / 2)} ${pos.z.pos } `);
+                        this.el.appendChild(histoRecursive);
+                        histogramSubjectGet().next(
+                           {id: `${this.el.id}x${relX}${relY}${relZ}`, histogram: content});
+
+                        //instancedMesh cannot handle if some index is skipped
+                        dummy.scale.set(0, 0, 0);
+                        dummy.updateMatrix();
+                        this.instancedMesh.setMatrixAt(index, dummy.matrix);
+
+                        index += 1;
+                        continue;
                      }
+                     recursiveFlag = false;
 
                      dummy.scale.set(pos.x.size, pos.y.size, pos.z.size);
-                     dummy.position.set(pos.x.pos, pos.y.pos + (pos.y.size / 2), pos.z.pos);
+                     dummy.position.set(pos.x.pos, pos.y.pos , pos.z.pos);
                      dummy.updateMatrix();
                      this.instancedMesh.setMatrixAt(index, dummy.matrix);
                      this.instancedMesh.setColorAt(index, this.color);
@@ -137,9 +166,11 @@ const registerHistogramComponent = () => {
                   }
                }
             }
-            this.el.object3D.add(this.instancedMesh)
+            if (recursiveFlag === false) {
+               this.el.object3D.add(this.instancedMesh)
+               console.log('')
+            }
          }
-         this.el.object3D.add(this.instancedMesh);
       },
 
       computePositionFromIndex: function (index) {
