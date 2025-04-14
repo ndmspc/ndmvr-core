@@ -4,7 +4,6 @@ import {computeAFrameBinSizePos, stringToXYZ} from "../utils/histogramRenderUtil
 import {histogramSubjectGet} from "../rxjs/HistogramSubject.js";
 import {filter} from "rxjs";
 import {functionSubjectGet} from "../rxjs/FunctionSubject.js";
-import histogramRecursive from "../../public/histograms/THrecursive.json";
 
 const registerHistogramComponent = () => {
 
@@ -30,7 +29,7 @@ const registerHistogramComponent = () => {
          }
          this.raycaster = new THREE.Raycaster();
          this.mouse = new THREE.Vector2();
-         if (this.data.size){
+         if (this.data.size) {
             this.size = stringToXYZ(this.data.size);
          }
 
@@ -50,10 +49,13 @@ const registerHistogramComponent = () => {
                filter(e => e.id === this.el.id)
             )
             .subscribe((histo) => {
-            this.el.object3D.remove(this.instancedMesh);
-            this.rootObj = histo.histogram;
-            this.renderHistogram();
-         })
+               while (this.el.firstChild) {
+                  this.el.removeChild(this.el.lastChild);
+               }
+               this.el.object3D.remove(this.instancedMesh);
+               this.rootObj = histo.histogram;
+               this.renderHistogram();
+            })
       },
 
       remove: function () {
@@ -105,7 +107,7 @@ const registerHistogramComponent = () => {
             this.instancedMesh = new THREE.InstancedMesh(geometry, material, fXbins * fYbins * fZbins);
             const dummy = new THREE.Object3D();
             const entriesMax = Math.max(...this.rootObj.fArray);
-            const isTH3 = this.rootObj._typename.substring(0,3) === 'TH3';
+            const isTH3 = this.rootObj._typename.substring(0, 3) === 'TH3';
             let max;
             isTH3 ? max = entriesMax : max = entriesMax / 5;
 
@@ -118,7 +120,7 @@ const registerHistogramComponent = () => {
 
                      const content = this.rootObj.fArray[index];
 
-                     if (content < this.data.content_min){
+                     if (content < this.data.content_min) {
                         dummy.scale.set(0, 0, 0);
                         dummy.updateMatrix();
                         this.instancedMesh.setMatrixAt(index, dummy.matrix);
@@ -136,13 +138,13 @@ const registerHistogramComponent = () => {
                      //    pos.z.size *= scaleFactor;
                      // }
 
-                     if (content?._typename){
+                     if (content?._typename) {
                         const histoRecursive = document.createElement('a-entity');
                         histoRecursive.setAttribute('histogram',
                            'size: ' + `${pos.x.size} ${pos.z.size} ${pos.y.size}`);
                         histoRecursive.id = `${this.el.id}x${relX}${relY}${relZ}`;
                         histoRecursive.setAttribute('position',
-                           `${pos.x.pos } ${pos.y.pos - (pos.y.size / 2)} ${pos.z.pos } `);
+                           `${pos.x.pos} ${pos.y.pos - (pos.y.size / 2)} ${pos.z.pos} `);
                         this.el.appendChild(histoRecursive);
                         histogramSubjectGet().next(
                            {id: `${this.el.id}x${relX}${relY}${relZ}`, histogram: content});
@@ -158,7 +160,7 @@ const registerHistogramComponent = () => {
                      recursiveFlag = false;
 
                      dummy.scale.set(pos.x.size, pos.y.size, pos.z.size);
-                     dummy.position.set(pos.x.pos, pos.y.pos , pos.z.pos);
+                     dummy.position.set(pos.x.pos, pos.y.pos, pos.z.pos);
                      dummy.updateMatrix();
                      this.instancedMesh.setMatrixAt(index, dummy.matrix);
                      this.instancedMesh.setColorAt(index, this.color);
@@ -187,7 +189,7 @@ const registerHistogramComponent = () => {
          const z = Math.floor(index / (dimensions.x * dimensions.y));
          const position = {x: x, y: y, z: z + 1};
          // console.log(`pos: x: ${x}, y: ${y}, z: ${z}`);
-         return(position)
+         return (position)
       }
 
    });
