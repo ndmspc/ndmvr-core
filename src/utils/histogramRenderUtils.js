@@ -150,7 +150,6 @@ function rootSizePosToAFrame(jsrootSizePos) {
 export function computeAFrameBinSizePos(rootObj, rootBinRelPos, padding, size) {
 
    const absRootBinSizePos = getRootBinSizePos(rootObj, rootBinRelPos, size, padding);
-   // console.log(absRootBinSizePos);
 
    if (!size) {
       for (let axis in absRootBinSizePos) {

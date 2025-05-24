@@ -10,6 +10,7 @@ import registerThumbstickOculusController from "../controllers/oculus/thumbstick
 import registerNdmvrRaycasterComponent from "../component/ndmvr-raycaster-component.js";
 import registerDesktopController from "../controllers/desktop/wasdControlsCustom.js";
 import registerHistogramComponent from "../component/histogram-component.js";
+import registerHistogramBorderComponent from "../component/histogram-border-component.js";
 
 export const registerComponents = () => {
    //by D.Chovanec:
@@ -22,6 +23,7 @@ export const registerComponents = () => {
    registerThumbstickOculusController();
    registerNdmvrRaycasterComponent();
    registerDesktopController();
+   registerHistogramBorderComponent();
    //by S.Korecko:
    registerPseudoHistogramComponent();
 }
