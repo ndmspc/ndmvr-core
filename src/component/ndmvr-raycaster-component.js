@@ -11,13 +11,15 @@ const registerNdmvrRaycasterComponent = () => {
       },
 
       color: new THREE.Color(),
-      dirtyInstance: null,
+      dirtyInstance: {
+         instancedMesh: undefined,
+         instancedId: undefined
+      },
 
 
       setupRaycasting: function () {
          let lastCheck = 0; // Timestamp tracker
          const checkInterval = 100; // 100ms delay
-
 
 
          window.addEventListener("mousemove", (event) => {
@@ -38,15 +40,20 @@ const registerNdmvrRaycasterComponent = () => {
             if (intersects.length > 0) {
 
                if (intersects[0].object.isInstancedMesh === true) {
-                  // console.log(intersects[0].object.parent.el);
                   const histogram = intersects[0].object.parent.el.components['histogram'];
+                  this.dirtyInstance= {
+                     instancedMesh: undefined,
+                        instancedId: undefined
+                  }
 
                   intersects[0].object.parent.el.dispatchEvent(new CustomEvent("instance-click", {
                      detail: {
                         instancedMesh: intersects[0].object,
                         instanceId: intersects[0].instanceId,
+                        shiftKey: event.shiftKey,
                         getBinContent: function () {
-                           return histogram.rootObj.fArray.at(intersects[0].instanceId);
+                           const position = histogram.computePositionFromIndex(intersects[0].instanceId);
+                           return histogram.rootObj.getBinContent(position.x, position.y, position.z);
                         },
                         getBinPosition: function () {
                            return histogram.computePositionFromIndex(intersects[0].instanceId);
@@ -58,31 +65,64 @@ const registerNdmvrRaycasterComponent = () => {
          });
       },
 
-      updateRaycaster: function (event) {
-         this.mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
-         this.mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+         updateRaycaster: function (event) {
+            this.mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+            this.mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
 
-         this.raycaster.setFromCamera(this.mouse, this.el.sceneEl.camera);
-         const intersects = this.raycaster.intersectObjects(this.el.sceneEl.object3D.children);
-         if (intersects.length > 0){
-            if (intersects[0].object.isInstancedMesh === true){
-               if (this.dirtyInstance === intersects[0].instanceId) return;
-               this.dirtyInstance = intersects[0].instanceId;
-               const histogram = intersects[0].object.parent.el.components['histogram'];
-               intersects[0].object.parent.el.dispatchEvent(new CustomEvent("instance-hover", {
-                  detail: {
-                     instancedMesh: intersects[0].object,
-                     instanceId: intersects[0].instanceId,
-                     getBinContent: function () {
-                        return histogram.rootObj.fArray.at(intersects[0].instanceId);
-                     },
-                     getBinPosition: function () {
-                        return histogram.computePositionFromIndex(intersects[0].instanceId);
-                     }
-                  }
-               }))
+            this.raycaster.setFromCamera(this.mouse, this.el.sceneEl.camera);
+
+            const intersects = this.raycaster.intersectObjects(this.el.sceneEl.object3D.children);
+
+            if (intersects.length > 0 && intersects[0].object.isInstancedMesh) {
+               const hit = intersects[0];
+
+               if (this.dirtyInstance.instancedMesh === hit.object &&
+                  this.dirtyInstance.instanceId === hit.instanceId) {
+                  return;
+               }
+
+               const histogram = hit.object.parent.el.components['histogram'];
+
+               if (this.dirtyInstance.instancedMesh && this.dirtyInstance.instanceId != null) {
+                  this.sendInstanceHoverEvent('end', this.dirtyInstance.instancedMesh, this.dirtyInstance.instanceId);
+               }
+
+               this.sendInstanceHoverEvent('start', hit.object, hit.instanceId);
+
+               this.dirtyInstance = {
+                  instancedMesh: hit.object,
+                  instanceId: hit.instanceId,
+               };
+
+            } else {
+               if (this.dirtyInstance.instancedMesh && this.dirtyInstance.instanceId != null) {
+                  this.sendInstanceHoverEvent('end', this.dirtyInstance.instancedMesh, this.dirtyInstance.instanceId);
+                  this.dirtyInstance = {
+                     instancedMesh: undefined,
+                     instanceId: undefined
+                  };
+               }
             }
-         }
+         },
+
+
+      sendInstanceHoverEvent: function (phase, instancedMesh, instanceId) {
+         const histogram = instancedMesh.parent.el.components['histogram'];
+
+         instancedMesh.parent.el.dispatchEvent(new CustomEvent("instance-hover", {
+            detail: {
+               instancedMesh,
+               instanceId,
+               phase,
+               getBinContent: function () {
+                  const pos = histogram.computePositionFromIndex(instanceId);
+                  return histogram.rootObj.getBinContent(pos.x, pos.y, pos.z);
+               },
+               getBinPosition: function () {
+                  return histogram.computePositionFromIndex(instanceId);
+               }
+            }
+         }));
       },
 
       computePositionFromIndex: function (index) {

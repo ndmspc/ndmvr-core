@@ -118,7 +118,7 @@ function generateScene() {
 <!--      <a-box position="0 2 0" depth="1" height="1" width="1">-->
 <!--      </a-box>-->
       
-/
+
       
 <!--      <a-entity id="histogram18bins" position="10 0 0"-->
 <!--        histogram="size: 10 10 10; bin_padding_x: 0; bin_padding_y: 0; bin_padding_z: 0">-->

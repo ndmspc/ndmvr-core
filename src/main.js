@@ -14,22 +14,77 @@ import {initNdmvrAframe} from "./core/ndmvr-aframe-core.js";
 import histogramRecursive from "../public/histograms/THrecursive.json";
 import histogram2x2x3 from "../public/histograms/TH3variableBinning2x2x3OnlyInsideContent.json";
 import {histogramSubjectGet} from "./rxjs/HistogramSubject.js";
+import histoSparse2 from "../public/histograms/THnSparse3.json"
 import {parse} from "jsroot";
 
 initNdmvrAframe();
 
 const sceneElm = generate_AFrame_blank_scene_html();
+let toggleHisto = false;
 
 
 document.querySelector("#app").appendChild(sceneElm);
 
-const histogram = document.createElement('a-entity');
-histogram.id = "histogram1";
-histogram.setAttribute('histogram', '');
-histogram.setAttribute('position', "0 0 0");
-sceneElm.appendChild(histogram);
+const histogramContainer = document.createElement('a-entity');
+histogramContainer.id = "histogram1";
+histogramContainer.setAttribute('histogram', '');
+histogramContainer.setAttribute('position', "0 0 0");
+sceneElm.appendChild(histogramContainer);
 
-stdBin();
+// histogramSubjectGet().next({id: 'histogram1', histogram: parse(histoWithOutsideContent)});
+// histogramSubjectGet().next({id: 'histogram1', histogram: parse(histoSparse)});
+histogramSubjectGet().next({id: 'histogram1', histogram: parse(histoSparse2)});
+// histogramSubjectGet().next({id: 'histogram1', histogram: parse(histo6x2x1)});
+// histogramSubjectGet().next({id: 'histogram1', histogram: parse(histo4x3x1)});
+// stdBin();
+
+let showHistogramToggle = false;
+
+// window.addEventListener('click', () => {
+//    if (showHistogramToggle){
+//       document.querySelector('[histogram]').components.histogram.hideAllChildHistograms();
+//    } else {
+//       document.querySelector('[histogram]').components.histogram.showAllChildHistograms();
+//    }
+//    showHistogramToggle = !showHistogramToggle;
+// })
+
+// setTimeout(() => {
+//    document.querySelector('[histogram]').components.histogram.renderMappingHistogram('set1')
+// }, 1000);
+//
+// setTimeout(() => {
+//    document.querySelector('[histogram]').components.histogram.renderMappingHistogram('set3')
+// }, 2000);
+//
+// setTimeout(() => {
+//    document.querySelector('[histogram]').components.histogram.renderMappingHistogram('set2')
+// }, 3000);
+//
+// setTimeout(() => {
+//    document.querySelector('[histogram]').components.histogram.renderMappingHistogram('set1')
+// }, 4000);
+//
+// setTimeout(() => {
+//    document.querySelector('[histogram]').components.histogram.renderMappingHistogram('set3')
+// }, 5000);
+//
+// setTimeout(() => {
+//    document.querySelector('[histogram]').components.histogram.renderMappingHistogram('set2')
+// }, 6000);
+//
+// setTimeout(() => {
+//    document.querySelector('[histogram]').components.histogram.renderMappingHistogram('set1')
+// }, 7000);
+//
+// setTimeout(() => {
+//    document.querySelector('[histogram]').components.histogram.renderMappingHistogram('set3')
+// }, 8000);
+//
+// setTimeout(() => {
+//    document.querySelector('[histogram]').components.histogram.renderMappingHistogram('set2')
+// }, 9000);
+
 
 function stdBin() {
    histogramSubjectGet().next({id: 'histogram1', histogram: parse(histogram2x2x3)});
@@ -42,7 +97,6 @@ function histoBin() {
 }
 
 
-
 const functions = [
    {
       event: 'instance-hover',
@@ -51,6 +105,16 @@ const functions = [
          id: '*'
       },
       function: function (event) {
+         // console.log(event)
+         const position = event.detail.getBinPosition();
+
+         // if(event.detail.phase === 'start') {
+         //    event.srcElement.components['histogram'].showChildHistogram(position.x, position.y, position.z);
+         // } else {
+         // event.srcElement.components['histogram'].hideChildHistogram(position.x, position.y, position.z);
+         // }
+
+         if (event.detail.phase === 'end') return;
          const instancedMesh = event.detail.instancedMesh;
          const instanceId = event.detail.instanceId;
 
@@ -71,8 +135,26 @@ const functions = [
          id: '*'
       },
       function: function (event) {
-         console.log('bin content: ', event.detail.getBinContent());
-         console.log('bin position: ', event.detail.getBinPosition());
+         // console.log('bin content: ', event.detail.getBinContent());
+         // console.log('bin position: ', event.detail.getBinPosition());
+         const position = event.detail.getBinPosition();
+         // console.log(position);
+
+         if (event.detail.shiftKey) {
+            console.log('shift')
+            event.srcElement.components['histogram'].hideChildHistogram(position.x, position.y, position.z);
+         } else {
+            event.srcElement.components['histogram'].showChildHistogram(position.x, position.y, position.z);
+         }
+
+         // if (toggleHisto) {
+         //    console.log('hide')
+         //    document.querySelector('[histogram]').components.histogram.hideAllChildHistograms();
+         // } else {
+         //    document.querySelector('[histogram]').components.histogram.showAllChildHistograms();
+         // }
+         // toggleHisto = !toggleHisto;
+
          // const instancedMesh = event.detail.instancedMesh;
          // console.log(instancedMesh);
          // const instanceId = event.detail.instanceId;
