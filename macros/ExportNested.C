@@ -180,12 +180,57 @@ void ExportNested(std::string filenameJson = "/tmp/test.json", std::vector<int> 
   // // Printf("Parsed JSON: %s", h1JsonParsed.dump(2).c_str());
   std::string content = hJsonParsed.dump();
   // std::string filenameJson = "/tmp/test.json";
-  TFile * f = TFile::Open(TString::Format("%s?filetype=raw", filenameJson.c_str()).Data(), "RECREATE");
-  if (!f) return;
+  TString filenameJsonStr = filenameJson.c_str();
 
-  f->WriteBuffer(content.c_str(), content.size());
+  std::string postfix = "" + std::to_string((int)axes.size()) + "D.";
+  for (auto & ax : axes) {
+    // postfix += std::to_string(ax) + "_";
+    postfix += hns->GetAxis(ax)->GetName();
+    postfix += "_";
+  }
 
-  f->Close();
+  if (postfix.back() == '_') {
+    postfix.pop_back(); // Remove trailing underscore
+  }
+  filenameJsonStr.ReplaceAll(".json", TString::Format("%s.json", postfix.c_str()).Data());
+  TFile * fJson = TFile::Open(TString::Format("%s?filetype=raw", filenameJsonStr.Data()).Data(), "RECREATE");
+  if (!fJson) return;
+
+  fJson->WriteBuffer(content.c_str(), content.size());
+
+  fJson->Close();
+  Printf("Exported histograms to %s", filenameJsonStr.Data());
+
+  filenameJsonStr.ReplaceAll(".json", ".root");
+  TFile * fOut = TFile::Open(filenameJsonStr.Data(), "RECREATE");
+  if (!fOut) {
+    Printf("Error: Could not create output file %s", filenameJsonStr.Data());
+    return;
+  }
+
+  if (h1) h1->Write("hMap");
+  if (h2) h2->Write("hMap");
+  if (h3) h3->Write("hMap");
+
+  TDirectory * oDir = fOut->mkdir("content");
+  oDir->cd();
+
+  for (auto objName : objNames) {
+    // loop over sparseProjections and write each histogram
+    for (int i = 0; i < sparseProjections[objName].size(); ++i) {
+      if (sparseProjections[objName][i]) {
+
+        TString strPath = TString::Format("%d", i);
+        oDir->mkdir(strPath.Data(), "", kTRUE);
+        TDirectory * currentBinDir = oDir->GetDirectory(strPath.Data());
+        currentBinDir->cd();
+        sparseProjections[objName][i]->Write(TString::Format("%s", objName.c_str()).Data());
+      }
+    }
+  }
+
+  fOut->Close();
+  Printf("Exported histograms to %s", filenameJsonStr.Data());
 
   file->Close();
 }
