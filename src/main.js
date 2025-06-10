@@ -15,6 +15,7 @@ import histogramRecursive from "../public/histograms/THrecursive.json";
 import histogram2x2x3 from "../public/histograms/TH3variableBinning2x2x3OnlyInsideContent.json";
 import {histogramSubjectGet} from "./rxjs/HistogramSubject.js";
 import histoSparse2 from "../public/histograms/THnSparse3.json"
+import nestedHisto from "../public/histograms/hist3D.axis1-pt_axis2-ce_axis5-eta.json"
 import {parse} from "jsroot";
 
 initNdmvrAframe();
@@ -25,15 +26,17 @@ let toggleHisto = false;
 
 document.querySelector("#app").appendChild(sceneElm);
 
+
+
 const histogramContainer = document.createElement('a-entity');
 histogramContainer.id = "histogram1";
-histogramContainer.setAttribute('histogram', '');
-histogramContainer.setAttribute('position', "0 0 0");
+histogramContainer.setAttribute('nested-histogram', '');
+histogramContainer.setAttribute('position', "0 5 0");
 sceneElm.appendChild(histogramContainer);
 
 // histogramSubjectGet().next({id: 'histogram1', histogram: parse(histoWithOutsideContent)});
 // histogramSubjectGet().next({id: 'histogram1', histogram: parse(histoSparse)});
-histogramSubjectGet().next({id: 'histogram1', histogram: parse(histoSparse2)});
+histogramSubjectGet().next({id: 'histogram1', histogram: parse(nestedHisto)});
 // histogramSubjectGet().next({id: 'histogram1', histogram: parse(histo6x2x1)});
 // histogramSubjectGet().next({id: 'histogram1', histogram: parse(histo4x3x1)});
 // stdBin();
@@ -175,4 +178,4 @@ const functions = [
    }
 ];
 
-setTimeout(() => functionSubjectGet().addFunctions(functions), 100);
+// setTimeout(() => functionSubjectGet().addFunctions(functions), 100);
