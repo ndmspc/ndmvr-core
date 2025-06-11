@@ -26,7 +26,11 @@ let toggleHisto = false;
 
 document.querySelector("#app").appendChild(sceneElm);
 
-
+// const geom = new THREE.BoxGeometry(6, 5, 12);
+// const mate = new THREE.MeshNormalMaterial();
+// const cube = new THREE.Mesh(geom, mate);
+// cube.position.set(-3,5,0);
+// sceneElm.object3D.add(cube)
 
 const histogramContainer = document.createElement('a-entity');
 histogramContainer.id = "histogram1";

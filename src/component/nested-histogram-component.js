@@ -52,7 +52,7 @@ const registerNestedHistogramComponent = () => {
 
                const geometry = new THREE.BoxGeometry(1, 1, 1);
                const material = new THREE.MeshPhongMaterial({color: 0xaaaaaa});
-               // const material = new THREE.MeshToonMaterial({color: 0xaaaaaa});
+               // const material = new THREE.MeshMatcapMaterial({color: 0xaaaaaa});
                this.instancedMesh = new THREE.InstancedMesh(geometry, material, this.totalInstances);
                const dummy = new THREE.Object3D();
                dummy.scale.set(0, 0, 0);
@@ -65,7 +65,7 @@ const registerNestedHistogramComponent = () => {
                this.instancedMesh.instanceMatrix.needsUpdate = true;
                this.el.object3D.add(this.instancedMesh);
 
-               this.renderHistogram(0, this.totalInstances, 1);
+               this.renderHistogram(0, this.totalInstances, 0);
                this.matrixCache = [];
             });
       },
@@ -79,6 +79,7 @@ const registerNestedHistogramComponent = () => {
       renderHistogram: function (startIndex, endIndex, layer) {
          if (!this.rootObj ||
             layer > this.maxInstancesPerLayer.length - 1) return;
+         this.currentLayer = layer;
 
          // if (layer > 0) {
          //    this.renderHistogram(startIndex, endIndex, layer - 1, true);
@@ -139,37 +140,52 @@ const registerNestedHistogramComponent = () => {
                const binSizePos = computeAFrameBinSizePos(obj, relPos, padding, limitMatrix.scale, limitMatrix.position);
 
                const content = obj.getBinContent(relPos.x + 1, relPos.y + 1, relPos.z + 1);
-               let scaleFactor = 0.2 + 0.8 * this.easeOutCubic(content / contentMax);
+               let scaleFactor;
+               if (layer === 0){
+                  scaleFactor = 0.2 + 0.8 * this.easeOutCubic(content / contentMax);
+               } else {
+                  scaleFactor = content / contentMax;
+               }
                if (content === 0) {
                   scaleFactor = 0;
                }
+               let t = content / contentMax;
+               this.color = new THREE.Color(t, 0, 1-t);
 
                if (currentLayer === 1) {
                   // if (startIndex < 10) {
                   //    console.log('content: ', content, ', contentMax: ', contentMax, ', scale: ', scaleFactor);
                   // }
-                  binSizePos.y.size *= scaleFactor;
-                  if (isTH3) {
-                     binSizePos.x.size *= scaleFactor;
-                     binSizePos.z.size *= scaleFactor;
-                  }
                }
+               dummy.position.set(binSizePos.x.pos, binSizePos.y.pos, binSizePos.z.pos)
+               dummy.scale.set(binSizePos.x.size, binSizePos.y.size, binSizePos.z.size)
+               dummy.updateMatrix();
+
+               this.matrixCache[i] = dummy.matrix.clone();
+
+               // t = binSizePos.y.size * scaleFactor;
+               // if (isTH3) {
+               //    binSizePos.x.size *= scaleFactor;
+               //    binSizePos.z.size *= scaleFactor;
+               // } else {
+               //    binSizePos.y.pos -= (binSizePos.y.size - t) / 2;
+               // }
+               // binSizePos.y.size = t;
 
                dummy.position.set(binSizePos.x.pos, binSizePos.y.pos, binSizePos.z.pos)
                dummy.scale.set(binSizePos.x.size, binSizePos.y.size, binSizePos.z.size)
                dummy.updateMatrix();
+
                // if (i < 1000) {
                //    console.log(dummy.scale)
                // console.log(binSizePos)
                // }
 
-
                k++;
-
-               this.matrixCache[i] = dummy.matrix.clone();
 
                if (currentLayer === layer) {
                   this.instancedMesh.setMatrixAt(i, dummy.matrix);
+                  this.instancedMesh.setColorAt(i, this.color);
                } else {
                   //    // console.log(obj.children[this.selectedChildren[currentLayer]])
                   //    // console.log(relPos)
@@ -186,7 +202,8 @@ const registerNestedHistogramComponent = () => {
                if (!counter.increment(0)) break;
             }
             this.instancedMesh.instanceMatrix.needsUpdate = true;
-
+            this.instancedMesh.instanceColor.needsUpdate = true;
+            this.instancedMesh.computeBoundingBox();
 
          }
          const ex = {x: matrix.scale.x, y: matrix.scale.y, z: matrix.scale.z}
@@ -200,36 +217,21 @@ const registerNestedHistogramComponent = () => {
 
       },
 
-      filterOutsideContent: function (rootObj) {
-         // rootObj = rootObj.children.likemm[287]
-         // console.log(rootObj)
-         // const binsPerAxis = [1];
-         // binsPerAxis.push((rootObj.fXaxis.fNbins + 2) * binsPerAxis[0]);
-         // binsPerAxis.push((rootObj.fYaxis.fNbins + 2) * binsPerAxis[1]);
-         // console.log(rootObj.fArray)
-         // console.log(binsPerAxis);
-         // const copy = rootObj.fArray;
-         //
-         // if (rootObj.fZaxis.fNbins > 1) {
-         //    copy.splice(copy.length - binsPerAxis[2], binsPerAxis[2]);
-         //    copy.splice(0, binsPerAxis[2]);
-         // }
-         // if (rootObj.fYaxis.fNbins > 1) {
-         //    for (let i = rootObj.fZaxis.fNbins; i >= 1; i--){
-         //       copy.splice(i* binsPerAxis[2] - binsPerAxis[1], binsPerAxis[1]);
-         //       copy.splice((i - 1) * binsPerAxis[2], binsPerAxis[1]);
-         //    }
-         // }
-         // if (rootObj.fXaxis.fNbins > 1) {
-         //    for (let i = rootObj.fZaxis.fNbins; i >= 1; i--){
-         //       for (let j = rootObj.fYaxis.fNbins; j >= 1; j--){
-         //          copy.splice(i * j * binsPerAxis[1] - binsPerAxis[0], binsPerAxis[0])
-         //          copy.splice(i * j * binsPerAxis[1] - binsPerAxis[1], binsPerAxis[0])
-         //       }
-         //    }
-         // }
-         // console.log(copy.length)
+      checkIntersection: function (startIndex, endIndex) {
+         const dummy = new THREE.Object3D();
+         this.instancedMesh.getMatrixAt(startIndex, dummy.matrix);
+         const posA = new THREE.Vector3().setFromMatrixPosition(dummy.matrix)
 
+         endIndex -= endIndex % this.maxInstancesPerLayer[this.currentLayer + 1];
+         this.instancedMesh.getMatrixAt(endIndex, dummy.matrix);
+         const posB = new THREE.Vector3().setFromMatrixPosition(dummy.matrix);
+         const boundingBox = new THREE.Box3().setFromPoints([posA, posB]);
+         const helper = new THREE.Box3Helper(boundingBox, 0x00ff00);
+         this.el.object3D.add(helper);
+
+      },
+
+      filterOutsideContent: function (rootObj) {
          const binsPerAxis = [1];
          binsPerAxis.push((rootObj.fXaxis.fNbins + 2) * binsPerAxis[0]);
          binsPerAxis.push((rootObj.fYaxis.fNbins + 2) * binsPerAxis[1]);
