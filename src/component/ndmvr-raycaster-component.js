@@ -35,59 +35,84 @@ const registerNdmvrRaycasterComponent = () => {
          window.addEventListener("click", (event) => {
             this.mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
             this.mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+            // this.instancedMesh = document.getElementById('histogram1').object3D;
 
             this.raycaster.setFromCamera(this.mouse, this.el.sceneEl.camera);
+            const instancedMesh = this.histogram.instancedMesh;
+
+            const worldBoundingBox = instancedMesh.boundingBox.clone();
+            worldBoundingBox.applyMatrix4(instancedMesh.matrixWorld);
+
+            if (!this.raycaster.ray.intersectsBox(worldBoundingBox)) {
+               // No hit at all
+               // console.log('nehitlo')
+               return null;
+            } else {
+               // console.log('hitlo')
+               // this.checkIntersection(0, this.instancedMesh.count - 1);
+               // console.log(instancedMesh.count / 2 - 1)
+               //TU----------------------
+               // const res = this.histogram.checkIntersection(0, instancedMesh.count, this.raycaster);
+               // console.log(res);
+            }
+            this.mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+            this.mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+            //
+            this.raycaster.setFromCamera(this.mouse, this.el.sceneEl.camera);
             const intersects = this.raycaster.intersectObjects(this.el.sceneEl.object3D.children);
-
+            //
             if (intersects.length > 0) {
-
-               if (intersects[0].object.isInstancedMesh === true) {
-                  const histogram = intersects[0].object.parent.el.components['histogram'];
-                  this.dirtyInstance = {
-                     instancedMesh: undefined,
-                     instancedId: undefined
-                  }
-
-                  intersects[0].object.parent.el.dispatchEvent(new CustomEvent("instance-click", {
-                     detail: {
-                        instancedMesh: intersects[0].object,
-                        instanceId: intersects[0].instanceId,
-                        shiftKey: event.shiftKey,
-                        getBinContent: function () {
-                           const position = histogram.computePositionFromIndex(intersects[0].instanceId);
-                           return histogram.rootObj.getBinContent(position.x, position.y, position.z);
-                        },
-                        getBinPosition: function () {
-                           return histogram.computePositionFromIndex(intersects[0].instanceId);
-                        }
-                     }
-                  }))
-               }
+               console.log(intersects[0].instanceId)
+            //
+            //    if (intersects[0].object.isInstancedMesh === true) {
+            //       const histogram = intersects[0].object.parent.el.components['histogram'];
+            //       this.dirtyInstance = {
+            //          instancedMesh: undefined,
+            //          instancedId: undefined
+            //       }
+            //
+            //       intersects[0].object.parent.el.dispatchEvent(new CustomEvent("instance-click", {
+            //          detail: {
+            //             instancedMesh: intersects[0].object,
+            //             instanceId: intersects[0].instanceId,
+            //             shiftKey: event.shiftKey,
+            //             getBinContent: function () {
+            //                const position = histogram.computePositionFromIndex(intersects[0].instanceId);
+            //                return histogram.rootObj.getBinContent(position.x, position.y, position.z);
+            //             },
+            //             getBinPosition: function () {
+            //                return histogram.computePositionFromIndex(intersects[0].instanceId);
+            //             }
+            //          }
+            //       }))
+            //    }
             }
          });
       },
 
       updateRaycaster: function (event) {
-         console.log('update')
-         this.mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
-         this.mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
-         // this.instancedMesh = document.getElementById('histogram1').object3D;
-
-         this.raycaster.setFromCamera(this.mouse, this.el.sceneEl.camera);
-         const instancedMesh = this.histogram.instancedMesh;
-
-         const worldBoundingBox = instancedMesh.boundingBox.clone();
-         worldBoundingBox.applyMatrix4(instancedMesh.matrixWorld);
-
-         if (!this.raycaster.ray.intersectsBox(worldBoundingBox)) {
-            // No hit at all
-            // console.log('nehitlo')
-            return null;
-         } else {
-            // console.log('hitlo')
-            // this.checkIntersection(0, this.instancedMesh.count - 1);
-            this.histogram.checkIntersection(0, instancedMesh.count - 1);
-         }
+         // console.log('update')
+         // this.mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+         // this.mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+         // // this.instancedMesh = document.getElementById('histogram1').object3D;
+         //
+         // this.raycaster.setFromCamera(this.mouse, this.el.sceneEl.camera);
+         // const instancedMesh = this.histogram.instancedMesh;
+         //
+         // const worldBoundingBox = instancedMesh.boundingBox.clone();
+         // worldBoundingBox.applyMatrix4(instancedMesh.matrixWorld);
+         //
+         // if (!this.raycaster.ray.intersectsBox(worldBoundingBox)) {
+         //    // No hit at all
+         //    // console.log('nehitlo')
+         //    return null;
+         // } else {
+         //    // console.log('hitlo')
+         //    // this.checkIntersection(0, this.instancedMesh.count - 1);
+         //    // console.log(instancedMesh.count / 2 - 1)
+         //    const res = this.histogram.checkIntersection(0, instancedMesh.count, this.raycaster);
+         //    console.log(res);
+         // }
 
          // const intersects = this.raycaster.intersectObjects(this.el.sceneEl.object3D.children);
          // const intersects = this.raycaster.intersectObject(this.instancedMesh.boundingSphere, true);
