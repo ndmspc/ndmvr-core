@@ -31,7 +31,7 @@ const registerDesktopController = () => {
 
    AFRAME.registerComponent('wasd-controls-custom', {
       schema: {
-         acceleration: {default: 50},
+         acceleration: {default: 10},
          adAxis: {default: 'x', oneOf: ['x', 'y', 'z']},
          adEnabled: {default: true},
          adInverted: {default: false},

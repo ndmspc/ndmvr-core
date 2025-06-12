@@ -42,8 +42,9 @@ const registerNdmvrRaycasterComponent = () => {
 
             const worldBoundingBox = instancedMesh.boundingBox.clone();
             worldBoundingBox.applyMatrix4(instancedMesh.matrixWorld);
+            const target = new THREE.Vector3();
 
-            if (!this.raycaster.ray.intersectsBox(worldBoundingBox)) {
+            if (!this.raycaster.ray.intersectBox(worldBoundingBox, target)) {
                // No hit at all
                // console.log('nehitlo')
                return null;
@@ -52,17 +53,18 @@ const registerNdmvrRaycasterComponent = () => {
                // this.checkIntersection(0, this.instancedMesh.count - 1);
                // console.log(instancedMesh.count / 2 - 1)
                //TU----------------------
-               // const res = this.histogram.checkIntersection(0, instancedMesh.count, this.raycaster);
+               const res = this.histogram.checkIntersection(target);
+               // console.log(target)
                // console.log(res);
             }
-            this.mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
-            this.mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+            // this.mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+            // this.mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+            // //
+            // this.raycaster.setFromCamera(this.mouse, this.el.sceneEl.camera);
+            // const intersects = this.raycaster.intersectObjects(this.el.sceneEl.object3D.children);
             //
-            this.raycaster.setFromCamera(this.mouse, this.el.sceneEl.camera);
-            const intersects = this.raycaster.intersectObjects(this.el.sceneEl.object3D.children);
-            //
-            if (intersects.length > 0) {
-               console.log(intersects[0].instanceId)
+            // if (intersects.length > 0) {
+            //    console.log(intersects[0].instanceId)
             //
             //    if (intersects[0].object.isInstancedMesh === true) {
             //       const histogram = intersects[0].object.parent.el.components['histogram'];
@@ -86,7 +88,7 @@ const registerNdmvrRaycasterComponent = () => {
             //          }
             //       }))
             //    }
-            }
+            // }
          });
       },
 

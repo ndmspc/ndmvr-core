@@ -129,7 +129,7 @@ const registerNestedHistogramComponent = () => {
             // if (startIndex < 100) {
             //    console.log(contentMax)
             //
-               // console.log(limitMatrix)
+            // console.log(limitMatrix)
             //
             // console.log('start: ', startIndex, ', end: ', endIndex, ', step: ', stepFor)
             // }
@@ -141,7 +141,7 @@ const registerNestedHistogramComponent = () => {
 
                const content = obj.getBinContent(relPos.x + 1, relPos.y + 1, relPos.z + 1);
                let scaleFactor;
-               if (layer === 0){
+               if (layer === 0) {
                   scaleFactor = 0.2 + 0.8 * this.easeOutCubic(content / contentMax);
                } else {
                   scaleFactor = content / contentMax;
@@ -150,7 +150,7 @@ const registerNestedHistogramComponent = () => {
                   scaleFactor = 0;
                }
                let t = content / contentMax;
-               this.color = new THREE.Color(t, 0, 1-t);
+               this.color = new THREE.Color(t, 0, 1 - t);
 
                if (currentLayer === 1) {
                   // if (startIndex < 10) {
@@ -217,69 +217,120 @@ const registerNestedHistogramComponent = () => {
 
       },
 
-      checkIntersection: function (startIndex, endIndex, raycaster) {
-         console.log('start: ', startIndex, ', end: ', endIndex);
+      checkIntersection: function (target) {
+         // console.log('start: ', startIndex, ', end: ', endIndex);
+         // console.log(this.instancedMesh)
+         const layer = 0;
+         const perInstance = this.maxInstancesPerLayer[layer + 1];
+         const fXaxis = this.rootObj.fXaxis.fNbins;
+         const fYaxis = this.rootObj.fYaxis.fNbins;
+         const fZaxis = this.rootObj.fZaxis.fNbins;
          const dummy = new THREE.Object3D();
 
-         const intersect = (matrix) => {
-            // this.instancedMesh.getMatrixAt(matrix, dummy.matrix);
-            const position = new THREE.Vector3();
-            const quaternion = new THREE.Quaternion();
-            const scale = new THREE.Vector3();
-
-            // Decompose the matrix into position, rotation, scale
-            matrix.decompose(position, quaternion, scale);
-            const halfScale = scale.clone().multiplyScalar(0.5);
-            const min = position.clone().sub(halfScale);
-            const max = position.clone().add(halfScale);
-
-            // Create and return the bounding box
-            const boundary = new THREE.Box3(min, max);
-            boundary.applyMatrix4(this.instancedMesh.matrixWorld)
-            console.log(raycaster.ray.intersectsBox(boundary));
+         const isBetween = (x, a, b) => x >= Math.min(a, b) && x <= Math.max(a, b);
+         const checkAxis = (axis, step, startIndex, endIndex) => {
+            console.log(startIndex, endIndex);
+            const half = Math.floor((startIndex + endIndex) / 2);
+            this.instancedMesh.getMatrixAt(half * perInstance * step, dummy.matrix);
+            // console.log(half * perInstance * step)
+            dummy.matrix.decompose(dummy.position, dummy.quaternion, dummy.scale);
+            let targetPos;
+            let checkPos;
+            let checkScale;
+            if (axis.fName === 'fXaxis') {
+               targetPos = target.x;
+               checkPos = dummy.position.x;
+               checkScale = dummy.scale.x;
+            } else if (axis.fName === 'fYaxis') {
+               targetPos = target.y;
+               checkPos = dummy.position.y;
+               checkScale = dummy.scale.y;
+            } else {
+               targetPos = target.z;
+               checkPos = dummy.position.z;
+               checkScale = dummy.scale.z;
+            }
+            // console.log(targetPos, checkPos, checkScale)
+            if (isBetween(targetPos,
+               checkPos + (checkScale / 2),
+               checkPos - (checkScale / 2))) {
+               return half;
+            } else if (checkPos < targetPos) {
+               return checkAxis(axis, step, half, endIndex);
+            } else {
+               return checkAxis(axis, step, startIndex, half);
+            }
          }
-         endIndex -= endIndex % this.maxInstancesPerLayer[this.currentLayer + 1];
-         if (startIndex === endIndex) {
-            this.instancedMesh.getMatrixAt(startIndex, dummy.matrix);
-            console.log(startIndex);
-            console.log(startIndex + this.maxInstancesPerLayer[this.currentLayer + 1])
-            intersect(dummy.matrix)
-            this.instancedMesh.getMatrixAt(startIndex + this.maxInstancesPerLayer[this.currentLayer + 1], dummy.matrix);
-            intersect(dummy.matrix)
-            return startIndex;
-         }
+         let step = 1;
+         // const relX = checkAxis(this.rootObj.fXaxis, step, 0, this.rootObj.fXaxis.fNbins);
+         // console.log(relX)
+         step *= fXaxis;
+         // console.log(this.rootObj.fYaxis.fNbins)
+         const relY = checkAxis(this.rootObj.fYaxis, step, 0, this.rootObj.fYaxis.fNbins);
+         console.log(relY)
+         step *= fXaxis * fYaxis;
+         // checkAxis(this.rootObj.fZaxis);
 
 
+         // const intersect = (matrix) => {
+         // this.instancedMesh.getMatrixAt(matrix, dummy.matrix);
+         //    const position = new THREE.Vector3();
+         //    const quaternion = new THREE.Quaternion();
+         //    const scale = new THREE.Vector3();
+         //
+         //    // Decompose the matrix into position, rotation, scale
+         //    matrix.decompose(position, quaternion, scale);
+         //    const halfScale = scale.clone().multiplyScalar(0.5);
+         //    const min = position.clone().sub(halfScale);
+         //    const max = position.clone().add(halfScale);
+         //
+         //    // Create and return the bounding box
+         //    const boundary = new THREE.Box3(min, max);
+         //    boundary.applyMatrix4(this.instancedMesh.matrixWorld)
+         //    console.log(raycaster.ray.intersectsBox(boundary));
+         // }
+         // endIndex -= endIndex % this.maxInstancesPerLayer[this.currentLayer + 1];
+         // if (startIndex === endIndex) {
+         //    this.instancedMesh.getMatrixAt(startIndex, dummy.matrix);
+         //    console.log(startIndex);
+         //    console.log(startIndex + this.maxInstancesPerLayer[this.currentLayer + 1])
+         //    intersect(dummy.matrix)
+         //    this.instancedMesh.getMatrixAt(startIndex + this.maxInstancesPerLayer[this.currentLayer + 1], dummy.matrix);
+         //    intersect(dummy.matrix)
+         //    return startIndex;
+         // }
+         //
+         //
+         //
+         // this.instancedMesh.getMatrixAt(startIndex, dummy.matrix);
+         // // console.log(dummy.matrix);
+         // const posA = new THREE.Vector3().setFromMatrixPosition(dummy.matrix);
+         // let sizeOffset = new THREE.Vector3(
+         //    dummy.matrix.elements[0] * 0.5,
+         //    dummy.matrix.elements[5] * 0.5,
+         //    -dummy.matrix.elements[10] * 0.5
+         // );
+         // posA.sub(sizeOffset);
+         //
+         // const half = Math.ceil((startIndex + endIndex) / 2);
+         // // console.log(half)
+         // this.instancedMesh.getMatrixAt(half - 1, dummy.matrix);
+         // const posB = new THREE.Vector3().setFromMatrixPosition(dummy.matrix);
+         // //----DANGER!!---- pravdepodobne treba prerobit na decompose (bez rot funguje)
+         // sizeOffset = new THREE.Vector3(
+         //    dummy.matrix.elements[0] * 0.5,
+         //    dummy.matrix.elements[5] * 0.5,
+         //    -dummy.matrix.elements[10] * 0.5
+         // );
+         // posB.add(sizeOffset);
+         // const boundingBox = new THREE.Box3().setFromPoints([posA, posB]);
+         // boundingBox.applyMatrix4(this.instancedMesh.matrixWorld);
 
-         this.instancedMesh.getMatrixAt(startIndex, dummy.matrix);
-         // console.log(dummy.matrix);
-         const posA = new THREE.Vector3().setFromMatrixPosition(dummy.matrix);
-         let sizeOffset = new THREE.Vector3(
-            dummy.matrix.elements[0] * 0.5,
-            dummy.matrix.elements[5] * 0.5,
-            -dummy.matrix.elements[10] * 0.5
-         );
-         posA.sub(sizeOffset);
-
-         const half = Math.ceil((startIndex + endIndex) / 2);
-         // console.log(half)
-         this.instancedMesh.getMatrixAt(half - 1, dummy.matrix);
-         const posB = new THREE.Vector3().setFromMatrixPosition(dummy.matrix);
-         //----DANGER!!---- pravdepodobne treba prerobit na decompose (bez rot funguje)
-         sizeOffset = new THREE.Vector3(
-            dummy.matrix.elements[0] * 0.5,
-            dummy.matrix.elements[5] * 0.5,
-            -dummy.matrix.elements[10] * 0.5
-         );
-         posB.add(sizeOffset);
-         const boundingBox = new THREE.Box3().setFromPoints([posA, posB]);
-         boundingBox.applyMatrix4(this.instancedMesh.matrixWorld);
-
-         if (raycaster.ray.intersectsBox(boundingBox)) {
-            return this.checkIntersection(startIndex, half, raycaster);
-         } else {
-            return this.checkIntersection(half, endIndex, raycaster);
-         }
+         // if (raycaster.ray.intersectsBox(boundingBox)) {
+         //    return this.checkIntersection(startIndex, half, raycaster);
+         // } else {
+         //    return this.checkIntersection(half, endIndex, raycaster);
+         // }
 
          // const helper = new THREE.Box3Helper(boundingBox, 0x00ff00);
          // helper.updateMatrix();
