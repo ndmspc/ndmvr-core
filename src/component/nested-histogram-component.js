@@ -229,46 +229,56 @@ const registerNestedHistogramComponent = () => {
 
          const isBetween = (x, a, b) => x >= Math.min(a, b) && x <= Math.max(a, b);
          const checkAxis = (axis, step, startIndex, endIndex) => {
-            console.log(startIndex, endIndex);
+            // if (startIndex + 1 === endIndex) return null;
             const half = Math.floor((startIndex + endIndex) / 2);
             this.instancedMesh.getMatrixAt(half * perInstance * step, dummy.matrix);
             // console.log(half * perInstance * step)
+            // dummy.position.setFromMatrixPosition(dummy.matrix);
             dummy.matrix.decompose(dummy.position, dummy.quaternion, dummy.scale);
+            dummy.position.applyMatrix4(this.instancedMesh.matrixWorld);
+            // console.log(this.instancedMesh.matrixWorld)
             let targetPos;
             let checkPos;
             let checkScale;
-            if (axis.fName === 'fXaxis') {
+            // console.log(axis.fName)
+            if (axis.fName === 'xaxis') {
                targetPos = target.x;
                checkPos = dummy.position.x;
                checkScale = dummy.scale.x;
-            } else if (axis.fName === 'fYaxis') {
-               targetPos = target.y;
-               checkPos = dummy.position.y;
-               checkScale = dummy.scale.y;
-            } else {
+            } else if (axis.fName === 'yaxis') {
                targetPos = target.z;
                checkPos = dummy.position.z;
                checkScale = dummy.scale.z;
+            } else {
+               targetPos = target.y;
+               checkPos = dummy.position.y;
+               checkScale = dummy.scale.y;
             }
             // console.log(targetPos, checkPos, checkScale)
             if (isBetween(targetPos,
                checkPos + (checkScale / 2),
                checkPos - (checkScale / 2))) {
                return half;
-            } else if (checkPos < targetPos) {
+            } else if (startIndex + 1 === endIndex) {
+               return null;
+            }
+            else if ((targetPos > checkPos) ^ (axis.fName === 'yaxis')) {
                return checkAxis(axis, step, half, endIndex);
             } else {
                return checkAxis(axis, step, startIndex, half);
             }
          }
          let step = 1;
-         // const relX = checkAxis(this.rootObj.fXaxis, step, 0, this.rootObj.fXaxis.fNbins);
+         const relX = checkAxis(this.rootObj.fXaxis, step, 0, this.rootObj.fXaxis.fNbins);
          // console.log(relX)
          step *= fXaxis;
          // console.log(this.rootObj.fYaxis.fNbins)
          const relY = checkAxis(this.rootObj.fYaxis, step, 0, this.rootObj.fYaxis.fNbins);
-         console.log(relY)
-         step *= fXaxis * fYaxis;
+         // console.log(relY)
+         step *= fYaxis;
+         const relZ = checkAxis(this.rootObj.fZaxis, step, 0, this.rootObj.fZaxis.fNbins);
+         // console.log(relZ);
+         console.log('relX: ', relX, ', relY: ', relY, ', relZ: ', relZ);
          // checkAxis(this.rootObj.fZaxis);
 
 

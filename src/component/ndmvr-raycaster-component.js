@@ -53,6 +53,7 @@ const registerNdmvrRaycasterComponent = () => {
                // this.checkIntersection(0, this.instancedMesh.count - 1);
                // console.log(instancedMesh.count / 2 - 1)
                //TU----------------------
+               // console.log(target);
                const res = this.histogram.checkIntersection(target);
                // console.log(target)
                // console.log(res);
