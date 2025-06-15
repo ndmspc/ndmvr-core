@@ -49,14 +49,8 @@ const registerNdmvrRaycasterComponent = () => {
                // console.log('nehitlo')
                return null;
             } else {
-               // console.log('hitlo')
-               // this.checkIntersection(0, this.instancedMesh.count - 1);
-               // console.log(instancedMesh.count / 2 - 1)
-               //TU----------------------
-               // console.log(target);
                const res = this.histogram.checkIntersection(target, this.raycaster.ray);
-               // console.log(target)
-               // console.log(res);
+               console.log(res);
             }
             // this.mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
             // this.mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;

@@ -20,7 +20,7 @@ const registerNestedHistogramComponent = () => {
       maxInstancesPerLayer: undefined,
       totalInstances: undefined,
       color: new THREE.Color(),
-      matrixCache: [],
+      matrixCache: undefined,
       selectedChildren: ['likemm'],
 
       init: function () {
@@ -44,7 +44,7 @@ const registerNestedHistogramComponent = () => {
             .subscribe((histo) => {
                this.rootObj = histo.histogram;
                this.maxInstancesPerLayer = this.computeMaxInstancesPerLayer();
-               console.log(this.maxInstancesPerLayer)
+               this.matrixCache = new Array(this.maxInstancesPerLayer.length).fill().map(() => []);
                this.totalInstances = this.maxInstancesPerLayer
                   .reduce((acc, value) => {
                      return acc * value;
@@ -66,7 +66,8 @@ const registerNestedHistogramComponent = () => {
                this.el.object3D.add(this.instancedMesh);
 
                this.renderHistogram(0, this.totalInstances, 0);
-               this.matrixCache = [];
+               console.log(this.matrixCache)
+               // this.matrixCache = [];
             });
       },
 
@@ -135,10 +136,10 @@ const registerNestedHistogramComponent = () => {
             // }
             // if (currentLayer === 1) return;
 
+
             for (let i = startIndex; i < endIndex; i += stepFor) {
                const relPos = {x: counter.getValueAt(0), y: counter.getValueAt(1), z: counter.getValueAt(2)}
                const binSizePos = computeAFrameBinSizePos(obj, relPos, padding, limitMatrix.scale, limitMatrix.position);
-
                const content = obj.getBinContent(relPos.x + 1, relPos.y + 1, relPos.z + 1);
                let scaleFactor;
                if (layer === 0) {
@@ -151,17 +152,15 @@ const registerNestedHistogramComponent = () => {
                }
                let t = content / contentMax;
                this.color = new THREE.Color(t, 0, 1 - t);
-
-               if (currentLayer === 1) {
-                  // if (startIndex < 10) {
-                  //    console.log('content: ', content, ', contentMax: ', contentMax, ', scale: ', scaleFactor);
-                  // }
-               }
                dummy.position.set(binSizePos.x.pos, binSizePos.y.pos, binSizePos.z.pos)
                dummy.scale.set(binSizePos.x.size, binSizePos.y.size, binSizePos.z.size)
                dummy.updateMatrix();
+               // console.log(counter.getIndex())
 
-               this.matrixCache[i] = dummy.matrix.clone();
+               this.matrixCache[currentLayer][counter.getIndex()] = new THREE.Box3().setFromCenterAndSize(
+                  new THREE.Vector3(binSizePos.x.pos, binSizePos.y.pos, binSizePos.z.pos),
+                  new THREE.Vector3(binSizePos.x.size, binSizePos.y.size, binSizePos.z.size),
+               );
 
                // t = binSizePos.y.size * scaleFactor;
                // if (isTH3) {
@@ -176,40 +175,26 @@ const registerNestedHistogramComponent = () => {
                dummy.scale.set(binSizePos.x.size, binSizePos.y.size, binSizePos.z.size)
                dummy.updateMatrix();
 
-               // if (i < 1000) {
-               //    console.log(dummy.scale)
-               // console.log(binSizePos)
-               // }
-
-               k++;
-
                if (currentLayer === layer) {
                   this.instancedMesh.setMatrixAt(i, dummy.matrix);
                   this.instancedMesh.setColorAt(i, this.color);
                } else {
-                  //    // console.log(obj.children[this.selectedChildren[currentLayer]])
-                  //    // console.log(relPos)
                   const index = obj.getBin(relPos.x + 1, relPos.y + 1, relPos.z + 1)
-                  //    // console.log(obj.getBin(relPos.x, relPos.y, relPos.z))
                   const child = obj.children[this.selectedChildren[currentLayer]][index];
-                  if (i === 0) {
-                     console.log(this.matrixCache[i])
-                  }
-                  render(i, i + stepFor, currentLayer + 1, child, this.matrixCache[i]);
+                  // render(i, i + stepFor, currentLayer + 1, child, this.matrixCache[i]);
                }
-
-
                if (!counter.increment(0)) break;
             }
             this.instancedMesh.instanceMatrix.needsUpdate = true;
             this.instancedMesh.instanceColor.needsUpdate = true;
-            this.instancedMesh.computeBoundingBox();
 
          }
          const ex = {x: matrix.scale.x, y: matrix.scale.y, z: matrix.scale.z}
-         console.log(matrix)
+         // console.log(matrix)
 
          render(startIndex, endIndex, 0, this.rootObj, matrix);
+         this.instancedMesh.computeBoundingBox();
+
          // console.log(k)
 
 
