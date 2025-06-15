@@ -217,135 +217,99 @@ const registerNestedHistogramComponent = () => {
 
       },
 
-      checkIntersection: function (target) {
-         // console.log('start: ', startIndex, ', end: ', endIndex);
-         // console.log(this.instancedMesh)
+      checkIntersection: function (target, ray) {
          const layer = 0;
          const perInstance = this.maxInstancesPerLayer[layer + 1];
          const fXaxis = this.rootObj.fXaxis.fNbins;
          const fYaxis = this.rootObj.fYaxis.fNbins;
          const fZaxis = this.rootObj.fZaxis.fNbins;
-         const dummy = new THREE.Object3D();
+         const dummyHalfUpper = new THREE.Object3D();
+         const dummyHalfBelow = new THREE.Object3D();
+         const dummyMin = new THREE.Object3D();
+         const dummyMax = new THREE.Object3D();
 
-         const isBetween = (x, a, b) => x >= Math.min(a, b) && x <= Math.max(a, b);
-         const checkAxis = (axis, step, startIndex, endIndex) => {
-            // if (startIndex + 1 === endIndex) return null;
+         const checkAxis = (step, startIndex, endIndex, offset) => {
             const half = Math.floor((startIndex + endIndex) / 2);
-            this.instancedMesh.getMatrixAt(half * perInstance * step, dummy.matrix);
-            // console.log(half * perInstance * step)
-            // dummy.position.setFromMatrixPosition(dummy.matrix);
-            dummy.matrix.decompose(dummy.position, dummy.quaternion, dummy.scale);
-            dummy.position.applyMatrix4(this.instancedMesh.matrixWorld);
-            // console.log(this.instancedMesh.matrixWorld)
-            let targetPos;
-            let checkPos;
-            let checkScale;
-            // console.log(axis.fName)
-            if (axis.fName === 'xaxis') {
-               targetPos = target.x;
-               checkPos = dummy.position.x;
-               checkScale = dummy.scale.x;
-            } else if (axis.fName === 'yaxis') {
-               targetPos = target.z;
-               checkPos = dummy.position.z;
-               checkScale = dummy.scale.z;
+            this.instancedMesh.getMatrixAt(((half + 1) * perInstance * step) + offset, dummyHalfUpper.matrix);
+            this.instancedMesh.getMatrixAt(((half + 1) * perInstance * step) - perInstance + offset, dummyHalfBelow.matrix);
+            this.instancedMesh.getMatrixAt((startIndex * perInstance * step) + offset, dummyMin.matrix);
+            this.instancedMesh.getMatrixAt(((endIndex + 1) * perInstance * step) - perInstance + offset, dummyMax.matrix);
+            dummyHalfUpper.matrix.decompose(dummyHalfUpper.position, dummyHalfUpper.quaternion, dummyHalfUpper.scale);
+            dummyHalfBelow.matrix.decompose(dummyHalfBelow.position, dummyHalfBelow.quaternion, dummyHalfBelow.scale);
+            dummyMin.matrix.decompose(dummyMin.position, dummyMin.quaternion, dummyMin.scale);
+            dummyMax.matrix.decompose(dummyMax.position, dummyMax.quaternion, dummyMax.scale);
+            dummyHalfUpper.position.applyMatrix4(this.instancedMesh.matrixWorld);
+            dummyHalfBelow.position.applyMatrix4(this.instancedMesh.matrixWorld);
+            dummyMin.position.applyMatrix4(this.instancedMesh.matrixWorld);
+            dummyMax.position.applyMatrix4(this.instancedMesh.matrixWorld);
+            const pointMin = dummyMin.position.clone().sub(dummyMin.scale.clone().multiplyScalar(0.5));
+            pointMin.setZ(pointMin.z + dummyMin.scale.z);
+            const pointHalfBelow = dummyHalfBelow.position.clone().add(dummyHalfBelow.scale.clone().multiplyScalar(0.5));
+            pointHalfBelow.setZ(pointHalfBelow.z - dummyHalfBelow.scale.z);
+            const pointHalfUpper = dummyHalfUpper.position.clone().sub(dummyHalfUpper.scale.clone().multiplyScalar(0.5));
+            pointHalfUpper.setZ(pointHalfUpper.z + dummyHalfUpper.scale.z);
+            const pointMax = dummyMax.position.clone().add(dummyMax.scale.clone().multiplyScalar(0.5));
+            pointMax.setZ(pointMax.z - dummyMax.scale.z);
+            const boundaryFirstHalf = new THREE.Box3().setFromPoints([pointMin, pointHalfBelow]);
+            const boundarySecondHalf = new THREE.Box3().setFromPoints([pointHalfUpper, pointMax]);
+            const target = new THREE.Vector3();
+            const resultList = [];
+            if (ray.intersectBox(boundaryFirstHalf, target)) {
+               resultList.push([startIndex, half]);
             } else {
-               targetPos = target.y;
-               checkPos = dummy.position.y;
-               checkScale = dummy.scale.y;
+               resultList.push(null);
             }
-            // console.log(targetPos, checkPos, checkScale)
-            if (isBetween(targetPos,
-               checkPos + (checkScale / 2),
-               checkPos - (checkScale / 2))) {
-               return half;
-            } else if (startIndex + 1 === endIndex) {
-               return null;
-            }
-            else if ((targetPos > checkPos) ^ (axis.fName === 'yaxis')) {
-               return checkAxis(axis, step, half, endIndex);
+            if (ray.intersectBox(boundarySecondHalf, target)) {
+               resultList.push([half + 1, endIndex]);
             } else {
-               return checkAxis(axis, step, startIndex, half);
+               resultList.push(null);
             }
+            return resultList;
          }
-         let step = 1;
-         const relX = checkAxis(this.rootObj.fXaxis, step, 0, this.rootObj.fXaxis.fNbins);
-         // console.log(relX)
-         step *= fXaxis;
-         // console.log(this.rootObj.fYaxis.fNbins)
-         const relY = checkAxis(this.rootObj.fYaxis, step, 0, this.rootObj.fYaxis.fNbins);
-         // console.log(relY)
-         step *= fYaxis;
-         const relZ = checkAxis(this.rootObj.fZaxis, step, 0, this.rootObj.fZaxis.fNbins);
-         // console.log(relZ);
-         console.log('relX: ', relX, ', relY: ', relY, ', relZ: ', relZ);
-         // checkAxis(this.rootObj.fZaxis);
+         let step = fXaxis * fYaxis;
 
+         const dfs = (step, start, end, offset) => {
+            const result = []
+            const traverse = (start, end) => {
+               if (start === end) {
+                  result.push(start);
+                  return;
+               }
+               const [firstHalf, secondHalf] = checkAxis(step, start, end, offset);
+               if (firstHalf) {
+                  traverse(firstHalf[0], firstHalf[1]);
+               }
+               if (secondHalf) {
+                  traverse(secondHalf[0], secondHalf[1]);
+               }
+            }
 
-         // const intersect = (matrix) => {
-         // this.instancedMesh.getMatrixAt(matrix, dummy.matrix);
-         //    const position = new THREE.Vector3();
-         //    const quaternion = new THREE.Quaternion();
-         //    const scale = new THREE.Vector3();
-         //
-         //    // Decompose the matrix into position, rotation, scale
-         //    matrix.decompose(position, quaternion, scale);
-         //    const halfScale = scale.clone().multiplyScalar(0.5);
-         //    const min = position.clone().sub(halfScale);
-         //    const max = position.clone().add(halfScale);
-         //
-         //    // Create and return the bounding box
-         //    const boundary = new THREE.Box3(min, max);
-         //    boundary.applyMatrix4(this.instancedMesh.matrixWorld)
-         //    console.log(raycaster.ray.intersectsBox(boundary));
-         // }
-         // endIndex -= endIndex % this.maxInstancesPerLayer[this.currentLayer + 1];
-         // if (startIndex === endIndex) {
-         //    this.instancedMesh.getMatrixAt(startIndex, dummy.matrix);
-         //    console.log(startIndex);
-         //    console.log(startIndex + this.maxInstancesPerLayer[this.currentLayer + 1])
-         //    intersect(dummy.matrix)
-         //    this.instancedMesh.getMatrixAt(startIndex + this.maxInstancesPerLayer[this.currentLayer + 1], dummy.matrix);
-         //    intersect(dummy.matrix)
-         //    return startIndex;
-         // }
-         //
-         //
-         //
-         // this.instancedMesh.getMatrixAt(startIndex, dummy.matrix);
-         // // console.log(dummy.matrix);
-         // const posA = new THREE.Vector3().setFromMatrixPosition(dummy.matrix);
-         // let sizeOffset = new THREE.Vector3(
-         //    dummy.matrix.elements[0] * 0.5,
-         //    dummy.matrix.elements[5] * 0.5,
-         //    -dummy.matrix.elements[10] * 0.5
-         // );
-         // posA.sub(sizeOffset);
-         //
-         // const half = Math.ceil((startIndex + endIndex) / 2);
-         // // console.log(half)
-         // this.instancedMesh.getMatrixAt(half - 1, dummy.matrix);
-         // const posB = new THREE.Vector3().setFromMatrixPosition(dummy.matrix);
-         // //----DANGER!!---- pravdepodobne treba prerobit na decompose (bez rot funguje)
-         // sizeOffset = new THREE.Vector3(
-         //    dummy.matrix.elements[0] * 0.5,
-         //    dummy.matrix.elements[5] * 0.5,
-         //    -dummy.matrix.elements[10] * 0.5
-         // );
-         // posB.add(sizeOffset);
-         // const boundingBox = new THREE.Box3().setFromPoints([posA, posB]);
-         // boundingBox.applyMatrix4(this.instancedMesh.matrixWorld);
+            traverse(start, end);
+            return result;
+         }
 
-         // if (raycaster.ray.intersectsBox(boundingBox)) {
-         //    return this.checkIntersection(startIndex, half, raycaster);
-         // } else {
-         //    return this.checkIntersection(half, endIndex, raycaster);
-         // }
+         const validZ = dfs(step, 0, this.rootObj.fZaxis.fNbins, 0);
+         if (validZ[validZ.length - 1] === this.rootObj.fZaxis.fNbins) validZ.pop();
 
-         // const helper = new THREE.Box3Helper(boundingBox, 0x00ff00);
-         // helper.updateMatrix();
-         // this.el.object3D.add(helper);
+         const validY = validZ.reduce((acc, zIndex) => {
+            const offset = zIndex * perInstance * step;
+            const res = dfs(step / fYaxis, 0, this.rootObj.fYaxis.fNbins, offset);
+            if (res[res.length - 1] === this.rootObj.fYaxis.fNbins) res.pop();
+            res.forEach(yIndex => {
+               acc.push({z: zIndex, y: yIndex})
+            });
+            return acc;
+         }, []);
 
+         return validY.reduce((acc, index) => {
+            const offset = (index.z * step * perInstance) + (index.y * (step / fYaxis) * perInstance);
+            const res = dfs(step / (fYaxis * fXaxis), 0, this.rootObj.fXaxis.fNbins, offset);
+            if (res[res.length - 1] === this.rootObj.fXaxis.fNbins) res.pop();
+            res.forEach(xIndex => {
+               acc.push({x: xIndex, y: index.y, z: index.z})
+            });
+            return acc;
+         }, []);
       },
 
       filterOutsideContent: function (rootObj) {
