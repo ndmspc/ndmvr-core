@@ -2,7 +2,7 @@ import {functionSubjectGet} from "../rxjs/FunctionSubject.js";
 import {filter} from "rxjs";
 import {histogramSubjectGet} from "../rxjs/HistogramSubject.js";
 import RadixCounter from "../utils/radixCounter.js";
-import {computeAFrameBinSizePos} from "../utils/histogramRenderUtils.js";
+import {computeAFrameBinSizePos, rootSizePosToAFrame} from "../utils/histogramRenderUtils.js";
 
 const registerNestedHistogramComponent = () => {
    AFRAME.registerComponent("nested-histogram", {
@@ -83,10 +83,6 @@ const registerNestedHistogramComponent = () => {
             layer > this.maxInstancesPerLayer.length - 1) return;
          this.currentLayer = layer;
 
-         // if (layer > 0) {
-         //    this.renderHistogram(startIndex, endIndex, layer - 1, true);
-         // }
-
          const padding = {
             x: this.data.bin_padding_x,
             y: this.data.bin_padding_y,
@@ -97,16 +93,8 @@ const registerNestedHistogramComponent = () => {
             position: new THREE.Vector3(0, 5, 0),
             scale: new THREE.Vector3(10, 10, 5)
          };
-         // const position = new THREE.Vector3(0, 0, 0);
-         // const quaternion = new THREE.Quaternion(); // no rotation
-         // const scale = new THREE.Vector3(10, 10, 5);
-         //
-         // matrix.compose(position, quaternion, scale);
-
 
          const dummy = new THREE.Object3D();
-
-         let k = 0;
 
          const render = (startIndex, endIndex, currentLayer, obj, limits) => {
             if (currentLayer > layer) return;
@@ -115,6 +103,9 @@ const registerNestedHistogramComponent = () => {
             const fXbins = obj.fXaxis.fNbins;
             const fYbins = obj.fYaxis.fNbins;
             const fZbins = obj.fZaxis.fNbins;
+            if (currentLayer === 1 && startIndex === 0) {
+               console.log(limits)
+            }
 
             const counter = new RadixCounter([fXbins, fYbins, fZbins]);
             // const contentMax = Math.max(...obj.fArray);
@@ -125,6 +116,7 @@ const registerNestedHistogramComponent = () => {
                .reduce((acc, value) => {
                   return acc * value;
                }, 1);
+
             // const limitMatrix = new THREE.Object3D();
             // console.log(limits)
             // limitMatrix.matrix.copy(limits);
@@ -142,14 +134,19 @@ const registerNestedHistogramComponent = () => {
 
             for (let i = startIndex; i < endIndex; i += stepFor) {
                const relPos = {x: counter.getValueAt(0), y: counter.getValueAt(1), z: counter.getValueAt(2)}
-               const binSizePos = computeAFrameBinSizePos(obj, relPos, padding, limits.scale, limits.position);
-               const content = obj.getBinContent(relPos.x + 1, relPos.y + 1, relPos.z + 1);
-               let scaleFactor;
-               if (layer === 0) {
-                  scaleFactor = 0.2 + 0.8 * this.easeOutCubic(content / contentMax);
-               } else {
-                  scaleFactor = content / contentMax;
+               let binSizePos = computeAFrameBinSizePos(obj, relPos, padding, limits.scale, limits.position);
+               if (currentLayer === 0) {
+                  binSizePos = rootSizePosToAFrame(binSizePos);
                }
+               //TODO ASI TREBA FlipLocalZAxis (zatial netreba ak je len 1D)
+
+               const content = obj.getBinContent(relPos.x + 1, relPos.y + 1, relPos.z + 1);
+               let scaleFactor = 1;
+               // if (layer === 0) {
+               //    scaleFactor = 0.2 + 0.8 * this.easeOutCubic(content / contentMax);
+               // } else {
+               //    scaleFactor = content / contentMax;
+               // }
                if (content === 0) {
                   scaleFactor = 0;
                }
@@ -164,14 +161,14 @@ const registerNestedHistogramComponent = () => {
                   scale: new THREE.Vector3(binSizePos.x.size, binSizePos.y.size, binSizePos.z.size),
                }
 
-               // t = binSizePos.y.size * scaleFactor;
-               // if (isTH3) {
-               //    binSizePos.x.size *= scaleFactor;
-               //    binSizePos.z.size *= scaleFactor;
-               // } else {
-               //    binSizePos.y.pos -= (binSizePos.y.size - t) / 2;
-               // }
-               // binSizePos.y.size = t;
+               t = binSizePos.y.size * scaleFactor;
+               if (isTH3) {
+                  binSizePos.x.size *= scaleFactor;
+                  binSizePos.z.size *= scaleFactor;
+               } else {
+                  binSizePos.y.pos -= (binSizePos.y.size - t) / 2;
+               }
+               binSizePos.y.size = t;
 
                dummy.position.set(binSizePos.x.pos, binSizePos.y.pos, binSizePos.z.pos)
                dummy.scale.set(binSizePos.x.size, binSizePos.y.size, binSizePos.z.size)
@@ -321,7 +318,7 @@ const registerNestedHistogramComponent = () => {
             return acc;
          }, []);
 
-         return validY.reduce((acc, index) => {
+         const validX = validY.reduce((acc, index) => {
             const offset = (index.z * step) + (index.y * (step / fYaxis));
             const res = dfs(step / (fYaxis * fXaxis), 0, this.rootObj.fXaxis.fNbins - 1, offset, layer);
             if (res[res.length - 1] === this.rootObj.fXaxis.fNbins) res.pop();
@@ -330,6 +327,12 @@ const registerNestedHistogramComponent = () => {
             });
             return acc;
          }, []);
+
+         validX.forEach(result => {
+            console.log(result)
+         })
+
+         return validX;
       },
 
       filterOutsideContent: function (rootObj) {

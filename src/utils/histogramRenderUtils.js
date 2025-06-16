@@ -109,11 +109,12 @@ function getRootBinSizePos(rootObj, rootBinRelPos, size, padding, offset) {
       rootBinSizePos.z = getRootBinSizePosByAxis(rootObj.fZaxis, rootBinRelPos.z, size?.z, padding?.z, offset?.z);
    }
 
+   // return rootSizePosToAFrame(rootBinSizePos);
    return rootBinSizePos;
 
 }
 
-function rootSizePosToAFrame(jsrootSizePos) {
+export function rootSizePosToAFrame(jsrootSizePos) {
    const aframeSizePos = {
       x: undefined,
       y: undefined,
@@ -186,7 +187,19 @@ export function computeAFrameBinSizePos(rootObj, rootBinRelPos, padding, size, o
 
    //TODO: resolve TH1 and TH2 (height = content); for TH3 height = scale
 
-   return rootSizePosToAFrame(absRootBinSizePos);
+   // return rootSizePosToAFrame(absRootBinSizePos);
+   return absRootBinSizePos;
+}
+
+/**
+ * Flips target Z position by limitMatrix.
+ * Origin of rotation is at center of limitMatrix.
+ * */
+export function flipLocalZAxis(limitMatrix, target) {
+   const posZ = limitMatrix.position.z;
+   const scaleZ = limitMatrix.scale.z;
+   const minZ = Math.min(posZ, posZ + scaleZ);
+   return 2 * minZ - target;
 }
 
 export function stringToXYZ(str) {
