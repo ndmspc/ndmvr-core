@@ -318,7 +318,7 @@ const registerNestedHistogramComponent = () => {
             return acc;
          }, []);
 
-         const validX = validY.reduce((acc, index) => {
+         let validX = validY.reduce((acc, index) => {
             const offset = (index.z * step) + (index.y * (step / fYaxis));
             const res = dfs(step / (fYaxis * fXaxis), 0, this.rootObj.fXaxis.fNbins - 1, offset, layer);
             if (res[res.length - 1] === this.rootObj.fXaxis.fNbins) res.pop();
@@ -328,9 +328,20 @@ const registerNestedHistogramComponent = () => {
             return acc;
          }, []);
 
-         validX.forEach(result => {
-            console.log(result)
+         console.log('before: ', validX);
+
+         validX = validX.filter(pos => {
+            console.log(pos)
+            // console.log( pos.x + pos.x * pos.y + pos.z * pos.y * pos.x)
+            const index = pos.x + pos.x * pos.y + pos.z * pos.y * pos.x;
+            // console.log(this.rootObj.fArray[index])
+            return this.rootObj.fArray[index] !== 0;
          })
+
+         console.log('after: ', validX);
+         // validX.forEach(result => {
+         //    console.log(result)
+         // })
 
          return validX;
       },

@@ -26,11 +26,11 @@ let toggleHisto = false;
 
 document.querySelector("#app").appendChild(sceneElm);
 
-// const geom = new THREE.BoxGeometry(1, 5, 1);
-// const mate = new THREE.MeshNormalMaterial();
-// const cube = new THREE.Mesh(geom, mate);
-// cube.position.set(4.5,5,-8);
-// sceneElm.object3D.add(cube)
+const geom = new THREE.BoxGeometry(0.4566210045662101, 0.2688172043010752, 0.9910802775024777);
+const mate = new THREE.MeshNormalMaterial();
+const cube = new THREE.Mesh(geom, mate);
+cube.position.set(-5.273972602739725,2,0.5054509415262638);
+sceneElm.object3D.add(cube)
 
 const histogramContainer = document.createElement('a-entity');
 histogramContainer.id = "histogram1";
