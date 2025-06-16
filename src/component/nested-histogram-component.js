@@ -65,7 +65,7 @@ const registerNestedHistogramComponent = () => {
                this.instancedMesh.instanceMatrix.needsUpdate = true;
                this.el.object3D.add(this.instancedMesh);
 
-               this.renderHistogram(0, this.totalInstances, 0);
+               this.renderHistogram(0, this.totalInstances, 1);
                console.log(this.matrixCache)
                // this.matrixCache = [];
             });
@@ -74,7 +74,8 @@ const registerNestedHistogramComponent = () => {
       remove: function () {
          this.histoSub.unsubscribe();
          this.sub.unsubscribe();
-         this.instancedMesh.dispose();
+         // this.instancedMesh.dispose();
+         this.matrixCache = [];
       },
 
       renderHistogram: function (startIndex, endIndex, layer) {
@@ -92,12 +93,15 @@ const registerNestedHistogramComponent = () => {
             z: this.data.bin_padding_z,
          };
 
-         const matrix = new THREE.Matrix4();
-         const position = new THREE.Vector3(0, 0, 0);
-         const quaternion = new THREE.Quaternion(); // no rotation
-         const scale = new THREE.Vector3(10, 10, 5);
-
-         matrix.compose(position, quaternion, scale);
+         const matrix = {
+            position: new THREE.Vector3(0, 5, 0),
+            scale: new THREE.Vector3(10, 10, 5)
+         };
+         // const position = new THREE.Vector3(0, 0, 0);
+         // const quaternion = new THREE.Quaternion(); // no rotation
+         // const scale = new THREE.Vector3(10, 10, 5);
+         //
+         // matrix.compose(position, quaternion, scale);
 
 
          const dummy = new THREE.Object3D();
@@ -121,11 +125,11 @@ const registerNestedHistogramComponent = () => {
                .reduce((acc, value) => {
                   return acc * value;
                }, 1);
-            const limitMatrix = new THREE.Object3D();
+            // const limitMatrix = new THREE.Object3D();
             // console.log(limits)
-            limitMatrix.matrix.copy(limits);
-            limitMatrix.matrix.decompose(limitMatrix.position, limitMatrix.quaternion, limitMatrix.scale);
-            limitMatrix.updateMatrix();
+            // limitMatrix.matrix.copy(limits);
+            // limitMatrix.matrix.decompose(limitMatrix.position, limitMatrix.quaternion, limitMatrix.scale);
+            // limitMatrix.updateMatrix();
             // const limitMatrixSize = {x: limitMatrix.scale.x, y: limitMatrix.scale.y, z: limitMatrix.scale.z}
             // if (startIndex < 100) {
             //    console.log(contentMax)
@@ -136,10 +140,9 @@ const registerNestedHistogramComponent = () => {
             // }
             // if (currentLayer === 1) return;
 
-
             for (let i = startIndex; i < endIndex; i += stepFor) {
                const relPos = {x: counter.getValueAt(0), y: counter.getValueAt(1), z: counter.getValueAt(2)}
-               const binSizePos = computeAFrameBinSizePos(obj, relPos, padding, limitMatrix.scale, limitMatrix.position);
+               const binSizePos = computeAFrameBinSizePos(obj, relPos, padding, limits.scale, limits.position);
                const content = obj.getBinContent(relPos.x + 1, relPos.y + 1, relPos.z + 1);
                let scaleFactor;
                if (layer === 0) {
@@ -155,12 +158,11 @@ const registerNestedHistogramComponent = () => {
                dummy.position.set(binSizePos.x.pos, binSizePos.y.pos, binSizePos.z.pos)
                dummy.scale.set(binSizePos.x.size, binSizePos.y.size, binSizePos.z.size)
                dummy.updateMatrix();
-               // console.log(counter.getIndex())
 
-               this.matrixCache[currentLayer][counter.getIndex()] = new THREE.Box3().setFromCenterAndSize(
-                  new THREE.Vector3(binSizePos.x.pos, binSizePos.y.pos, binSizePos.z.pos),
-                  new THREE.Vector3(binSizePos.x.size, binSizePos.y.size, binSizePos.z.size),
-               );
+               this.matrixCache[currentLayer][i / stepFor] = {
+                  position: new THREE.Vector3(binSizePos.x.pos, binSizePos.y.pos, binSizePos.z.pos),
+                  scale: new THREE.Vector3(binSizePos.x.size, binSizePos.y.size, binSizePos.z.size),
+               }
 
                // t = binSizePos.y.size * scaleFactor;
                // if (isTH3) {
@@ -181,7 +183,7 @@ const registerNestedHistogramComponent = () => {
                } else {
                   const index = obj.getBin(relPos.x + 1, relPos.y + 1, relPos.z + 1)
                   const child = obj.children[this.selectedChildren[currentLayer]][index];
-                  // render(i, i + stepFor, currentLayer + 1, child, this.matrixCache[i]);
+                  render(i, i + stepFor, currentLayer + 1, child, this.matrixCache[currentLayer][counter.getIndex()]);
                }
                if (!counter.increment(0)) break;
             }
@@ -189,7 +191,7 @@ const registerNestedHistogramComponent = () => {
             this.instancedMesh.instanceColor.needsUpdate = true;
 
          }
-         const ex = {x: matrix.scale.x, y: matrix.scale.y, z: matrix.scale.z}
+         // const ex = {x: matrix.scale.x, y: matrix.scale.y, z: matrix.scale.z}
          // console.log(matrix)
 
          render(startIndex, endIndex, 0, this.rootObj, matrix);
@@ -213,32 +215,66 @@ const registerNestedHistogramComponent = () => {
          const dummyMin = new THREE.Object3D();
          const dummyMax = new THREE.Object3D();
 
-         const checkAxis = (step, startIndex, endIndex, offset) => {
+         const createBox3 = (layer, index) => {
+            const t = this.matrixCache[layer][index];
+            return new THREE.Box3().setFromCenterAndSize(t.position, t.scale)
+         }
+
+         const checkAxis = (step, startIndex, endIndex, offset, layer) => {
             const half = Math.floor((startIndex + endIndex) / 2);
-            this.instancedMesh.getMatrixAt(((half + 1) * perInstance * step) + offset, dummyHalfUpper.matrix);
-            this.instancedMesh.getMatrixAt(((half + 1) * perInstance * step) - perInstance + offset, dummyHalfBelow.matrix);
-            this.instancedMesh.getMatrixAt((startIndex * perInstance * step) + offset, dummyMin.matrix);
-            this.instancedMesh.getMatrixAt(((endIndex + 1) * perInstance * step) - perInstance + offset, dummyMax.matrix);
-            dummyHalfUpper.matrix.decompose(dummyHalfUpper.position, dummyHalfUpper.quaternion, dummyHalfUpper.scale);
-            dummyHalfBelow.matrix.decompose(dummyHalfBelow.position, dummyHalfBelow.quaternion, dummyHalfBelow.scale);
-            dummyMin.matrix.decompose(dummyMin.position, dummyMin.quaternion, dummyMin.scale);
-            dummyMax.matrix.decompose(dummyMax.position, dummyMax.quaternion, dummyMax.scale);
-            dummyHalfUpper.position.applyMatrix4(this.instancedMesh.matrixWorld);
-            dummyHalfBelow.position.applyMatrix4(this.instancedMesh.matrixWorld);
-            dummyMin.position.applyMatrix4(this.instancedMesh.matrixWorld);
-            dummyMax.position.applyMatrix4(this.instancedMesh.matrixWorld);
-            const pointMin = dummyMin.position.clone().sub(dummyMin.scale.clone().multiplyScalar(0.5));
-            pointMin.setZ(pointMin.z + dummyMin.scale.z);
-            const pointHalfBelow = dummyHalfBelow.position.clone().add(dummyHalfBelow.scale.clone().multiplyScalar(0.5));
-            pointHalfBelow.setZ(pointHalfBelow.z - dummyHalfBelow.scale.z);
-            const pointHalfUpper = dummyHalfUpper.position.clone().sub(dummyHalfUpper.scale.clone().multiplyScalar(0.5));
-            pointHalfUpper.setZ(pointHalfUpper.z + dummyHalfUpper.scale.z);
-            const pointMax = dummyMax.position.clone().add(dummyMax.scale.clone().multiplyScalar(0.5));
-            pointMax.setZ(pointMax.z - dummyMax.scale.z);
-            const boundaryFirstHalf = new THREE.Box3().setFromPoints([pointMin, pointHalfBelow]);
-            const boundarySecondHalf = new THREE.Box3().setFromPoints([pointHalfUpper, pointMax]);
+            // console.log(startIndex, endIndex, half)
+            // this.matrixCache[this.currentLayer][]
+            // this.instancedMesh.getMatrixAt(((half + 1) * perInstance * step) + offset, dummyHalfUpper.matrix);
+            // this.instancedMesh.getMatrixAt(((half + 1) * perInstance * step) - perInstance + offset, dummyHalfBelow.matrix);
+            // this.instancedMesh.getMatrixAt((startIndex * perInstance * step) + offset, dummyMin.matrix);
+            // this.instancedMesh.getMatrixAt(((endIndex + 1) * perInstance * step) - perInstance + offset, dummyMax.matrix);
+            // dummyHalfUpper.matrix.decompose(dummyHalfUpper.position, dummyHalfUpper.quaternion, dummyHalfUpper.scale);
+            // dummyHalfBelow.matrix.decompose(dummyHalfBelow.position, dummyHalfBelow.quaternion, dummyHalfBelow.scale);
+            // dummyMin.matrix.decompose(dummyMin.position, dummyMin.quaternion, dummyMin.scale);
+            // dummyMax.matrix.decompose(dummyMax.position, dummyMax.quaternion, dummyMax.scale);
+            // dummyHalfUpper.position.applyMatrix4(this.instancedMesh.matrixWorld);
+            // dummyHalfBelow.position.applyMatrix4(this.instancedMesh.matrixWorld);
+            // dummyMin.position.applyMatrix4(this.instancedMesh.matrixWorld);
+            // dummyMax.position.applyMatrix4(this.instancedMesh.matrixWorld);
+            // const pointMin = dummyMin.position.clone().sub(dummyMin.scale.clone().multiplyScalar(0.5));
+            // pointMin.setZ(pointMin.z + dummyMin.scale.z);
+            // const pointHalfBelow = dummyHalfBelow.position.clone().add(dummyHalfBelow.scale.clone().multiplyScalar(0.5));
+            // pointHalfBelow.setZ(pointHalfBelow.z - dummyHalfBelow.scale.z);
+            // const pointHalfUpper = dummyHalfUpper.position.clone().sub(dummyHalfUpper.scale.clone().multiplyScalar(0.5));
+            // pointHalfUpper.setZ(pointHalfUpper.z + dummyHalfUpper.scale.z);
+            // const pointMax = dummyMax.position.clone().add(dummyMax.scale.clone().multiplyScalar(0.5));
+            // pointMax.setZ(pointMax.z - dummyMax.scale.z);
+            // console.log(startIndex * step)
+            // console.log(((half + 1) * step) - 1)
+            // console.log((half + 1) * step)
+            // console.log(((endIndex) * step) - 1)
+            // console.log('')
+            const pointMin = createBox3(layer, (startIndex * step) + offset);
+            const pointHalfBelow = createBox3(layer, (((half + 1) * step) - 1) + offset);
+            const pointHalfUpper = createBox3(layer, ((half + 1) * step) + offset);
+            // console.log(((endIndex + 1) * step) - 1)
+            const pointMax = createBox3(layer, (((endIndex + 1) * step) - 1) + offset);
+            pointMin.applyMatrix4(this.instancedMesh.matrixWorld);
+            pointHalfBelow.applyMatrix4(this.instancedMesh.matrixWorld);
+            pointHalfUpper.applyMatrix4(this.instancedMesh.matrixWorld);
+            pointMax.applyMatrix4(this.instancedMesh.matrixWorld);
+
+            const boundaryFirstHalf = new THREE.Box3().copy(pointMin).union(pointHalfBelow)
+            // const boundaryFirstHalf = new THREE.Box3().setFromPoints([pointMin.min, pointHalfBelow.max])
+            // boundaryFirstHalf.applyMatrix4(this.instancedMesh.matrixWorld)
+            // const boundarySecondHalf = new THREE.Box3().setFromPoints([pointHalfUpper.min, pointMax.max])
+            const boundarySecondHalf = new THREE.Box3().copy(pointHalfUpper).union(pointMax)
+            // boundarySecondHalf.applyMatrix4(this.instancedMesh.matrixWorld)
             const target = new THREE.Vector3();
             const resultList = [];
+            // console.log(pointMin)
+            // console.log(pointHalfBelow)
+            // console.log(pointHalfUpper);
+            // console.log(pointMax);
+            // console.log(boundaryFirstHalf)
+            // console.log(boundarySecondHalf)
+            // console.log(ray.intersectBox(boundaryFirstHalf, target))
+            // console.log(ray.intersectBox(boundarySecondHalf, target))
             if (ray.intersectBox(boundaryFirstHalf, target)) {
                resultList.push([startIndex, half]);
             } else {
@@ -253,14 +289,14 @@ const registerNestedHistogramComponent = () => {
          }
          let step = fXaxis * fYaxis;
 
-         const dfs = (step, start, end, offset) => {
+         const dfs = (step, start, end, offset, layer) => {
             const result = []
             const traverse = (start, end) => {
                if (start === end) {
                   result.push(start);
                   return;
                }
-               const [firstHalf, secondHalf] = checkAxis(step, start, end, offset);
+               const [firstHalf, secondHalf] = checkAxis(step, start, end, offset, layer);
                if (firstHalf) {
                   traverse(firstHalf[0], firstHalf[1]);
                }
@@ -273,12 +309,11 @@ const registerNestedHistogramComponent = () => {
             return result;
          }
 
-         const validZ = dfs(step, 0, this.rootObj.fZaxis.fNbins, 0);
+         const validZ = dfs(step, 0, this.rootObj.fZaxis.fNbins - 1, 0, layer);
          if (validZ[validZ.length - 1] === this.rootObj.fZaxis.fNbins) validZ.pop();
-
          const validY = validZ.reduce((acc, zIndex) => {
-            const offset = zIndex * perInstance * step;
-            const res = dfs(step / fYaxis, 0, this.rootObj.fYaxis.fNbins, offset);
+            const offset = zIndex * step;
+            const res = dfs(step / fYaxis, 0, this.rootObj.fYaxis.fNbins - 1, offset, layer);
             if (res[res.length - 1] === this.rootObj.fYaxis.fNbins) res.pop();
             res.forEach(yIndex => {
                acc.push({z: zIndex, y: yIndex})
@@ -287,8 +322,8 @@ const registerNestedHistogramComponent = () => {
          }, []);
 
          return validY.reduce((acc, index) => {
-            const offset = (index.z * step * perInstance) + (index.y * (step / fYaxis) * perInstance);
-            const res = dfs(step / (fYaxis * fXaxis), 0, this.rootObj.fXaxis.fNbins, offset);
+            const offset = (index.z * step) + (index.y * (step / fYaxis));
+            const res = dfs(step / (fYaxis * fXaxis), 0, this.rootObj.fXaxis.fNbins - 1, offset, layer);
             if (res[res.length - 1] === this.rootObj.fXaxis.fNbins) res.pop();
             res.forEach(xIndex => {
                acc.push({x: xIndex, y: index.y, z: index.z})

@@ -88,6 +88,25 @@ const registerNdmvrRaycasterComponent = () => {
       },
 
       updateRaycaster: function (event) {
+         this.mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+         this.mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+         // this.instancedMesh = document.getElementById('histogram1').object3D;
+
+         this.raycaster.setFromCamera(this.mouse, this.el.sceneEl.camera);
+         const instancedMesh = this.histogram.instancedMesh;
+
+         const worldBoundingBox = instancedMesh.boundingBox.clone();
+         worldBoundingBox.applyMatrix4(instancedMesh.matrixWorld);
+         const target = new THREE.Vector3();
+
+         if (!this.raycaster.ray.intersectBox(worldBoundingBox, target)) {
+            // No hit at all
+            // console.log('nehitlo')
+            return null;
+         } else {
+            const res = this.histogram.checkIntersection(target, this.raycaster.ray);
+            // console.log(res);
+         }
          // console.log('update')
          // this.mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
          // this.mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
