@@ -195,11 +195,11 @@ const registerDesktopController = () => {
          if (data.qeEnabled) {
             qeSign = data.qeInverted ? -1 : 1;
             if (keys.KeyQ) {
-               if (this.el.object3D.position.y < this.data.cameraHeight + 0.55 /*landing threshold*/) {
-                  this.el.object3D.position.y = this.data.cameraHeight;
-                  return;
-               }
-               if ((this.el.object3D.position.y - (qeSign * accelerationY * delta)) > data.cameraHeight) {
+               // if (this.el.object3D.position.y < this.data.cameraHeight + 0.55 /*landing threshold*/) {
+               //    this.el.object3D.position.y = this.data.cameraHeight;
+               //    return;
+               // }
+               if ((this.el.object3D.position.y - (qeSign * accelerationY * delta))) {
                   velocity[qeAxis] -= qeSign * accelerationY * delta;
                }
             }

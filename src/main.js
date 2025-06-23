@@ -16,6 +16,8 @@ import histogram2x2x3 from "../public/histograms/TH3variableBinning2x2x3OnlyInsi
 import {histogramSubjectGet} from "./rxjs/HistogramSubject.js";
 import histoSparse2 from "../public/histograms/THnSparse3.json"
 import nestedHisto from "../public/histograms/hist3D.axis1-pt_axis2-ce_axis5-eta.json"
+import nestedHisto2 from "../public/histograms/hist2D.axis1-pt_axis2-ce.json"
+import nestedHisto3 from "../public/histograms/hist1D.axis1-pt.json"
 import {parse} from "jsroot";
 
 initNdmvrAframe();
@@ -26,21 +28,41 @@ let toggleHisto = false;
 
 document.querySelector("#app").appendChild(sceneElm);
 
-const geom = new THREE.BoxGeometry(0.4566210045662101, 0.2688172043010752, 0.9910802775024777);
+const geom = new THREE.BoxGeometry(1,10,1);
 const mate = new THREE.MeshNormalMaterial();
 const cube = new THREE.Mesh(geom, mate);
-cube.position.set(-5.273972602739725,2,0.5054509415262638);
+cube.position.set(0,0,0);
 sceneElm.object3D.add(cube)
+
+// const cube2 = new THREE.Mesh(geom, mate);
+// cube2.position.set(0.5,0,1);
+// sceneElm.object3D.add(cube2)
+//
+// const cube2 = new THREE.Mesh(geom, mate);
+// cube2.position.set(-5.273972602739725,3.0537634409,-8.503468780971257);
+// sceneElm.object3D.add(cube2)
+//
+// const cube3 = new THREE.Mesh(geom, mate);
+// cube3.position.set(-5.273972602739725,3.0537634409,-0.49554013875123815);
+// sceneElm.object3D.add(cube3)
+
+// const cube4 = new THREE.Mesh(geom, mate);
+// cube.position.set(-5.273972602739725,3.0537634409,0.5054509415262638);
+// sceneElm.object3D.add(cube4)
+//
+// const cube5 = new THREE.Mesh(geom, mate);
+// cube.position.set(-5.273972602739725,3.0537634409,0.5054509415262638);
+// sceneElm.object3D.add(cube5)
 
 const histogramContainer = document.createElement('a-entity');
 histogramContainer.id = "histogram1";
 histogramContainer.setAttribute('nested-histogram', '');
-histogramContainer.setAttribute('position', "0 5 0");
+histogramContainer.setAttribute('position', "0 0 0");
 sceneElm.appendChild(histogramContainer);
 
 // histogramSubjectGet().next({id: 'histogram1', histogram: parse(histoWithOutsideContent)});
 // histogramSubjectGet().next({id: 'histogram1', histogram: parse(histoSparse)});
-histogramSubjectGet().next({id: 'histogram1', histogram: parse(nestedHisto)});
+histogramSubjectGet().next({id: 'histogram1', histogram: parse(nestedHisto3)});
 // histogramSubjectGet().next({id: 'histogram1', histogram: parse(histo6x2x1)});
 // histogramSubjectGet().next({id: 'histogram1', histogram: parse(histo4x3x1)});
 // stdBin();
