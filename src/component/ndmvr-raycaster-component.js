@@ -24,13 +24,13 @@ const registerNdmvrRaycasterComponent = () => {
          const checkInterval = 100; // 100ms delay
 
 
-         // window.addEventListener("mousemove", (event) => {
-         //    const now = performance.now();
-         //    if (now - lastCheck < checkInterval) return; // Skip if too soon
-         //    lastCheck = now;
-         //
-         //    this.updateRaycaster(event);
-         // });
+         window.addEventListener("mousemove", (event) => {
+            const now = performance.now();
+            if (now - lastCheck < checkInterval) return; // Skip if too soon
+            lastCheck = now;
+
+            // this.updateRaycaster(event);
+         });
 
          window.addEventListener("click", (event) => {
             this.mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
@@ -104,7 +104,7 @@ const registerNdmvrRaycasterComponent = () => {
             // console.log('nehitlo')
             return null;
          } else {
-            const res = this.histogram.checkIntersection(target, this.raycaster.ray);
+            const res = this.histogram.checkIntersection(this.raycaster.ray);
             // console.log(res);
          }
          // console.log('update')

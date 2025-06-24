@@ -28,15 +28,15 @@ let toggleHisto = false;
 
 document.querySelector("#app").appendChild(sceneElm);
 
-const geom = new THREE.BoxGeometry(1,10,1);
+const geom = new THREE.BoxGeometry(0.3,1,1);
 const mate = new THREE.MeshNormalMaterial();
 const cube = new THREE.Mesh(geom, mate);
 cube.position.set(0,0,0);
 sceneElm.object3D.add(cube)
 
-// const cube2 = new THREE.Mesh(geom, mate);
-// cube2.position.set(0.5,0,1);
-// sceneElm.object3D.add(cube2)
+const cube2 = new THREE.Mesh(geom, mate);
+cube2.position.set(-4.87179,0,1);
+sceneElm.object3D.add(cube2)
 //
 // const cube2 = new THREE.Mesh(geom, mate);
 // cube2.position.set(-5.273972602739725,3.0537634409,-8.503468780971257);
@@ -62,7 +62,7 @@ sceneElm.appendChild(histogramContainer);
 
 // histogramSubjectGet().next({id: 'histogram1', histogram: parse(histoWithOutsideContent)});
 // histogramSubjectGet().next({id: 'histogram1', histogram: parse(histoSparse)});
-histogramSubjectGet().next({id: 'histogram1', histogram: parse(nestedHisto3)});
+histogramSubjectGet().next({id: 'histogram1', histogram: parse(nestedHisto)});
 // histogramSubjectGet().next({id: 'histogram1', histogram: parse(histo6x2x1)});
 // histogramSubjectGet().next({id: 'histogram1', histogram: parse(histo4x3x1)});
 // stdBin();
