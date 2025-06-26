@@ -36,50 +36,50 @@ export default class FileHandler {
    async computeMaxInstancesPerLayer() {
       this.#maxInstancesPerLayer = [3400, 130];
       return [3400, 130];
-      // await this.#ready;
-      // if (!this.#rootFile) return;
-      // const hMap = await this.#rootFile.readObject('hMap');
-      // console.log(hMap);
-      // console.log(this.#rootFile);
-      // const temp = hMap.fXaxis.fNbins * hMap.fYaxis.fNbins * hMap.fZaxis.fNbins;
-      // let max = [];
-      // max.push(temp);
-      //
-      // const computation = (children, layer = 1) => {
-      //    let temp = 0;
-      //    if (layer >= max.length) {
-      //       max.push(0);
-      //    }
-      //    children.forEach(value => {
-      //       // console.log(value.fName)
-      //       // this.#rootFile.readObject(`content/${value.fName}`).then(val => {
-      //       //    console.log(val)
-      //       // })
-      //       this.#rootFile.readObject(`content/288;1`).then(val => {
-      //          console.log(val)
-      //       })
-      //    })
-      //    // Object.entries(children).forEach((value, index) => {
-      //    //    value[1].forEach(child => {
-      //    //       // console.log(child)
-      //    //       if (child) {
-      //    //          temp = child.fXaxis.fNbins * child.fYaxis.fNbins * child.fZaxis.fNbins;
-      //    //          if (temp > max[layer]) {
-      //    //             max[layer] = temp;
-      //    //          }
-      //    //          if (child.children) {
-      //    //             computation(child.children, layer + 1);
-      //    //          }
-      //    //       }
-      //    //    });
-      //    // });
-      //    return max;
-      // };
-      // const childs = await this.#rootFile.readObject('content')
-      // console.log(childs)
-      //
-      // // computation(childs.fKeys);
-      // return max;
+      await this.#ready;
+      if (!this.#rootFile) return;
+      const hMap = await this.#rootFile.readObject('hMap');
+      console.log(hMap);
+      console.log(this.#rootFile);
+      const temp = hMap.fXaxis.fNbins * hMap.fYaxis.fNbins * hMap.fZaxis.fNbins;
+      let max = [];
+      max.push(temp);
+
+      const computation = (children, layer = 1) => {
+         let temp = 0;
+         if (layer >= max.length) {
+            max.push(0);
+         }
+         children.forEach(index => {
+            // console.log(value.fName)
+            this.#rootFile.readObject(`content/${index.fName}/`).then(val => {
+               console.log(val)
+            })
+            // this.#rootFile.readObject(`content/288;1`).then(val => {
+            //    console.log(val)
+            // })
+         })
+         // Object.entries(children).forEach((value, index) => {
+         //    value[1].forEach(child => {
+         //       // console.log(child)
+         //       if (child) {
+         //          temp = child.fXaxis.fNbins * child.fYaxis.fNbins * child.fZaxis.fNbins;
+         //          if (temp > max[layer]) {
+         //             max[layer] = temp;
+         //          }
+         //          if (child.children) {
+         //             computation(child.children, layer + 1);
+         //          }
+         //       }
+         //    });
+         // });
+         return max;
+      };
+      const childs = await this.#rootFile.readObject('content')
+      console.log(childs)
+
+      computation(childs.fKeys);
+      return max;
    }
 
 

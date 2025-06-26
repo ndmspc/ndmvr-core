@@ -28,15 +28,15 @@ let toggleHisto = false;
 
 document.querySelector("#app").appendChild(sceneElm);
 
-const geom = new THREE.BoxGeometry(0.5,1,1);
+const geom = new THREE.BoxGeometry(0.25641025641025644, 0.1515151515151515,0.9174311926605504);
 const mate = new THREE.MeshNormalMaterial();
-// const cube = new THREE.Mesh(geom, mate);
-// cube.position.set(0,0,0);
-// sceneElm.object3D.add(cube)
+const cube = new THREE.Mesh(geom, mate);
+cube.position.set(-4.871794871794871,-2.4242424242424248,4.541284403669724);
+sceneElm.object3D.add(cube)
 
-const cube2 = new THREE.Mesh(geom, mate);
-cube2.position.set(-4.87179,5,0);
-sceneElm.object3D.add(cube2)
+// const cube2 = new THREE.Mesh(geom, mate);
+// cube2.position.set(-4.87179,5,0);
+// sceneElm.object3D.add(cube2)
 //
 // const cube2 = new THREE.Mesh(geom, mate);
 // cube2.position.set(-5.273972602739725,3.0537634409,-8.503468780971257);

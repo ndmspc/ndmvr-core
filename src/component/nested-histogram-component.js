@@ -2,7 +2,12 @@ import {functionSubjectGet} from "../rxjs/FunctionSubject.js";
 import {filter} from "rxjs";
 import {histogramSubjectGet} from "../rxjs/HistogramSubject.js";
 import RadixCounter from "../utils/radixCounter.js";
-import {changePos, computeAFrameBinSizePos, rootSizePosToAFrame} from "../utils/histogramRenderUtils.js";
+import {
+   changePos,
+   computeAFrameBinSizePos,
+   rootSizePosToAFrame,
+   rootSizePosToAFrameNeg
+} from "../utils/histogramRenderUtils.js";
 
 const registerNestedHistogramComponent = () => {
    AFRAME.registerComponent("nested-histogram", {
@@ -91,13 +96,15 @@ const registerNestedHistogramComponent = () => {
 
          const matrix = {
             position: new THREE.Vector3(0, 0, 0),
-            scale: new THREE.Vector3(10, 10, 10)
+            scale: new THREE.Vector3(10, 5, 10)
          };
 
          const dummy = new THREE.Object3D();
 
          const render = (startIndex, endIndex, currentLayer, obj, limits) => {
-            // console.log('start: ', startIndex, ', end: ', endIndex);
+            if (currentLayer === 1 && startIndex === 0) {
+               console.log('start: ', startIndex, ', end: ', endIndex, ', limits: ', limits);
+            }
             // console.log(limits.position);
             // console.log('')
             if (currentLayer > layer) return;
@@ -160,9 +167,12 @@ const registerNestedHistogramComponent = () => {
                if (currentLayer === 0) {
                   binSizePos = rootSizePosToAFrame(binSizePos);
                }
-               // else {
-               //    binSizePos = changePos(binSizePos, padding);
-               // }
+               else {
+                  binSizePos = rootSizePosToAFrame(binSizePos);
+                  // binSizePos = rootSizePosToAFrameNeg(binSizePos);
+                  // binSizePos = rootSizePosToAFrame(binSizePos);
+                  // binSizePos = changePos(binSizePos);
+               }
                //TODO ASI TREBA FlipLocalZAxis (zatial netreba ak je len 1D)
 
                const content = obj.getBinContent(relPos.x + 1, relPos.y + 1, relPos.z + 1);
@@ -189,10 +199,15 @@ const registerNestedHistogramComponent = () => {
                      new THREE.Vector3(binSizePos.x.pos, binSizePos.y.pos, binSizePos.z.pos),
                      new THREE.Vector3(binSizePos.x.size, binSizePos.y.size, binSizePos.z.size)
                   );
-                  box.applyMatrix4(this.instancedMesh.matrixWorld);
+                  // box.applyMatrix4(this.instancedMesh.matrixWorld);
                   const helper = new THREE.Box3Helper(box, color);
                   helper.raycast = () => {};
-                  this.el.object3D.add(helper);
+
+                  const index = obj.getBin(relPos.x + 1, relPos.y + 1, relPos.z + 1)
+                  const child = obj.children[this.selectedChildren[currentLayer]][index];
+                  if (child) {
+                     this.el.object3D.add(helper);
+                  }
                }
                this.matrixCache[currentLayer][i / stepFor] = {
                   position: new THREE.Vector3(binSizePos.x.pos, binSizePos.y.pos, binSizePos.z.pos),

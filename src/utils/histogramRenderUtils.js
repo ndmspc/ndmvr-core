@@ -50,17 +50,46 @@ export function getRootMinMaxBinSizes(rootObj) {
    return rootMinMaxBinSizes;
 }
 
-export function changePos(rootBinRel, padding) {
-   rootBinRel.pos -= size / 2;
-   rootBinRel.pos += rootBinRel.size;
-   rootBinRel.pos += padding / (wholeSize / size)
-   // rootBinRel.z.pos -= rootBinRel.z.size;
-   // rootBinRel.y.pos += rootBinRel.y.size;
-   // rootBinRel.y.pos += padding.y * 0.268815;
-   // rootBinRel.z.pos += padding.z * 0.0999999;
-   // rootBinRel.x.pos -= padding.x * 0.304;
+export function changePos(jsrootSizePos) {
+   const aframeSizePos = {
+      x: undefined,
+      y: undefined,
+      z: undefined
+   }
+      aframeSizePos.x = {
+         size: jsrootSizePos.x.size,
+         pos: -jsrootSizePos.x.pos
+      };
+      aframeSizePos.z = {
+         size: jsrootSizePos.z.size,
+         pos: -jsrootSizePos.z.pos
+      };
+      aframeSizePos.y = {
+         size: jsrootSizePos.y.size,
+         pos: jsrootSizePos.y.pos
+      };
+   return (aframeSizePos);
+}
 
-   return rootBinRel;
+export function rootSizePosToAFrameNeg(jsrootSizePos) {
+   const aframeSizePos = {
+      x: undefined,
+      y: undefined,
+      z: undefined
+   }
+      aframeSizePos.x = {
+         size: jsrootSizePos.x.size,
+         pos: jsrootSizePos.x.pos
+      };
+      aframeSizePos.y = {
+         size: jsrootSizePos.z.size,
+         pos: -jsrootSizePos.z.pos
+      };
+      aframeSizePos.z = {
+         size: jsrootSizePos.y.size,
+         pos: jsrootSizePos.y.pos
+      };
+   return (aframeSizePos);
 }
 
 /**
@@ -145,10 +174,10 @@ function getRootBinSizePos(rootObj, rootBinRelPos, size, padding, offset, layer)
       rootBinSizePos.x = getRootBinSizePosByAxis(rootObj.fXaxis, rootBinRelPos.x, size?.x, padding?.x, offset?.x, layer);
    }
    if (rootObj.fYaxis) {
-      rootBinSizePos.y = getRootBinSizePosByAxis(rootObj.fYaxis, rootBinRelPos.y, size?.y, padding?.y, offset?.y, layer);
+      rootBinSizePos.y = getRootBinSizePosByAxis(rootObj.fYaxis, rootBinRelPos.y, size?.z, padding?.y, offset?.z, layer);
    }
    if (rootObj.fZaxis) {
-      rootBinSizePos.z = getRootBinSizePosByAxis(rootObj.fZaxis, rootBinRelPos.z, size?.z, padding?.z, offset?.z, layer);
+      rootBinSizePos.z = getRootBinSizePosByAxis(rootObj.fZaxis, rootBinRelPos.z, size?.y, padding?.z, offset?.y, layer);
    }
 
    // return rootSizePosToAFrame(rootBinSizePos);
