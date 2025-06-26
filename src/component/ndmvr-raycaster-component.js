@@ -5,10 +5,10 @@ const registerNdmvrRaycasterComponent = () => {
       schema: {},
 
       init: function () {
-         this.raycaster = new THREE.Raycaster();
-         this.mouse = new THREE.Vector2();
-         this.setupRaycasting();
-         this.histogram = document.getElementById('histogram1').components['nested-histogram'];
+         // this.raycaster = new THREE.Raycaster();
+         // this.mouse = new THREE.Vector2();
+         // this.setupRaycasting();
+         // this.histogram = document.getElementById('histogram1').components['nested-histogram'];
       },
 
       color: new THREE.Color(),

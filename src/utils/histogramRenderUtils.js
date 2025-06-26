@@ -81,10 +81,16 @@ function getRootBinSizePosByAxis(rootObjAxis, rootBinRelPosOnAxis, size, padding
 
    rootBinSizePosByAxis.size = binSizeByAxis;
 
+
    //bin low edge + half of width * scale relative to size of whole histogram
    rootBinSizePosByAxis.pos = binLowEdge + (binSizeByAxis / 2);
 
    const wholeSize = ((rootObjAxis.fXmax - rootObjAxis.fXmin) + (padding * (rootObjAxis.fNbins - 1)));
+   // if (layer === 1 && rootObjAxis.fName === 'xaxis') {
+      // console.log(size)
+      // console.log(rootBinSizePosByAxis.size)
+      // console.log( 1 / (wholeSize / size))
+   // }
    if (size) {
       rootBinSizePosByAxis.pos += padding * (rootBinRelPosOnAxis - 1);
       rootBinSizePosByAxis.pos /= (wholeSize / size);

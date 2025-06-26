@@ -130,7 +130,7 @@ const registerNestedHistogramComponent = () => {
                };
             } else {
                padding = {
-                  x: 1,
+                  x: 0,
                   // y: this.data.bin_padding_y,
                   y: 0,
                   z: this.data.bin_padding_z,
