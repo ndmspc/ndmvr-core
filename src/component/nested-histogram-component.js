@@ -2,12 +2,7 @@ import {functionSubjectGet} from "../rxjs/FunctionSubject.js";
 import {filter} from "rxjs";
 import {histogramSubjectGet} from "../rxjs/HistogramSubject.js";
 import RadixCounter from "../utils/radixCounter.js";
-import {
-   changePos,
-   computeAFrameBinSizePos,
-   rootSizePosToAFrame,
-   rootSizePosToAFrameNeg
-} from "../utils/histogramRenderUtils.js";
+import {computeAFrameBinSizePos, rootSizePosToAFrame} from "../utils/histogramRenderUtils.js";
 
 const registerNestedHistogramComponent = () => {
    AFRAME.registerComponent("nested-histogram", {
@@ -71,6 +66,7 @@ const registerNestedHistogramComponent = () => {
                this.el.object3D.add(this.instancedMesh);
 
                this.renderHistogram(0, this.totalInstances, 1);
+               console.log(this.rootObj)
                console.log(this.matrixCache)
                // this.matrixCache = [];
             });
@@ -102,23 +98,16 @@ const registerNestedHistogramComponent = () => {
          const dummy = new THREE.Object3D();
 
          const render = (startIndex, endIndex, currentLayer, obj, limits) => {
-            if (currentLayer === 1 && startIndex === 0) {
-               console.log('start: ', startIndex, ', end: ', endIndex, ', limits: ', limits);
-            }
-            // console.log(limits.position);
-            // console.log('')
+            // if (currentLayer === 1 && startIndex === 0) {
+            //    console.log('start: ', startIndex, ', end: ', endIndex, ', limits: ', limits);
+            // }
             if (currentLayer > layer) return;
             if (!obj) return;
-            // console.log(obj)
             const fXbins = obj.fXaxis.fNbins;
             const fYbins = obj.fYaxis.fNbins;
             const fZbins = obj.fZaxis.fNbins;
-            // if (currentLayer === 1 && startIndex === 0) {
-            // console.log(limits)
-            // }
 
             const counter = new RadixCounter([fXbins, fYbins, fZbins]);
-            // const contentMax = Math.max(...obj.fArray);
             const contentMax = Math.max(...this.filterOutsideContent(obj));
             const isTH3 = obj._typename.substring(0, 3) === 'TH3';
             const isTH2 = obj._typename.substring(0, 3) === 'TH2';
@@ -138,41 +127,23 @@ const registerNestedHistogramComponent = () => {
             } else {
                padding = {
                   x: 0,
-                  // y: this.data.bin_padding_y,
-                  y: 0,
+                  y: this.data.bin_padding_y,
+                  // y: 0,
                   z: this.data.bin_padding_z,
                }
             }
 
-
-            // const limitMatrix = new THREE.Object3D();
-            // console.log(limits)
-            // limitMatrix.matrix.copy(limits);
-            // limitMatrix.matrix.decompose(limitMatrix.position, limitMatrix.quaternion, limitMatrix.scale);
-            // limitMatrix.updateMatrix();
-            // const limitMatrixSize = {x: limitMatrix.scale.x, y: limitMatrix.scale.y, z: limitMatrix.scale.z}
-            // if (startIndex < 100) {
-            //    console.log(contentMax)
-            //
-            // console.log(limitMatrix)
-            //
-            // console.log('start: ', startIndex, ', end: ', endIndex, ', step: ', stepFor)
-            // }
-            // if (currentLayer === 1) return;
-
             for (let i = startIndex; i < endIndex; i += stepFor) {
                const relPos = {x: counter.getValueAt(0), y: counter.getValueAt(1), z: counter.getValueAt(2)}
                let binSizePos = computeAFrameBinSizePos(obj, relPos, padding, limits?.scale, limits?.position, currentLayer);
-               // console.log(binSizePos)
-               if (currentLayer === 0) {
+
+               if (layer === 0) {
                   binSizePos = rootSizePosToAFrame(binSizePos);
-               }
-               else {
+               } else {
                   binSizePos = rootSizePosToAFrame(binSizePos);
-                  // binSizePos = rootSizePosToAFrameNeg(binSizePos);
-                  // binSizePos = rootSizePosToAFrame(binSizePos);
-                  // binSizePos = changePos(binSizePos);
+                  binSizePos.z.pos = -binSizePos.z.pos;
                }
+
                //TODO ASI TREBA FlipLocalZAxis (zatial netreba ak je len 1D)
 
                const content = obj.getBinContent(relPos.x + 1, relPos.y + 1, relPos.z + 1);
@@ -187,28 +158,33 @@ const registerNestedHistogramComponent = () => {
                }
                let t = content / contentMax;
                this.color = new THREE.Color(t, 0, 1 - t);
-               // this.color = new THREE.Color(counter.getIndex() / 1000, 0, 1 - counter.getIndex() / 100);
-               // dummy.position.set(binSizePos.x.pos, binSizePos.y.pos, binSizePos.z.pos)
-               // dummy.scale.set(binSizePos.x.size, binSizePos.y.size, binSizePos.z.size)
-               // dummy.updateMatrix();
+               // this.color = new THREE.Color(counter.getIndex() / 1000, 0, 1 - counter.getIndex() / 10);
 
-               if (currentLayer === 0) {
-                  // console.log(i / stepFor)
-                  const color = new THREE.Color(255, 0, 0);
-                  const box = new THREE.Box3().setFromCenterAndSize(
-                     new THREE.Vector3(binSizePos.x.pos, binSizePos.y.pos, binSizePos.z.pos),
-                     new THREE.Vector3(binSizePos.x.size, binSizePos.y.size, binSizePos.z.size)
-                  );
-                  // box.applyMatrix4(this.instancedMesh.matrixWorld);
-                  const helper = new THREE.Box3Helper(box, color);
-                  helper.raycast = () => {};
+               // if (currentLayer === 0) {
+               //    // console.log(i / stepFor)
+               //    const color = new THREE.Color(255, 0, 0);
+               //    const box = new THREE.Box3().setFromCenterAndSize(
+               //       new THREE.Vector3(binSizePos.x.pos, binSizePos.y.pos, binSizePos.z.pos),
+               //       new THREE.Vector3(binSizePos.x.size, binSizePos.y.size, binSizePos.z.size)
+               //    );
+               //    const helper = new THREE.Box3Helper(box, color);
+               //    helper.raycast = () => {
+               //    };
+               //
+               //    const index = obj.getBin(relPos.x + 1, relPos.y + 1, relPos.z + 1)
+               //    const child = obj.children[this.selectedChildren[currentLayer]][index];
+               //    if (child) {
+               //       this.el.object3D.add(helper);
+               //    }
+               // }
 
-                  const index = obj.getBin(relPos.x + 1, relPos.y + 1, relPos.z + 1)
-                  const child = obj.children[this.selectedChildren[currentLayer]][index];
-                  if (child) {
-                     this.el.object3D.add(helper);
-                  }
-               }
+               // if (isTH2) {
+               //    binSizePos.y.pos -= (binSizePos.y.size - t) / 2;
+               // } else if (!isTH3) {
+               //    binSizePos.y.pos -= (binSizePos.y.size - t) / 2;
+               //    binSizePos.z.size = 0.01;
+               // }
+
                this.matrixCache[currentLayer][i / stepFor] = {
                   position: new THREE.Vector3(binSizePos.x.pos, binSizePos.y.pos, binSizePos.z.pos),
                   scale: new THREE.Vector3(binSizePos.x.size, binSizePos.y.size, binSizePos.z.size),
@@ -219,7 +195,8 @@ const registerNestedHistogramComponent = () => {
                // if (isTH3) {
                //    binSizePos.x.size *= scaleFactor;
                //    binSizePos.z.size *= scaleFactor;
-               // } else if (isTH2) {
+               // }
+               // else if (isTH2) {
                //    binSizePos.y.pos -= (binSizePos.y.size - t) / 2;
                // } else {
                //    binSizePos.y.pos -= (binSizePos.y.size - t) / 2;
@@ -237,7 +214,6 @@ const registerNestedHistogramComponent = () => {
                } else {
                   const index = obj.getBin(relPos.x + 1, relPos.y + 1, relPos.z + 1)
                   const child = obj.children[this.selectedChildren[currentLayer]][index];
-                  // console.log(counter.getIndex())
                   render(i, i + stepFor, currentLayer + 1, child, this.matrixCache[currentLayer][i / stepFor]);
                }
                if (!counter.increment(0)) break;
@@ -246,17 +222,9 @@ const registerNestedHistogramComponent = () => {
             this.instancedMesh.instanceColor.needsUpdate = true;
 
          }
-         // const ex = {x: matrix.scale.x, y: matrix.scale.y, z: matrix.scale.z}
-         // console.log(matrix)
 
          render(startIndex, endIndex, 0, this.rootObj, matrix);
          this.instancedMesh.computeBoundingBox();
-
-         // console.log(k)
-
-
-         // console.log(stepFor);
-
       },
 
       checkIntersection: function (ray) {
@@ -283,13 +251,25 @@ const registerNestedHistogramComponent = () => {
             const boundaryFirstHalf = new THREE.Box3().copy(pointMin).union(pointHalfBelow);
             const boundarySecondHalf = new THREE.Box3().copy(pointHalfUpper).union(pointMax);
 
+            // if (layer === 1) {      DEBUG
+            //    const helper = new THREE.Box3Helper(boundaryFirstHalf, new THREE.Color(0, 1, 0));
+            //    helper.raycast = () => {};
+            //    this.el.object3D.add(helper);
+            // }
+
             const resultList = [];
             if (ray.intersectBox(boundaryFirstHalf, target)) {
+               if (layer === 1) {
+                  console.log('prvy, ', startIndex, half, endIndex)
+               }
                resultList.push([startIndex, half]);
             } else {
                resultList.push(null);
             }
             if (ray.intersectBox(boundarySecondHalf, target)) {
+               if (layer === 1) {
+                  console.log('druhy, ', startIndex, half, endIndex)
+               }
                resultList.push([half + 1, endIndex]);
             } else {
                resultList.push(null);
@@ -324,6 +304,7 @@ const registerNestedHistogramComponent = () => {
             const stepX = stepY / fX;
 
             const validZ = dfs(stepZ, 0, fZ - 1, offset, layer);
+
             const result = [];
 
             validZ.forEach(zIndex => {
@@ -332,16 +313,19 @@ const registerNestedHistogramComponent = () => {
 
                validY.forEach(yIndex => {
                   const offsetY = offsetZ + yIndex * stepY;
+
                   const validX = dfs(stepX, 0, fX - 1, offsetY, layer);
 
                   validX.forEach(xIndex => {
                      const fullPath = [...path, {x: xIndex, y: yIndex, z: zIndex}];
+                     // console.log(fullPath);
                      // Check for children and recurse
                      const binIndex = node.getBin(xIndex + 1, yIndex + 1, zIndex + 1);
                      const children = node.children?.[this.selectedChildren];
                      const child = children?.[binIndex];
+                     // console.log(child)
 
-                     if (child && child.fXaxis) {
+                     if (child && child.fXaxis && layer < this.currentLayer) {
                         const nextLayer = layer + 1;
                         const childOffset = (xIndex + (yIndex * fX) + (zIndex * (fX * fY))) * perInstance;
                         const childResults = recursiveSearch(child, nextLayer, childOffset, fullPath);

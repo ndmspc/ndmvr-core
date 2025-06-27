@@ -76,7 +76,7 @@ function generateScene() {
   scene.setAttribute('stats', '');
   scene.setAttribute('device-detector', '');
   scene.setAttribute('screen-controls', '');
-  // scene.setAttribute('ndmvr-raycaster', '');
+  scene.setAttribute('ndmvr-raycaster', '');
   scene.style.cssText= "position: absolute; height: 100%; width: 100%;";
 
   const camera = getCameraComponent();

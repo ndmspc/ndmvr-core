@@ -56,18 +56,18 @@ export function changePos(jsrootSizePos) {
       y: undefined,
       z: undefined
    }
-      aframeSizePos.x = {
-         size: jsrootSizePos.x.size,
-         pos: -jsrootSizePos.x.pos
-      };
-      aframeSizePos.z = {
-         size: jsrootSizePos.z.size,
-         pos: -jsrootSizePos.z.pos
-      };
-      aframeSizePos.y = {
-         size: jsrootSizePos.y.size,
-         pos: jsrootSizePos.y.pos
-      };
+   aframeSizePos.x = {
+      size: jsrootSizePos.x.size,
+      pos: -jsrootSizePos.x.pos
+   };
+   aframeSizePos.z = {
+      size: jsrootSizePos.z.size,
+      pos: jsrootSizePos.z.pos
+   };
+   aframeSizePos.y = {
+      size: jsrootSizePos.y.size,
+      pos: jsrootSizePos.y.pos
+   };
    return (aframeSizePos);
 }
 
@@ -77,18 +77,18 @@ export function rootSizePosToAFrameNeg(jsrootSizePos) {
       y: undefined,
       z: undefined
    }
-      aframeSizePos.x = {
-         size: jsrootSizePos.x.size,
-         pos: jsrootSizePos.x.pos
-      };
-      aframeSizePos.y = {
-         size: jsrootSizePos.z.size,
-         pos: -jsrootSizePos.z.pos
-      };
-      aframeSizePos.z = {
-         size: jsrootSizePos.y.size,
-         pos: jsrootSizePos.y.pos
-      };
+   aframeSizePos.x = {
+      size: jsrootSizePos.x.size,
+      pos: jsrootSizePos.x.pos
+   };
+   aframeSizePos.y = {
+      size: jsrootSizePos.z.size,
+      pos: -jsrootSizePos.z.pos
+   };
+   aframeSizePos.z = {
+      size: jsrootSizePos.y.size,
+      pos: jsrootSizePos.y.pos
+   };
    return (aframeSizePos);
 }
 
@@ -104,48 +104,25 @@ function getRootBinSizePosByAxis(rootObjAxis, rootBinRelPosOnAxis, size, padding
       size: undefined,
       pos: undefined
    }
-   const binLowEdge = rootObjAxis.GetBinLowEdge(rootBinRelPosOnAxis);
-   const binUpperEdge = GetBinUpperEdge(rootObjAxis, rootBinRelPosOnAxis);
+   const binLowEdge = rootObjAxis.GetBinLowEdge(rootBinRelPosOnAxis + 1);
+   const binUpperEdge = GetBinUpperEdge(rootObjAxis, rootBinRelPosOnAxis + 1);
    const binSizeByAxis = Math.abs(binUpperEdge - binLowEdge);
 
    rootBinSizePosByAxis.size = binSizeByAxis;
 
-
    //bin low edge + half of width * scale relative to size of whole histogram
-   rootBinSizePosByAxis.pos = binLowEdge + (binSizeByAxis / 2);
+
+   rootBinSizePosByAxis.pos = binLowEdge + (binSizeByAxis / 2) - rootObjAxis.fXmin;
+
 
    const wholeSize = ((rootObjAxis.fXmax - rootObjAxis.fXmin) + (padding * (rootObjAxis.fNbins - 1)));
-   // if (layer === 1 && rootObjAxis.fName === 'xaxis') {
-      // console.log(size)
-      // console.log(rootBinSizePosByAxis.size)
-      // console.log( 1 / (wholeSize / size))
-   // }
+
    if (size) {
-      rootBinSizePosByAxis.pos += padding * (rootBinRelPosOnAxis - 1);
+      rootBinSizePosByAxis.pos += padding * (rootBinRelPosOnAxis);
       rootBinSizePosByAxis.pos /= (wholeSize / size);
       rootBinSizePosByAxis.size /= (wholeSize / size);
 
       rootBinSizePosByAxis.pos -= size / 2;
-      rootBinSizePosByAxis.pos += rootBinSizePosByAxis.size;
-      rootBinSizePosByAxis.pos += padding / (wholeSize / size)
-
-      // if (rootObjAxis.fName === 'zaxis') {
-      //    rootBinSizePosByAxis.pos -= size / 2;
-      //    rootBinSizePosByAxis.pos += rootBinSizePosByAxis.size;
-      //    rootBinSizePosByAxis.pos += padding / (wholeSize / size)
-      // } else if (rootObjAxis.fName === 'yaxis') {
-      //    rootBinSizePosByAxis.pos -= size / 2;
-      //    rootBinSizePosByAxis.pos += rootBinSizePosByAxis.size;
-      //    rootBinSizePosByAxis.pos += padding / (wholeSize / size)
-      // } else if (rootObjAxis.fName === 'xaxis') {
-      //    rootBinSizePosByAxis.pos -= size / 2;
-      //    rootBinSizePosByAxis.pos += rootBinSizePosByAxis.size;
-      //    rootBinSizePosByAxis.pos += padding / (wholeSize / size)
-      // }
-      // if (layer === 1 && rootObjAxis.fName === 'xaxis') {
-      //    rootBinSizePosByAxis.pos -= 2.5
-      // }
-
       rootBinSizePosByAxis.pos += offset;
    }
 

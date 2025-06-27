@@ -5,10 +5,10 @@ const registerNdmvrRaycasterComponent = () => {
       schema: {},
 
       init: function () {
-         // this.raycaster = new THREE.Raycaster();
-         // this.mouse = new THREE.Vector2();
-         // this.setupRaycasting();
-         // this.histogram = document.getElementById('histogram1').components['nested-histogram'];
+         this.raycaster = new THREE.Raycaster();
+         this.mouse = new THREE.Vector2();
+         this.setupRaycasting();
+         this.histogram = document.getElementById('histogram1').components['nested-histogram'];
       },
 
       color: new THREE.Color(),
@@ -61,28 +61,37 @@ const registerNdmvrRaycasterComponent = () => {
             // if (intersects.length > 0) {
             //    console.log(intersects[0].instanceId)
             //
-            //    if (intersects[0].object.isInstancedMesh === true) {
-            //       const histogram = intersects[0].object.parent.el.components['histogram'];
-            //       this.dirtyInstance = {
-            //          instancedMesh: undefined,
-            //          instancedId: undefined
-            //       }
+            //    const id = intersects[0].instanceId / 130;
             //
-            //       intersects[0].object.parent.el.dispatchEvent(new CustomEvent("instance-click", {
-            //          detail: {
-            //             instancedMesh: intersects[0].object,
-            //             instanceId: intersects[0].instanceId,
-            //             shiftKey: event.shiftKey,
-            //             getBinContent: function () {
-            //                const position = histogram.computePositionFromIndex(intersects[0].instanceId);
-            //                return histogram.rootObj.getBinContent(position.x, position.y, position.z);
-            //             },
-            //             getBinPosition: function () {
-            //                return histogram.computePositionFromIndex(intersects[0].instanceId);
-            //             }
-            //          }
-            //       }))
-            //    }
+            //    const histogram = intersects[0].object.parent.el.components['nested-histogram'];
+            //    this.rootObj = histogram.rootObj;
+            //    const pos = this.computePositionFromIndex(id);
+            //    console.log(histogram.rootObj)
+            //    // console.log(histogram.rootObj.children['unlikepm'][histogram.rootObj.getBin(pos.x, pos.y, pos.z)])
+            //
+            //
+            //    // if (intersects[0].object.isInstancedMesh === true) {
+            //    //    const histogram = intersects[0].object.parent.el.components['histogram'];
+            //    //    this.dirtyInstance = {
+            //    //       instancedMesh: undefined,
+            //    //       instancedId: undefined
+            //    //    }
+            //    //
+            //    //    intersects[0].object.parent.el.dispatchEvent(new CustomEvent("instance-click", {
+            //    //       detail: {
+            //    //          instancedMesh: intersects[0].object,
+            //    //          instanceId: intersects[0].instanceId,
+            //    //          shiftKey: event.shiftKey,
+            //    //          getBinContent: function () {
+            //    //             const position = histogram.computePositionFromIndex(intersects[0].instanceId);
+            //    //             return histogram.rootObj.getBinContent(position.x, position.y, position.z);
+            //    //          },
+            //    //          getBinPosition: function () {
+            //    //             return histogram.computePositionFromIndex(intersects[0].instanceId);
+            //    //          }
+            //    //       }
+            //    //    }))
+            //    // }
             // }
          });
       },
@@ -188,18 +197,30 @@ const registerNdmvrRaycasterComponent = () => {
       },
 
       computePositionFromIndex: function (index) {
-         const dimensions = {
-            x: this.rootObj.fXaxis.fNbins,
-            y: this.rootObj.fYaxis.fNbins,
-            z: this.rootObj.fZaxis.fNbins
+         let dimensions;
+         if (this.mappingHistogram) {
+            dimensions = {
+               x: this.mappingHistogram.fXaxis.fNbins,
+               y: this.mappingHistogram.fYaxis.fNbins,
+               z: this.mappingHistogram.fZaxis.fNbins
+            }
+         } else {
+            dimensions = {
+               x: this.rootObj.fXaxis.fNbins,
+               y: this.rootObj.fYaxis.fNbins,
+               z: this.rootObj.fZaxis.fNbins
+            }
          }
-         const medzi = index % (dimensions.x * dimensions.y);
 
-         let x = medzi % dimensions.x;
+         const level = 1 + index % (dimensions.x * dimensions.y);
+
+         let x = level % dimensions.x;
          if (x === 0) x = dimensions.x;
-         const y = Math.ceil(medzi / dimensions.x);
+         const y = Math.ceil(level / dimensions.x);
          const z = Math.floor(index / (dimensions.x * dimensions.y));
-         console.log(`pos: x: ${x}, y: ${y}, z: ${z + 1}`);
+         const position = {x: x, y: y, z: z + 1};
+         // console.log(`pos: x: ${x}, y: ${y}, z: ${z}`);
+         return (position)
       },
    })
 

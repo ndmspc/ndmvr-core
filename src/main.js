@@ -18,6 +18,7 @@ import histoSparse2 from "../public/histograms/THnSparse3.json"
 import nestedHisto from "../public/histograms/hist3D.axis1-pt_axis2-ce_axis5-eta.json"
 import nestedHisto2 from "../public/histograms/hist2D.axis1-pt_axis2-ce.json"
 import nestedHisto3 from "../public/histograms/hist1D.axis1-pt.json"
+import nestedHisto4 from "../public/histograms/test3D.axis1-pt_axis2-ce_axis5-eta (1).json"
 import {parse} from "jsroot";
 
 initNdmvrAframe();
@@ -28,11 +29,11 @@ let toggleHisto = false;
 
 document.querySelector("#app").appendChild(sceneElm);
 
-const geom = new THREE.BoxGeometry(0.25641025641025644, 0.1515151515151515,0.9174311926605504);
-const mate = new THREE.MeshNormalMaterial();
-const cube = new THREE.Mesh(geom, mate);
-cube.position.set(-4.871794871794871,-2.4242424242424248,4.541284403669724);
-sceneElm.object3D.add(cube)
+// const geom = new THREE.BoxGeometry(0.128821, 0.1515151515151515,0.9174311926605504);
+// const mate = new THREE.MeshNormalMaterial();
+// const cube = new THREE.Mesh(geom, mate);
+// cube.position.set(-4.9358974,-1.13636363,4.541284403669724);
+// sceneElm.object3D.add(cube)
 
 // const cube2 = new THREE.Mesh(geom, mate);
 // cube2.position.set(-4.87179,5,0);
