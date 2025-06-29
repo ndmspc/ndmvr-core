@@ -33,66 +33,68 @@ const registerNdmvrRaycasterComponent = () => {
          });
 
          window.addEventListener("click", (event) => {
-            this.mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
-            this.mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
-            // this.instancedMesh = document.getElementById('histogram1').object3D;
-
-            this.raycaster.setFromCamera(this.mouse, this.el.sceneEl.camera);
-            const instancedMesh = this.histogram.instancedMesh;
-
-            const worldBoundingBox = instancedMesh.boundingBox.clone();
-            worldBoundingBox.applyMatrix4(instancedMesh.matrixWorld);
-            const target = new THREE.Vector3();
-
-            if (!this.raycaster.ray.intersectBox(worldBoundingBox, target)) {
-               // No hit at all
-               // console.log('nehitlo')
-               return null;
-            } else {
-               const res = this.histogram.checkIntersection(this.raycaster.ray);
-               console.log(res);
-            }
             // this.mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
             // this.mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
-            // //
+            // // this.instancedMesh = document.getElementById('histogram1').object3D;
+            //
             // this.raycaster.setFromCamera(this.mouse, this.el.sceneEl.camera);
-            // const intersects = this.raycaster.intersectObjects(this.el.sceneEl.object3D.children);
+            // const instancedMesh = this.histogram.instancedMesh;
             //
-            // if (intersects.length > 0) {
-            //    console.log(intersects[0].instanceId)
+            // const worldBoundingBox = instancedMesh.boundingBox.clone();
+            // worldBoundingBox.applyMatrix4(instancedMesh.matrixWorld);
+            // const target = new THREE.Vector3();
             //
-            //    const id = intersects[0].instanceId / 130;
-            //
-            //    const histogram = intersects[0].object.parent.el.components['nested-histogram'];
-            //    this.rootObj = histogram.rootObj;
-            //    const pos = this.computePositionFromIndex(id);
-            //    console.log(histogram.rootObj)
-            //    // console.log(histogram.rootObj.children['unlikepm'][histogram.rootObj.getBin(pos.x, pos.y, pos.z)])
-            //
-            //
-            //    // if (intersects[0].object.isInstancedMesh === true) {
-            //    //    const histogram = intersects[0].object.parent.el.components['histogram'];
-            //    //    this.dirtyInstance = {
-            //    //       instancedMesh: undefined,
-            //    //       instancedId: undefined
-            //    //    }
-            //    //
-            //    //    intersects[0].object.parent.el.dispatchEvent(new CustomEvent("instance-click", {
-            //    //       detail: {
-            //    //          instancedMesh: intersects[0].object,
-            //    //          instanceId: intersects[0].instanceId,
-            //    //          shiftKey: event.shiftKey,
-            //    //          getBinContent: function () {
-            //    //             const position = histogram.computePositionFromIndex(intersects[0].instanceId);
-            //    //             return histogram.rootObj.getBinContent(position.x, position.y, position.z);
-            //    //          },
-            //    //          getBinPosition: function () {
-            //    //             return histogram.computePositionFromIndex(intersects[0].instanceId);
-            //    //          }
-            //    //       }
-            //    //    }))
-            //    // }
+            // if (!this.raycaster.ray.intersectBox(worldBoundingBox, target)) {
+            //    // No hit at all
+            //    // console.log('nehitlo')
+            //    return null;
+            // } else {
+            //    const res = this.histogram.checkIntersection(this.raycaster.ray);
+            //    console.log(res);
             // }
+
+
+            this.mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+            this.mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+            //
+            this.raycaster.setFromCamera(this.mouse, this.el.sceneEl.camera);
+            const intersects = this.raycaster.intersectObjects(this.el.sceneEl.object3D.children);
+
+            if (intersects.length > 0) {
+               console.log(intersects[0].instanceId)
+
+               // const id = intersects[0].instanceId / 130;
+               //
+               // const histogram = intersects[0].object.parent.el.components['nested-histogram'];
+               // this.rootObj = histogram.rootObj;
+               // const pos = this.computePositionFromIndex(id);
+               // console.log(histogram.rootObj)
+               // console.log(histogram.rootObj.children['unlikepm'][histogram.rootObj.getBin(pos.x, pos.y, pos.z)])
+
+
+               // if (intersects[0].object.isInstancedMesh === true) {
+               //    const histogram = intersects[0].object.parent.el.components['histogram'];
+               //    this.dirtyInstance = {
+               //       instancedMesh: undefined,
+               //       instancedId: undefined
+               //    }
+               //
+               //    intersects[0].object.parent.el.dispatchEvent(new CustomEvent("instance-click", {
+               //       detail: {
+               //          instancedMesh: intersects[0].object,
+               //          instanceId: intersects[0].instanceId,
+               //          shiftKey: event.shiftKey,
+               //          getBinContent: function () {
+               //             const position = histogram.computePositionFromIndex(intersects[0].instanceId);
+               //             return histogram.rootObj.getBinContent(position.x, position.y, position.z);
+               //          },
+               //          getBinPosition: function () {
+               //             return histogram.computePositionFromIndex(intersects[0].instanceId);
+               //          }
+               //       }
+               //    }))
+               // }
+            }
          });
       },
 
