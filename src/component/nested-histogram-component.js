@@ -3,6 +3,7 @@ import {filter} from "rxjs";
 import {histogramSubjectGet} from "../rxjs/HistogramSubject.js";
 import RadixCounter from "../utils/radixCounter.js";
 import {computeAFrameBinSizePos, rootSizePosToAFrame} from "../utils/histogramRenderUtils.js";
+import {distance} from "three/tsl";
 
 const registerNestedHistogramComponent = () => {
    AFRAME.registerComponent("nested-histogram", {
@@ -44,6 +45,7 @@ const registerNestedHistogramComponent = () => {
             .subscribe((histo) => {
                this.rootObj = histo.histogram;
                this.maxInstancesPerLayer = this.computeMaxInstancesPerLayer();
+               console.log(this.maxInstancesPerLayer)
                this.matrixCache = new Array(this.maxInstancesPerLayer.length).fill().map(() => []);
                this.totalInstances = this.maxInstancesPerLayer
                   .reduce((acc, value) => {
@@ -65,7 +67,7 @@ const registerNestedHistogramComponent = () => {
                this.instancedMesh.instanceMatrix.needsUpdate = true;
                this.el.object3D.add(this.instancedMesh);
 
-               this.renderHistogram(0, this.totalInstances, 1);
+               this.renderHistogram(0, this.totalInstances, 0);
                console.log(this.rootObj)
                console.log(this.matrixCache)
                // this.matrixCache = [];
@@ -137,18 +139,18 @@ const registerNestedHistogramComponent = () => {
                const relPos = {x: counter.getValueAt(0), y: counter.getValueAt(1), z: counter.getValueAt(2)}
                let binSizePos = computeAFrameBinSizePos(obj, relPos, padding, limits?.scale, limits?.position, currentLayer);
 
-               if (layer === 0) {
+               if (currentLayer === 0) {
                   binSizePos = rootSizePosToAFrame(binSizePos);
                } else {
                   binSizePos = rootSizePosToAFrame(binSizePos);
-                  // binSizePos.z.pos = -binSizePos.z.pos;
+                  binSizePos.z.pos = -binSizePos.z.pos;
                }
 
                //TODO ASI TREBA FlipLocalZAxis (zatial netreba ak je len 1D)
 
                const content = obj.getBinContent(relPos.x + 1, relPos.y + 1, relPos.z + 1);
                let scaleFactor = 1;
-               if (layer === 0) {
+               if (currentLayer === 0) {
                   scaleFactor = 0.2 + 0.8 * this.easeOutCubic(content / contentMax);
                } else {
                   scaleFactor = content / contentMax;
@@ -160,23 +162,23 @@ const registerNestedHistogramComponent = () => {
                this.color = new THREE.Color(t, 0, 1 - t);
                // this.color = new THREE.Color(counter.getIndex() / 1000, 0, 1 - counter.getIndex() / 10);
 
-               if (currentLayer === 0) {
-                  // console.log(i / stepFor)
-                  const color = new THREE.Color(255, 0, 0);
-                  const box = new THREE.Box3().setFromCenterAndSize(
-                     new THREE.Vector3(binSizePos.x.pos, binSizePos.y.pos, binSizePos.z.pos),
-                     new THREE.Vector3(binSizePos.x.size, binSizePos.y.size, binSizePos.z.size)
-                  );
-                  const helper = new THREE.Box3Helper(box, color);
-                  helper.raycast = () => {
-                  };
-
-                  const index = obj.getBin(relPos.x + 1, relPos.y + 1, relPos.z + 1)
-                  const child = obj.children[this.selectedChildren[currentLayer]][index];
-                  if (child) {
-                     this.el.object3D.add(helper);
-                  }
-               }
+               // if (currentLayer === 0) {
+               //    // console.log(i / stepFor)
+               //    const color = new THREE.Color(255, 0, 0);
+               //    const box = new THREE.Box3().setFromCenterAndSize(
+               //       new THREE.Vector3(binSizePos.x.pos, binSizePos.y.pos, binSizePos.z.pos),
+               //       new THREE.Vector3(binSizePos.x.size, binSizePos.y.size, binSizePos.z.size)
+               //    );
+               //    const helper = new THREE.Box3Helper(box, color);
+               //    helper.raycast = () => {
+               //    };
+               //
+               //    const index = obj.getBin(relPos.x + 1, relPos.y + 1, relPos.z + 1)
+               //    const child = obj.children[this.selectedChildren[currentLayer]][index];
+               //    if (child) {
+               //       this.el.object3D.add(helper);
+               //    }
+               // }
 
                // if (isTH2) {
                //    binSizePos.y.pos -= (binSizePos.y.size - t) / 2;
@@ -195,8 +197,7 @@ const registerNestedHistogramComponent = () => {
                if (isTH3) {
                   binSizePos.x.size *= scaleFactor;
                   binSizePos.z.size *= scaleFactor;
-               }
-               else if (isTH2) {
+               } else if (isTH2) {
                   binSizePos.y.pos -= (binSizePos.y.size - t) / 2;
                } else {
                   binSizePos.y.pos -= (binSizePos.y.size - t) / 2;
@@ -266,7 +267,8 @@ const registerNestedHistogramComponent = () => {
                // if (layer === 1) {
                //    console.log('prvy, ', startIndex, half, endIndex)
                // }
-               resultList.push([startIndex, half]);
+               resultList.push({array: [startIndex, half], target: target, distance: ray.origin.distanceTo(target)})
+               // resultList.push([startIndex, half]);
             } else {
                resultList.push(null);
             }
@@ -274,7 +276,8 @@ const registerNestedHistogramComponent = () => {
                // if (layer === 1) {
                //    console.log('druhy, ', startIndex, half, endIndex)
                // }
-               resultList.push([half + 1, endIndex]);
+               resultList.push({array: [half + 1, endIndex], target: target, distance: ray.origin.distanceTo(target)})
+               // resultList.push([half + 1, endIndex]);
             } else {
                resultList.push(null);
             }
@@ -282,23 +285,29 @@ const registerNestedHistogramComponent = () => {
          };
 
          const dfs = (step, start, end, offset, layer) => {
+
             const output = [];
-            const traverse = (start, end) => {
-               if (start === end) {
-
-                  // const box = createBox3(layer, (start * step) + offset);
-                  // box.applyMatrix4(this.instancedMesh.matrixWorld);
-                  // const intersectionPoint = new THREE.Vector3();
-                  console.log(layer,  (start * step) + offset);
-
-                  output.push(start);
+            const traverse = (details) => {
+               if (details.array[0] === details.array[1]) {
+                  // output.push(start);
+                  output.push(details);
                   return;
                }
-               const [firstHalf, secondHalf] = checkAxis(step, start, end, offset, layer);
-               if (firstHalf) traverse(firstHalf[0], firstHalf[1]);
-               if (secondHalf) traverse(secondHalf[0], secondHalf[1]);
+               // console.log(step)
+               // console.log(start)
+               // console.log(end)
+               // console.log(offset)
+               // console.log(layer)
+               const [firstHalf, secondHalf] = checkAxis(step, details.array[0], details.array[1], offset, layer);
+               if (firstHalf) traverse(firstHalf);
+               // if (firstHalf) traverse(firstHalf.array[0], firstHalf.array[1]);
+               // if (firstHalf) traverse(firstHalf[0], firstHalf[1]);
+               if (secondHalf) traverse(secondHalf);
+               // if (secondHalf) traverse(secondHalf.array[0], secondHalf.array[1]);
+               // if (secondHalf) traverse(secondHalf[0], secondHalf[1]);
             };
-            traverse(start, end);
+            traverse({array: [start, end], target: null, distance: null});
+            // traverse(start, end);
             if (output[output.length - 1] === end + 1) output.pop(); // edge fix
             return output;
          };
@@ -314,19 +323,31 @@ const registerNestedHistogramComponent = () => {
             const stepX = stepY / fX;
 
             const validZ = dfs(stepZ, 0, fZ - 1, offset, layer);
+            // if (layer === 1) {
+               // console.log(fX)
+               // console.log(fY)
+               // console.log(fZ)
+               // console.log(perInstance)
+               // console.log(stepZ)
+               // console.log(offset)
+               // console.log(validZ)
+            // }
 
             const result = [];
 
-            validZ.forEach(zIndex => {
+            validZ.forEach(z => {
+               const zIndex = z.array[0];
                const offsetZ = offset + zIndex * stepZ;
                const validY = dfs(stepY, 0, fY - 1, offsetZ, layer);
 
-               validY.forEach(yIndex => {
+               validY.forEach(y => {
+                  const yIndex = y.array[0];
                   const offsetY = offsetZ + yIndex * stepY;
 
                   const validX = dfs(stepX, 0, fX - 1, offsetY, layer);
 
-                  validX.forEach(xIndex => {
+                  validX.forEach(x => {
+                     const xIndex = x.array[0];
                      const fullPath = [...path, {x: xIndex, y: yIndex, z: zIndex}];
                      // console.log(fullPath);
                      // Check for children and recurse
@@ -341,13 +362,15 @@ const registerNestedHistogramComponent = () => {
                         const childResults = recursiveSearch(child, nextLayer, childOffset, fullPath);
                         result.push(...childResults);
                      } else {
-                        result.push(fullPath);
+                        result.push({index: fullPath, target: x.target, distance: x.distance});
                      }
                   });
                });
             });
 
-            return result;
+            return result.sort((a, b) => {
+               return a.distance - b.distance
+            });
          };
 
          // const sortResult = (search) => {
@@ -619,6 +642,7 @@ const registerNestedHistogramComponent = () => {
             return max;
          };
          computation(this.rootObj.children);
+         max.push(1)
          return max;
       },
 
