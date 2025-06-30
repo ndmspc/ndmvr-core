@@ -50,7 +50,10 @@ const registerNdmvrRaycasterComponent = () => {
                return null;
             } else {
                const res = this.histogram.checkIntersection(this.raycaster.ray);
-               console.log(res);
+               if (res[0]){
+                  this.histogram.showChildHistogram(res[0].index)
+                  console.log(res);
+               }
             }
 
 
