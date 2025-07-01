@@ -272,7 +272,9 @@ const registerNestedHistogramComponent = () => {
          const createBox3 = (layer, index) => {
             const t = this.matrixCache[layer][index];
             // console.log('layer: ', layer, ', index: ', index, ', t: ', t);
-            return new THREE.Box3().setFromCenterAndSize(t.position, t.scale);
+            if (t) {
+               return new THREE.Box3().setFromCenterAndSize(t.position, t.scale);
+            }
          };
 
          const checkAxis = (step, startIndex, endIndex, offset, layer) => {
@@ -359,16 +361,18 @@ const registerNestedHistogramComponent = () => {
                      const children = node.children?.[this.selectedChildren];
                      const child = children?.[binIndex];
 
-                     const dummy = new THREE.Object3D();
-                     this.instancedMesh.getMatrixAt(
-                        ((xIndex + (yIndex * fX) + (zIndex * fX * fY)) * perInstance) + this.maxInstancesPerLayer[layer+2],
-                        dummy.matrix);
-                     dummy.matrix.decompose(dummy.position, dummy.quaternion, dummy.scale);
-                     console.log('decompose')
+                     // const dummy = new THREE.Object3D();
+                     // this.instancedMesh.getMatrixAt(
+                     //    ((xIndex + (yIndex * fX) + (zIndex * fX * fY)) * perInstance) + this.maxInstancesPerLayer[layer+2],
+                     //    dummy.matrix);
+                     // dummy.matrix.decompose(dummy.position, dummy.quaternion, dummy.scale);
+                     // console.log('decompose')
+                     const childOffset = (xIndex + (yIndex * fX) + (zIndex * (fX * fY))) * perInstance;
 
-                     if (child && dummy.scale.x > 0) {
+                     const next = this.matrixCache[layer+1][childOffset +this.maxInstancesPerLayer[layer + 2]]
+
+                     if (child && child.children && next) {
                         const nextLayer = layer + 1;
-                        const childOffset = (xIndex + (yIndex * fX) + (zIndex * (fX * fY))) * perInstance;
                         const childResults = recursiveSearch(child, nextLayer, childOffset, fullPath);
                         result.push(...childResults);
                      } else {
