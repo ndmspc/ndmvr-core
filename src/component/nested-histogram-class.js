@@ -16,6 +16,8 @@ export default class NestedHistogram {
    color = new THREE.Color();
    matrixCache = undefined;
    selectedChildren = ['unlikepm'];
+   clickEvents = [];
+   mousemoveEvents = [];
 
    constructor(bin_padding_x, bin_padding_y, bin_padding_z) {
       this.bin_padding_x = bin_padding_x;
@@ -51,15 +53,29 @@ export default class NestedHistogram {
       this.instancedMesh.raycast = (raycaster, intersects) => {
          const res = this.checkIntersection(raycaster.ray);
          // }
-         // if (res) {
-         //    console.log(res[0])
-         // }
+         if (res) {
+            const trigger = raycaster._triggerSource;
+            if (trigger === 'mousemove') {
+               this.mousemoveEvents.forEach(func => {
+                  func(res[0].index);
+               });
+            }
+            // console.log(res[0])
+         }
       }
-      // this.el.object3D.add(this.instancedMesh);
-
-      // this.renderHistogram(0, this.totalInstances, 0);
       console.log(this.rootObj)
       console.log(this.matrixCache)
+   }
+
+   addEvent(event, func) {
+      console.log(event)
+      const boundFunction = func.bind(this);
+      if (event === 'mouseclick') {
+         this.clickEvents.push(boundFunction);
+      } else if(event === 'mousemove') {
+         console.log('pushed to array')
+         this.mousemoveEvents.push(boundFunction);
+      }
    }
 
    renderHistogram(startIndex, endIndex, layer) {

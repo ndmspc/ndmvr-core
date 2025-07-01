@@ -130,80 +130,26 @@ function histoBin() {
 
 const functions = [
    {
-      event: 'instance-hover',
+      event: 'mouseclick',
       target: {
-         entity: 'histogram',
+         entity: 'nested-histogram',
          id: '*'
       },
       function: function (event) {
-         // console.log(event)
-         const position = event.detail.getBinPosition();
-
-         // if(event.detail.phase === 'start') {
-         //    event.srcElement.components['histogram'].showChildHistogram(position.x, position.y, position.z);
-         // } else {
-         // event.srcElement.components['histogram'].hideChildHistogram(position.x, position.y, position.z);
-         // }
-
-         if (event.detail.phase === 'end') return;
-         const instancedMesh = event.detail.instancedMesh;
-         const instanceId = event.detail.instanceId;
-
-         let color = new THREE.Color();
-         instancedMesh.getColorAt(instanceId, color);
-         color.setHex(Math.random() * 0xffffff);
-         instancedMesh.setColorAt(instanceId, color);
-         instancedMesh.instanceColor.needsUpdate = true;
-
-         // console.log('bin content: ', event.detail.getBinContent());
-         // console.log('bin position: ', event.detail.getBinPosition());
+         console.log('click: ', event);
       }
    },
    {
-      event: 'instance-click',
+      event: 'mousemove',
       target: {
-         entity: 'histogram',
+         entity: 'nested-histogram',
          id: '*'
       },
       function: function (event) {
-         // console.log('bin content: ', event.detail.getBinContent());
-         // console.log('bin position: ', event.detail.getBinPosition());
-         const position = event.detail.getBinPosition();
-         // console.log(position);
-
-         if (event.detail.shiftKey) {
-            console.log('shift')
-            event.srcElement.components['histogram'].hideChildHistogram(position.x, position.y, position.z);
-         } else {
-            event.srcElement.components['histogram'].showChildHistogram(position.x, position.y, position.z);
-         }
-
-         // if (toggleHisto) {
-         //    console.log('hide')
-         //    document.querySelector('[histogram]').components.histogram.hideAllChildHistograms();
-         // } else {
-         //    document.querySelector('[histogram]').components.histogram.showAllChildHistograms();
-         // }
-         // toggleHisto = !toggleHisto;
-
-         // const instancedMesh = event.detail.instancedMesh;
-         // console.log(instancedMesh);
-         // const instanceId = event.detail.instanceId;
-         // const histogram = instancedMesh.parent.el.components['histogram'];
-         // const pos = histogram.computePositionFromIndex(instanceId);
-         //
-         // console.log(pos);
-         // console.log(histogram.rootObj.fArray.at(instanceId));
-         // let dum = new THREE.Object3D();
-
-         // instancedMesh.getMatrixAt(instanceId, dum.matrix);
-         // dum.matrix.decompose(dum.position, dum.quaternion, dum.scale);
-         // dum.scale.set(2,2,2);
-         // dum.updateMatrix();
-         // instancedMesh.setMatrixAt(instanceId, dum.matrix);
-         // instancedMesh.instanceMatrix.needsUpdate = true;
+         console.log('mousemove: ', event);
+         this.showChildHistogram(event)
       }
    }
 ];
 
-// setTimeout(() => functionSubjectGet().addFunctions(functions), 100);
+setTimeout(() => functionSubjectGet().addFunctions(functions), 100);

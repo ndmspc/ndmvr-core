@@ -107,6 +107,7 @@ const registerNdmvrRaycasterComponent = () => {
          // // this.instancedMesh = document.getElementById('histogram1').object3D;
          //
          this.raycaster.setFromCamera(this.mouse, this.el.sceneEl.camera);
+         this.raycaster._triggerSource = 'mousemove';
          const hits = this.raycaster.intersectObjects(this.el.sceneEl.object3D.children, true);
          // const instancedMesh = this.histogram.instancedMesh;
          //
