@@ -22,6 +22,7 @@ const registerNestedHistogramComponent = () => {
             .pipe(filter(e =>
                (e.target.entity === this.attrName) && ((e.target.id.includes('*')) || (e.target.id.includes(this.data.id)))))
             .subscribe((f) => {
+               if (!this.instancedMesh) return;
                if (f.flag === 'add') {
                   this.instancedMesh.addEvent(f.event, f.function);
                   // this.el.addEventListener(f.event, f.function);

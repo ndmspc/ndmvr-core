@@ -11,8 +11,8 @@ export default class FileHandler {
       this.#ready = this.open(url);
    }
 
-   async open(url) {
-      this.#rootFile = await openFile(url);
+   static async open(url) {
+      return openFile(url);
    }
 
    async getHistogram(layer, index, selectedChild) {
@@ -33,28 +33,34 @@ export default class FileHandler {
       }
    }
 
-   async computeMaxInstancesPerLayer() {
-      this.#maxInstancesPerLayer = [3400, 130];
-      return [3400, 130];
-      await this.#ready;
-      if (!this.#rootFile) return;
-      const hMap = await this.#rootFile.readObject('hMap');
-      console.log(hMap);
-      console.log(this.#rootFile);
+   static async parseFile(obj) {
+      const rootFile = await this.open(obj)
+      const maxInstancesPerLayer = await this.computeMaxInstancesPerLayer(rootFile);
+   }
+
+   static async computeMaxInstancesPerLayer(rootFile) {
+      // this.#maxInstancesPerLayer = [3400, 130];
+      // return [3400, 130];
+      // await this.#ready;
+      if (!rootFile) return;
+      const hMap = await rootFile.readObject('hMap');
+      // console.log(hMap);
+      // console.log(this.#rootFile);
       const temp = hMap.fXaxis.fNbins * hMap.fYaxis.fNbins * hMap.fZaxis.fNbins;
       let max = [];
+      let childrenAxes = [];
       max.push(temp);
 
-      const computation = (children, layer = 1) => {
+      const computation = (children, rootFile) => {
          let temp = 0;
-         if (layer >= max.length) {
-            max.push(0);
-         }
+         // if (layer >= max.length) {
+         //    max.push(0);
+         // }
          children.forEach(index => {
             // console.log(value.fName)
-            this.#rootFile.readObject(`content/${index.fName}/`).then(val => {
-               console.log(val)
-            })
+            // rootFile.readObject(`content/${index.fName}/`).then(val => {
+            //    console.log(val)
+            // })
             // this.#rootFile.readObject(`content/288;1`).then(val => {
             //    console.log(val)
             // })
@@ -75,10 +81,16 @@ export default class FileHandler {
          // });
          return max;
       };
-      const childs = await this.#rootFile.readObject('content')
-      console.log(childs)
+      const childs = await rootFile.readObject('content')
+      const childrenAxesDir = await rootFile.readObject(`content/${childs.fKeys[0].fName}`)
+      childrenAxesDir.fKeys.forEach(axis => {
+         childrenAxes.push(axis.fName);
+      })
+      console.log(childrenAxes)
 
-      computation(childs.fKeys);
+      console.log(childs.fKeys[0])
+
+      computation(childs.fKeys, rootFile);
       return max;
    }
 

@@ -63,8 +63,8 @@ sceneElm.appendChild(histogramContainer);
 
 // histogramSubjectGet().next({id: 'histogram1', histogram: parse(histoWithOutsideContent)});
 // histogramSubjectGet().next({id: 'histogram1', histogram: parse(histoSparse)});
-histogramSubjectGet().next({id: 'histogram1', histogram: parse(nestedHisto)});
-// histogramSubjectGet().next({id: 'histogram1', histogram: 'https://eos.ndmspc.io//eos/ndmspc/scratch/ndmspc/ndmvr-aframe/demo/hist3D.axis1-pt_axis2-ce_axis5-eta.root'});
+// histogramSubjectGet().next({id: 'histogram1', histogram: parse(nestedHisto)});
+histogramSubjectGet().next({id: 'histogram1', histogram: 'https://eos.ndmspc.io//eos/ndmspc/scratch/ndmspc/ndmvr-aframe/demo/hist3D.axis1-pt_axis2-ce_axis5-eta.root'});
 // histogramSubjectGet().next({id: 'histogram1', histogram: parse(histo6x2x1)});
 // histogramSubjectGet().next({id: 'histogram1', histogram: parse(histo4x3x1)});
 // stdBin();

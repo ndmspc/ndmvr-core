@@ -8,6 +8,10 @@ export default class JsonHandler {
       this.#rootFile = parse(obj);
    }
 
+   static async parseJson(obj) {
+      return parse(obj)
+   }
+
    computeMaxInstancesPerLayer() {
       if (!this.#rootFile) return;
       console.log(this.#rootFile)
