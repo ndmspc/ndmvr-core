@@ -25,7 +25,6 @@ const registerNestedHistogramComponent = () => {
                if (!this.instancedMesh) return;
                if (f.flag === 'add') {
                   this.instancedMesh.addEvent(f.event, f.function);
-                  // this.el.addEventListener(f.event, f.function);
                } else if (f.flag === 'remove') {
                   this.el.removeEventListener(f.event, f.function);
                }

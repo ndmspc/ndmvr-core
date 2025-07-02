@@ -13,6 +13,7 @@ import {functionSubjectGet} from "./rxjs/FunctionSubject.js";
 import {initNdmvrAframe} from "./core/ndmvr-aframe-core.js";
 import histogramRecursive from "../public/histograms/THrecursive.json";
 import histogram2x2x3 from "../public/histograms/TH3variableBinning2x2x3OnlyInsideContent.json";
+import histo6x2x1 from "../public/histograms/TH3variableBinning2x2x3WOutsideContent.json";
 import {histogramSubjectGet} from "./rxjs/HistogramSubject.js";
 import histoSparse2 from "../public/histograms/THnSparse3.json"
 import nestedHisto from "../public/histograms/hist3D.axis1-pt_axis2-ce_axis5-eta.json"
@@ -25,7 +26,6 @@ import {parse} from "jsroot";
 initNdmvrAframe();
 
 const sceneElm = generate_AFrame_blank_scene_html();
-let toggleHisto = false;
 
 
 document.querySelector("#app").appendChild(sceneElm);
@@ -64,70 +64,15 @@ sceneElm.appendChild(histogramContainer);
 
 // histogramSubjectGet().next({id: 'histogram1', histogram: parse(histoWithOutsideContent)});
 // histogramSubjectGet().next({id: 'histogram1', histogram: parse(histoSparse)});
+
 histogramSubjectGet().next({id: 'histogram1', histogram: parse(nestedHisto)});
+
 // histogramSubjectGet().next({id: 'histogram1', histogram: 'https://eos.ndmspc.io//eos/ndmspc/scratch/ndmspc/ndmvr-aframe/demo/hist3D.axis1-pt_axis2-ce_axis5-eta.root'});
 // histogramSubjectGet().next({id: 'histogram1', histogram: parse(nestedHisto4)});
-// histogramSubjectGet().next({id: 'histogram1', histogram: parse(histo6x2x1)});
+
+// histogramSubjectGet().next({id: 'histogram1', histogram: histo6x2x1});
+
 // histogramSubjectGet().next({id: 'histogram1', histogram: parse(histo4x3x1)});
-// stdBin();
-
-let showHistogramToggle = false;
-
-// window.addEventListener('click', () => {
-//    if (showHistogramToggle){
-//       document.querySelector('[histogram]').components.histogram.hideAllChildHistograms();
-//    } else {
-//       document.querySelector('[histogram]').components.histogram.showAllChildHistograms();
-//    }
-//    showHistogramToggle = !showHistogramToggle;
-// })
-
-// setTimeout(() => {
-//    document.querySelector('[histogram]').components.histogram.renderMappingHistogram('set1')
-// }, 1000);
-//
-// setTimeout(() => {
-//    document.querySelector('[histogram]').components.histogram.renderMappingHistogram('set3')
-// }, 2000);
-//
-// setTimeout(() => {
-//    document.querySelector('[histogram]').components.histogram.renderMappingHistogram('set2')
-// }, 3000);
-//
-// setTimeout(() => {
-//    document.querySelector('[histogram]').components.histogram.renderMappingHistogram('set1')
-// }, 4000);
-//
-// setTimeout(() => {
-//    document.querySelector('[histogram]').components.histogram.renderMappingHistogram('set3')
-// }, 5000);
-//
-// setTimeout(() => {
-//    document.querySelector('[histogram]').components.histogram.renderMappingHistogram('set2')
-// }, 6000);
-//
-// setTimeout(() => {
-//    document.querySelector('[histogram]').components.histogram.renderMappingHistogram('set1')
-// }, 7000);
-//
-// setTimeout(() => {
-//    document.querySelector('[histogram]').components.histogram.renderMappingHistogram('set3')
-// }, 8000);
-//
-// setTimeout(() => {
-//    document.querySelector('[histogram]').components.histogram.renderMappingHistogram('set2')
-// }, 9000);
-
-
-function stdBin() {
-   histogramSubjectGet().next({id: 'histogram1', histogram: parse(histogram2x2x3)});
-   setTimeout(() => histoBin(), 5000);
-}
-
-function histoBin() {
-   histogramSubjectGet().next({id: 'histogram1', histogram: parse(histogramRecursive)});
-   setTimeout(() => stdBin(), 5000);
-}
 
 
 const functions = [

@@ -53,21 +53,19 @@ export default class NestedHistogram {
       this.instancedMesh.raycast = (raycaster, intersects) => {
          const res = this.checkIntersection(raycaster.ray);
          // }
-         if (res) {
-            const trigger = raycaster._triggerSource;
-            if (trigger === 'mousemove') {
-               // this.showChildHistogram()
+         if (res[0]) {
+            const triggerSource = raycaster._triggerSource;
+            if (triggerSource === 'mousemove') {
                this.mousemoveEvents.forEach(func => {
                   // console.log(res[0].index)
-                  // func(res[0].index);
+                  func(res[0].index);
                });
-            } else if (trigger === 'mouseclick') {
+            } else if (triggerSource === 'mouseclick') {
                this.clickEvents.forEach(func => {
-                  console.log(res[0].index)
-                  // func(res[0].index);
+                  // console.log(res[0].index)
+                  func(res[0].index);
                });
             }
-            // console.log(res[0])
          }
       }
       console.log(this.rootObj)
@@ -80,7 +78,6 @@ export default class NestedHistogram {
       if (event === 'mouseclick') {
          this.clickEvents.push(boundFunction);
       } else if(event === 'mousemove') {
-         console.log('pushed to array')
          this.mousemoveEvents.push(boundFunction);
       }
    }
@@ -116,7 +113,7 @@ export default class NestedHistogram {
             .reduce((acc, value) => {
                return acc * value;
             }, 1);
-         counter.setFromNumber(startIndex / stepFor)
+         counter.setFromNumber(startIndex / stepFor);
 
          let padding;
          if (isTH3) {
@@ -180,38 +177,25 @@ export default class NestedHistogram {
             //    }
             // }
 
-            // if (isTH2) {
-            //    binSizePos.y.pos -= (binSizePos.y.size - t) / 2;
-            // } else if (!isTH3) {
-            //    binSizePos.y.pos -= (binSizePos.y.size - t) / 2;
-            //    binSizePos.z.size = 0.01;
-            // }
-
-
-            // if (layer === 0) {
             this.matrixCache[currentLayer][i / stepFor] = {
                position: new THREE.Vector3(binSizePos.x.pos, binSizePos.y.pos, binSizePos.z.pos),
                scale: new THREE.Vector3(binSizePos.x.size, binSizePos.y.size, binSizePos.z.size),
             }
-            // }
-
-            // if (layer === 1 && currentLayer === 0) {
-               // console.log(this.matrixCache[0][0].position)
-            // }
-            // console.log(i, binSizePos.x.pos, binSizePos.y.pos, binSizePos.z.pos)
 
             t = binSizePos.y.size * scaleFactor;
 
             if (isTH3) {
                binSizePos.x.size *= scaleFactor;
                binSizePos.z.size *= scaleFactor;
+               binSizePos.y.size = t;
             } else if (isTH2) {
                binSizePos.y.pos -= (binSizePos.y.size - t) / 2;
+               binSizePos.y.size = t;
             } else {
                binSizePos.y.pos -= (binSizePos.y.size - t) / 2;
+               binSizePos.y.size = t;
                binSizePos.z.size = 0.1;
             }
-            binSizePos.y.size = t;
 
             dummy.position.set(binSizePos.x.pos, binSizePos.y.pos, binSizePos.z.pos)
             dummy.scale.set(binSizePos.x.size, binSizePos.y.size, binSizePos.z.size)
@@ -220,14 +204,9 @@ export default class NestedHistogram {
             if (currentLayer === layer) {
                this.instancedMesh.setMatrixAt(i, dummy.matrix);
                this.instancedMesh.setColorAt(i, this.color);
-               // this.matrixCache[currentLayer][i / stepFor] = {
-               //    position: new THREE.Vector3(binSizePos.x.pos, binSizePos.y.pos, binSizePos.z.pos),
-               //    scale: new THREE.Vector3(binSizePos.x.size, binSizePos.y.size, binSizePos.z.size),
-               // }
-            } else {
+            } else if(this.maxInstancesPerLayer.length -1 > layer) {
                const index = obj.getBin(relPos.x + 1, relPos.y + 1, relPos.z + 1)
-               const child = obj.children[this.selectedChildren[currentLayer]][index];
-               // console.log(i, i+stepFor, currentLayer + 1, child, this.matrixCache[currentLayer][i/stepFor])
+               const child = obj.children[this.selectedChildren[0]][index];
                render(i, i + stepFor, currentLayer + 1, child, this.matrixCache[currentLayer][i / stepFor]);
             }
             if (!counter.increment(0)) break;
@@ -243,26 +222,20 @@ export default class NestedHistogram {
 
 
    showChildHistogram(index) {
-
-      // console.log(this.rootObj.getBin(index[0].x + 1, index[0].y + 1, index[0].z + 1))
       let ind = 0;
       const rec = (layer, obj) => {
          const fX = obj.fXaxis.fNbins;
          const fY = obj.fYaxis.fNbins;
          const fZ = obj.fZaxis.fNbins;
          ind += (index[layer].x + (index[layer].y * fX) + (index[layer].z * fX * fY)) * this.maxInstancesPerLayer[layer + 1]
-         // ind += (fX + (fY * fX) + (fZ * fX * fY)) * this.maxInstancesPerLayer[layer + 1]
          if (layer + 1 < index.length) {
             rec(layer + 1,
                obj.children[this.selectedChildren[0]]
-                  [obj.getBin(index[layer].x + 1, index[layer].y + 1, index[layer].z + 1)])
+                  [obj.getBin(index[layer].x + 1, index[layer].y + 1, index[layer].z + 1)]);
          }
       }
       rec(0, this.rootObj);
-      // console.log(this.matrixCache[0][0])
-      // console.log(this.matrixCache[0][1])
-      // console.log(index, ind, ind +  this.maxInstancesPerLayer[index.length],index.length)
-      this.renderHistogram(ind, ind + this.maxInstancesPerLayer[index.length], index.length)
+      this.renderHistogram(ind, ind + this.maxInstancesPerLayer[index.length], index.length);
    }
 
    checkIntersection(ray) {
@@ -481,7 +454,9 @@ export default class NestedHistogram {
          });
          return max;
       };
-      computation(this.rootObj.children);
+      if (this.rootObj.children) {
+         computation(this.rootObj.children);
+      }
       max.push(1)
       return max;
    }
