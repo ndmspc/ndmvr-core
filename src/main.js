@@ -19,6 +19,7 @@ import nestedHisto from "../public/histograms/hist3D.axis1-pt_axis2-ce_axis5-eta
 import nestedHisto2 from "../public/histograms/hist2D.axis1-pt_axis2-ce.json"
 import nestedHisto3 from "../public/histograms/hist1D.axis1-pt.json"
 import nestedHisto4 from "../public/histograms/test3D.axis1-pt_axis2-ce_axis5-eta (1).json"
+// import histoSparse5 from "../public/histograms/test3D.axis1-pt_axis2-ce_axis5-eta.root"
 import {parse} from "jsroot";
 
 initNdmvrAframe();
@@ -63,8 +64,9 @@ sceneElm.appendChild(histogramContainer);
 
 // histogramSubjectGet().next({id: 'histogram1', histogram: parse(histoWithOutsideContent)});
 // histogramSubjectGet().next({id: 'histogram1', histogram: parse(histoSparse)});
-// histogramSubjectGet().next({id: 'histogram1', histogram: parse(nestedHisto)});
-histogramSubjectGet().next({id: 'histogram1', histogram: 'https://eos.ndmspc.io//eos/ndmspc/scratch/ndmspc/ndmvr-aframe/demo/hist3D.axis1-pt_axis2-ce_axis5-eta.root'});
+histogramSubjectGet().next({id: 'histogram1', histogram: parse(nestedHisto)});
+// histogramSubjectGet().next({id: 'histogram1', histogram: 'https://eos.ndmspc.io//eos/ndmspc/scratch/ndmspc/ndmvr-aframe/demo/hist3D.axis1-pt_axis2-ce_axis5-eta.root'});
+// histogramSubjectGet().next({id: 'histogram1', histogram: parse(nestedHisto4)});
 // histogramSubjectGet().next({id: 'histogram1', histogram: parse(histo6x2x1)});
 // histogramSubjectGet().next({id: 'histogram1', histogram: parse(histo4x3x1)});
 // stdBin();
@@ -137,6 +139,8 @@ const functions = [
       },
       function: function (event) {
          console.log('click: ', event);
+         this.showChildHistogram(event)
+
       }
    },
    {
@@ -146,8 +150,8 @@ const functions = [
          id: '*'
       },
       function: function (event) {
-         console.log('mousemove: ', event);
-         this.showChildHistogram(event)
+         // console.log('mousemove: ', event);
+         // this.showChildHistogram(event)
       }
    }
 ];

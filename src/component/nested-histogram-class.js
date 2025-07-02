@@ -56,8 +56,15 @@ export default class NestedHistogram {
          if (res) {
             const trigger = raycaster._triggerSource;
             if (trigger === 'mousemove') {
+               // this.showChildHistogram()
                this.mousemoveEvents.forEach(func => {
-                  func(res[0].index);
+                  // console.log(res[0].index)
+                  // func(res[0].index);
+               });
+            } else if (trigger === 'mouseclick') {
+               this.clickEvents.forEach(func => {
+                  console.log(res[0].index)
+                  // func(res[0].index);
                });
             }
             // console.log(res[0])
@@ -152,6 +159,7 @@ export default class NestedHistogram {
             }
             let t = content / contentMax;
             this.color = new THREE.Color(t, 0, 1 - t);
+            // this.color = new THREE.Color(1, 0, 0);
             // this.color = new THREE.Color(counter.getIndex() / 1000, 0, 1 - counter.getIndex() / 10);
 
             // if (currentLayer === 0) {
@@ -187,9 +195,9 @@ export default class NestedHistogram {
             }
             // }
 
-            if (layer === 1 && currentLayer === 0) {
-               console.log(this.matrixCache[0][0].position)
-            }
+            // if (layer === 1 && currentLayer === 0) {
+               // console.log(this.matrixCache[0][0].position)
+            // }
             // console.log(i, binSizePos.x.pos, binSizePos.y.pos, binSizePos.z.pos)
 
             t = binSizePos.y.size * scaleFactor;
@@ -201,7 +209,7 @@ export default class NestedHistogram {
                binSizePos.y.pos -= (binSizePos.y.size - t) / 2;
             } else {
                binSizePos.y.pos -= (binSizePos.y.size - t) / 2;
-               binSizePos.z.size = 0.01;
+               binSizePos.z.size = 0.1;
             }
             binSizePos.y.size = t;
 

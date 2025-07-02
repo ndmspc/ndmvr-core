@@ -44,18 +44,49 @@ export default class FileHandler {
       // await this.#ready;
       if (!rootFile) return;
       const hMap = await rootFile.readObject('hMap');
-      // console.log(hMap);
+      hMap.children = {};
       // console.log(this.#rootFile);
       const temp = hMap.fXaxis.fNbins * hMap.fYaxis.fNbins * hMap.fZaxis.fNbins;
       let max = [];
       let childrenAxes = [];
       max.push(temp);
 
-      const computation = (children, rootFile) => {
+      const computation = async (children, rootFile) => {
          let temp = 0;
-         // if (layer >= max.length) {
-         //    max.push(0);
+         const concurrent = 100;
+
+         for (const key of Object.keys(hMap.children)) {
+            for (let i = 0; i < children.length; i += concurrent) {
+               const promises = [];
+
+               // Only process items that actually exist
+               const batchEnd = Math.min(i + concurrent, children.length);
+
+               for (let j = i; j < batchEnd; j++) {
+                  promises.push(rootFile.readObject(`content/${children[j].fName}/${key}`));
+               }
+
+               console.log(`Processing batch: ${i} to ${batchEnd-1} (${promises.length} items)`);
+               const results = await Promise.all(promises);
+
+               // Actually use the results if needed
+               // temp += results.length; // or whatever processing you need
+            }
+         }
+         //
+         //    console.log('start')
+         // for (const key of Object.keys(hMap.children)) {
+         //    for (const index of children) {
+         //       // console.log(index)
+         //       // console.log(`content/${index.fName}/${key}`);
+         //       const th = await rootFile.readObject(`content/${index.fName}/${key}`);
+         //       console.log(index.fName)
+         //    }
+         //    console.log('child done');
+         //
          // }
+         console.log('done')
+
          children.forEach(index => {
             // console.log(value.fName)
             // rootFile.readObject(`content/${index.fName}/`).then(val => {
@@ -84,11 +115,11 @@ export default class FileHandler {
       const childs = await rootFile.readObject('content')
       const childrenAxesDir = await rootFile.readObject(`content/${childs.fKeys[0].fName}`)
       childrenAxesDir.fKeys.forEach(axis => {
-         childrenAxes.push(axis.fName);
+         hMap.children[axis.fName] = [];
       })
-      console.log(childrenAxes)
+      console.log(hMap)
 
-      console.log(childs.fKeys[0])
+      // console.log(childs.fKeys)
 
       computation(childs.fKeys, rootFile);
       return max;
