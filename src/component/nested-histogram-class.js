@@ -58,12 +58,12 @@ export default class NestedHistogram {
             if (triggerSource === 'mousemove') {
                this.mousemoveEvents.forEach(func => {
                   // console.log(res[0].index)
-                  func(res[0].index);
+                  func(res[0].index, this);
                });
             } else if (triggerSource === 'mouseclick') {
                this.clickEvents.forEach(func => {
                   // console.log(res[0].index)
-                  func(res[0].index);
+                  func(res[0].index, this);
                });
             }
          }
@@ -73,12 +73,10 @@ export default class NestedHistogram {
    }
 
    addEvent(event, func) {
-      console.log(event)
-      const boundFunction = func.bind(this);
       if (event === 'mouseclick') {
-         this.clickEvents.push(boundFunction);
+         this.clickEvents.push(func);
       } else if(event === 'mousemove') {
-         this.mousemoveEvents.push(boundFunction);
+         this.mousemoveEvents.push(func);
       }
    }
 

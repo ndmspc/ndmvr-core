@@ -82,9 +82,8 @@ const functions = [
          entity: 'nested-histogram',
          id: '*'
       },
-      function: function (event) {
-         console.log('click: ', event);
-         this.showChildHistogram(event)
+      function: function (event, context) {
+         context.showChildHistogram(event);
 
       }
    },
@@ -94,7 +93,7 @@ const functions = [
          entity: 'nested-histogram',
          id: '*'
       },
-      function: function (event) {
+      function: function (event, context) {
          // console.log('mousemove: ', event);
          // this.showChildHistogram(event)
       }
