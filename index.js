@@ -11,5 +11,5 @@ export * from "./src/rxjs/HistogramSubject";
 export * from "./src/component/camera.component";
 export * from "./src/controllers/mobile/mobileController";
 export * from "./src/utils/htmlGenerators";
-export {default as NdmvrRaycaster} from "./src/core/ndmvr-raycaster-class";
-export { default as NestedHistogram } from "./src/component/nested-histogram-class";
+export * from "./src/core/ndmvr-raycaster-class";
+export * from "./src/component/nested-histogram-class";

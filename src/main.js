@@ -30,10 +30,10 @@ const sceneElm = generate_AFrame_blank_scene_html();
 
 document.querySelector("#app").appendChild(sceneElm);
 
-// const geom = new THREE.BoxGeometry(0.128821, 0.1515151515151515,0.9174311926605504);
-// const mate = new THREE.MeshNormalMaterial();
-// const cube = new THREE.Mesh(geom, mate);
-// cube.position.set(-4.9358974,-1.13636363,4.541284403669724);
+   // const geom = new THREE.BoxGeometry(0.128821, 0.1515151515151515,0.9174311926605504);
+   // const mate = new THREE.MeshNormalMaterial();
+   // const cube = new THREE.Mesh(geom, mate);
+   // cube.position.set(-4.9358974,-1.13636363,4.541284403669724);
 // sceneElm.object3D.add(cube)
 
 // const cube2 = new THREE.Mesh(geom, mate);
@@ -65,12 +65,12 @@ sceneElm.appendChild(histogramContainer);
 // histogramSubjectGet().next({id: 'histogram1', histogram: parse(histoWithOutsideContent)});
 // histogramSubjectGet().next({id: 'histogram1', histogram: parse(histoSparse)});
 
-histogramSubjectGet().next({id: 'histogram1', histogram: parse(nestedHisto)});
+// histogramSubjectGet().next({id: 'histogram1', histogram: parse(nestedHisto)});
 
 // histogramSubjectGet().next({id: 'histogram1', histogram: 'https://eos.ndmspc.io//eos/ndmspc/scratch/ndmspc/ndmvr-aframe/demo/hist3D.axis1-pt_axis2-ce_axis5-eta.root'});
 // histogramSubjectGet().next({id: 'histogram1', histogram: parse(nestedHisto4)});
 
-// histogramSubjectGet().next({id: 'histogram1', histogram: histo6x2x1});
+histogramSubjectGet().next({id: 'histogram1', histogram: histo6x2x1});
 
 // histogramSubjectGet().next({id: 'histogram1', histogram: parse(histo4x3x1)});
 

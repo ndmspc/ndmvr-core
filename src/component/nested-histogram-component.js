@@ -4,7 +4,7 @@ import {histogramSubjectGet} from "../rxjs/HistogramSubject.js";
 import RadixCounter from "../utils/radixCounter.js";
 import {computeAFrameBinSizePos, rootSizePosToAFrame} from "../utils/histogramRenderUtils.js";
 import {distance} from "three/tsl";
-import NestedHistogram from "./nested-histogram-class.js";
+import {NestedHistogram} from "./nested-histogram-class.js";
 
 const registerNestedHistogramComponent = () => {
    AFRAME.registerComponent("nested-histogram", {

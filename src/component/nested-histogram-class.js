@@ -1,7 +1,7 @@
 import RadixCounter from "../utils/radixCounter.js";
 import {computeAFrameBinSizePos, rootSizePosToAFrame} from "../utils/histogramRenderUtils.js";
 
-export default class NestedHistogram {
+export class NestedHistogram {
    bin_padding_x;
    bin_padding_y;
    bin_padding_z;

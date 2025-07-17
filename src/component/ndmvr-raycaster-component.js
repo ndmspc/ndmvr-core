@@ -1,5 +1,5 @@
 import "aframe";
-import NdmvrRaycaster from "../core/ndmvr-raycaster-class.js";
+import {NdmvrRaycaster} from "../core/ndmvr-raycaster-class.js";
 
 const registerNdmvrRaycasterComponent = () => {
    AFRAME.registerComponent("ndmvr-raycaster", {

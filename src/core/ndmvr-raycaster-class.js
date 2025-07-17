@@ -5,7 +5,7 @@
  * @param scene Three.js scene object, in scene children camera has to be present.
  * Raycaster then traverse childs of specified scene.
  */
-export default class NdmvrRaycaster {
+export class NdmvrRaycaster {
 
    raycaster;
    mouse;
