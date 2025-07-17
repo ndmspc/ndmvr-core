@@ -9,8 +9,6 @@ export class NestedHistogram {
    rootObj = undefined;
    instancedMesh = undefined;
    raycaster = undefined;
-   histoSub = undefined;
-   sub = undefined;
    maxInstancesPerLayer = undefined;
    totalInstances = undefined;
    color = new THREE.Color();
@@ -77,6 +75,17 @@ export class NestedHistogram {
          this.clickEvents.push(func);
       } else if(event === 'mousemove') {
          this.mousemoveEvents.push(func);
+      }
+   }
+
+   removeEvent(event, func) {
+      if (event === 'mouseclick') {
+         // this.clickEvents.(func);
+         const index = this.clickEvents.find((f) => f === func);
+         if (index) this.clickEvents.splice(index, 1);
+      } else if(event === 'mousemove') {
+         const index = this.clickEvents.find((f) => f === func);
+         if (index) this.clickEvents.splice(index, 1);
       }
    }
 
@@ -460,8 +469,6 @@ export class NestedHistogram {
    }
 
    remove() {
-      this.histoSub.unsubscribe();
-      this.sub.unsubscribe();
       // this.instancedMesh.dispose();
       this.matrixCache = [];
    }
