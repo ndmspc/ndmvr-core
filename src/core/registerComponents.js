@@ -11,6 +11,7 @@ import registerNdmvrRaycasterComponent from "../component/ndmvr-raycaster-compon
 import registerDesktopController from "../controllers/desktop/wasdControlsCustom.js";
 import registerHistogramComponent from "../component/histogram-component.js";
 import registerHistogramBorderComponent from "../component/histogram-border-component.js";
+import registerNestedHistogramComponent from "../component/nested-histogram-component.js";
 
 export const registerComponents = () => {
    //by D.Chovanec:
@@ -24,6 +25,7 @@ export const registerComponents = () => {
    registerNdmvrRaycasterComponent();
    registerDesktopController();
    registerHistogramBorderComponent();
+   registerNestedHistogramComponent();
    //by S.Korecko:
    registerPseudoHistogramComponent();
 }

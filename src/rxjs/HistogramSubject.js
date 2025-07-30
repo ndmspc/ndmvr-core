@@ -1,4 +1,6 @@
 import {ReplaySubject} from "rxjs";
+import FileHandler from "../service/FileHandler.js";
+import JsonHandler from "../service/JsonHandler.js";
 
 let histogramSubject;
 
@@ -13,7 +15,14 @@ class HistogramSubject {
       return this.#subject.asObservable();
    }
 
-   next(e) {
+   async next(e) {
+      if (typeof e.histogram === 'string') {
+         e.histogram = await FileHandler.parseFile(e.histogram);
+      } else if (typeof e.histogram === 'object') {
+         e.histogram = await JsonHandler.parseJson(e.histogram);
+      } else {
+         throw new Error('Unsupported data type');
+      }
       this.#subject.next(e);
    }
 }

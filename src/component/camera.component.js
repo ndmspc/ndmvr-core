@@ -11,7 +11,7 @@ class CameraComponent {
       this.#camera.id = "cameraRig"
       this.#camera.setAttribute('position', "0 1.6 0");
       this.#camera.innerHTML = `
-         <a-camera id="camera" wasd-controls-custom="">
+         <a-camera id="camera" wasd-controls-custom="acceleration: 10" wasd-controls="acceleration: 50">
          </a-camera>
       `;
       this.#oculusController = document.createElement('a-entity');
