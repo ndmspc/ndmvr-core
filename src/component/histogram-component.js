@@ -31,7 +31,7 @@ const registerHistogramComponent = () => {
          if (this.data.histogram_source_url) {
             this.loadAndRenderHistogramByHttpRequest(this.data.histogram_source_url);
          }
-         this.raycaster = new THREE.Raycaster();
+         // this.raycaster = new THREE.Raycaster();
          this.mouse = new THREE.Vector2();
          if (this.data.size) {
             this.size = stringToXYZ(this.data.size);

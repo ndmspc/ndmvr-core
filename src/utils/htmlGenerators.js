@@ -48,7 +48,7 @@ export function generate_AFrame_rand_hist_scene_html(){
 export function generate_AFrame_blank_scene_html(){
   const container = document.createElement('div');
   container.id = 'container';
-  new MobileController();
+  // new MobileController();
   const scene = generateBlankScene();
   container.appendChild(scene);
   return scene;
@@ -59,8 +59,8 @@ function generateBlankScene() {
   const scene = document.createElement('a-scene');
   scene.id = "a-min-scene";
   scene.setAttribute('stats', '');
-  scene.setAttribute('device-detector', '');
-  scene.setAttribute('screen-controls', '');
+  // scene.setAttribute('device-detector', '');
+  // scene.setAttribute('screen-controls', '');
   scene.setAttribute('ndmvr-raycaster', '');
   scene.style.cssText= "position: absolute; height: 100%; width: 100%;";
 
