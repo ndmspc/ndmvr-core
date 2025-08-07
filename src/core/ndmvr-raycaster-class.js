@@ -76,6 +76,14 @@ export class NdmvrRaycaster {
       });
    }
 
+   intersectObject(obj) {
+      this.mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+      this.mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+      this.raycaster.setFromCamera(this.mouse, this.cameraElement);
+
+      console.log(this.raycaster.intersectObject(obj));
+   }
+
    handleRaycast() {
       const hits = this.raycaster.intersectObjects(this.sceneElement.children, true);
       if (hits.length > 0) {

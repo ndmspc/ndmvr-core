@@ -2,13 +2,12 @@ import {BehaviorSubject} from "rxjs";
 
 let inputDeviceSubject;
 
-class SetSubject {
+class InputDeviceSubject {
    #subject;
 
    constructor() {
       this.#subject = new BehaviorSubject({
-         sets: [],
-         selectedSet: undefined
+         inputDevice: 'keyboard'
       });
    }
 
@@ -16,16 +15,16 @@ class SetSubject {
       return this.#subject.asObservable();
    }
 
-   getValue() {
-      return this.#subject.getValue();
-   }
-
    next(e) {
+      let state = this.#subject.getValue();
+      if (e.inputDevice){
+         state.inputDevice = e.inputDevice;
+      }
       this.#subject.next(e);
    }
 }
 
-export const stateSubjectGet = () => {
-   if (!inputDeviceSubject) inputDeviceSubject = new SetSubject();
+export const inputDeviceSubjectGet = () => {
+   if (!inputDeviceSubject) inputDeviceSubject = new InputDeviceSubject();
    return inputDeviceSubject;
 }

@@ -1,4 +1,4 @@
-import {stateSubjectGet} from "../rxjs/StateSubject.js";
+import {inputDeviceSubjectGet} from "../rxjs/InputDeviceSubject.js";
 
 let camera;
 
@@ -17,7 +17,7 @@ class CameraComponent {
       this.#oculusController = document.createElement('a-entity');
       this.#oculusController.id = "oculus-controller";
       this.#oculusController.setAttribute('oculus-controller', '');
-      stateSubjectGet()
+      inputDeviceSubjectGet()
          .getObservable()
          .subscribe(
             this.handleStateChange.bind(this)
