@@ -1,6 +1,6 @@
 import registerVRModeDetector from "../component/device-detector-component.js";
 
-import {stateSubjectGet} from "../rxjs/StateSubject.js";
+import {inputDeviceSubjectGet} from "../rxjs/InputDeviceSubject.js";
 import registerPseudoHistogramComponent from "../component/pseudo-histogram-component.js";
 import registerScreenControlsComponent from "../component/screen-controls-component.js";
 import registerOculusController from "../controllers/oculus/oculusController.js";
@@ -12,12 +12,13 @@ import registerDesktopController from "../controllers/desktop/wasdControlsCustom
 import registerHistogramComponent from "../component/histogram-component.js";
 import registerHistogramBorderComponent from "../component/histogram-border-component.js";
 import registerNestedHistogramComponent from "../component/nested-histogram-component.js";
+import registerCanvasComponent from "../component/canvas-component.js";
 
 export const registerComponents = () => {
    //by D.Chovanec:
    registerHistogramComponent();
    registerScreenControlsComponent();
-   registerVRModeDetector(stateSubjectGet().next.bind(stateSubjectGet()));
+   registerVRModeDetector(inputDeviceSubjectGet().next.bind(inputDeviceSubjectGet()));
    registerOculusController();
    registerLeftControllerLogging();
    registerRightControllerLogging();
@@ -26,6 +27,7 @@ export const registerComponents = () => {
    registerDesktopController();
    registerHistogramBorderComponent();
    registerNestedHistogramComponent();
+   registerCanvasComponent();
    //by S.Korecko:
    registerPseudoHistogramComponent();
 }

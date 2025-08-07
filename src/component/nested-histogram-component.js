@@ -10,8 +10,8 @@ const registerNestedHistogramComponent = () => {
    AFRAME.registerComponent("nested-histogram", {
       schema: {
          bin_padding_x: {type: "number", default: 0.1},
-         bin_padding_y: {type: "number", default: 1},
-         bin_padding_z: {type: "number", default: 1},
+         bin_padding_y: {type: "number", default: 0.1},
+         bin_padding_z: {type: "number", default: 0.1},
       },
 
       instancedMesh: undefined,
@@ -30,7 +30,7 @@ const registerNestedHistogramComponent = () => {
                   this.data.bin_padding_x,
                   this.data.bin_padding_y,
                   this.data.bin_padding_z,
-                  histo, this.data.id);
+                  histo, this.el.id);
                this.instancedMesh.init();
                this.el.object3D.add(this.instancedMesh.instancedMesh);
                this.instancedMesh.renderHistogram(0, this.instancedMesh.totalInstances, 0);

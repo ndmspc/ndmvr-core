@@ -4,7 +4,7 @@ import {getCameraService} from "../../service/cameraService.js";
 import arrow from "../../assets/mobileControls/arrow.png"
 import joystickBase from "../../assets/mobileControls/joystick-base.png"
 import joystickBlue from "../../assets/mobileControls/joystick-blue.png"
-import {stateSubjectGet} from "../../rxjs/StateSubject.js";
+import {inputDeviceSubjectGet} from "../../rxjs/InputDeviceSubject.js";
 
 /**
  * Holds elements responsible for controlling user (camera)
@@ -34,7 +34,7 @@ export class MobileController {
 
       this.initController();
 
-      stateSubjectGet().getObservable().subscribe(ev => {
+      inputDeviceSubjectGet().getObservable().subscribe(ev => {
          if (ev.inputDevice === 'mobile'){
             const container = document.getElementById('container');
             container.appendChild(this.getController());
