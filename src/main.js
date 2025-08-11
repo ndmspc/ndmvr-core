@@ -191,9 +191,9 @@ loadButton.addEventListener('click', async () => {
 // histogramSubjectGet().next({id: 'histogram1', histogram: parse(nestedHisto4)});
 
 // histogramSubjectGet().next({id: 'histogram1', histogram: histo6x2x1});
-// histogramSubjectGet().next({id: 'histogram1', histogram: histo125});
+histogramSubjectGet().next({id: 'histogram1', histogram: histo125});
 // histogramSubjectGet().next({id: 'histogram1', histogram: histo12_5});
-histogramSubjectGet().next({id: 'histogram1', histogram: histo1_2_5});
+// histogramSubjectGet().next({id: 'histogram1', histogram: histo1_2_5});
 
 // histogramSubjectGet().next({id: 'histogram1', histogram: parse(histo4x3x1)});
 
@@ -207,7 +207,6 @@ const functions = [
       },
       function: function (event, context) {
          console.log(event)
-         console.log('mouselcick');
          context.showChildHistogram(event);
       }
    },
@@ -218,9 +217,6 @@ const functions = [
          id: '*'
       },
       function: function (event, context) {
-         // console.log(event)
-         console.log('shiftmouselcick');
-
          context.hideChildHistogram(event);
       }
    },
@@ -231,7 +227,6 @@ const functions = [
          id: '*'
       },
       function: function (event, context) {
-         console.log(event)
          // console.log('index: ', context.computeJsRootIndexFromPosition(event))
          context.setPointerToChild(context.computeJsRootIndexFromPosition(event), 'unlikepm');
       }
