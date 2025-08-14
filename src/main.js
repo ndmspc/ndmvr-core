@@ -250,7 +250,7 @@ const functions = [
          id: '*'
       },
       function: function (event, context) {
-         // console.log('mousemove: ', event);
+         console.log('mousemove: ', event);
          // this.showChildHistogram(event)
       }
    }
