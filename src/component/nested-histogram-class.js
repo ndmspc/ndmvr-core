@@ -98,8 +98,8 @@ export class NestedHistogram {
     init() {
         this.maxInstancesPerLayer = this.computeMaxInstancesPerLayer();
         this.maxContentPerLayer = this.computeMaxContentPerLayer();
-        console.log(this.maxContentPerLayer);
-        console.log(this.maxInstancesPerLayer)
+        // console.log(this.maxContentPerLayer);
+        // console.log(this.maxInstancesPerLayer)
         this.matrixCache = new Array(this.maxInstancesPerLayer.length).fill().map(() => []);
         this.totalInstances = this.maxInstancesPerLayer
             .reduce((acc, value) => {
@@ -111,7 +111,7 @@ export class NestedHistogram {
 
     renderHistogram(startIndex, endIndex, layer) {
         if (!this.pointer ||
-            layer > this.maxInstancesPerLayer.length - 1) return;
+            layer >= this.maxInstancesPerLayer.length - 1) return;
         this.currentLayer = layer;
         // this.logRender(startIndex, endIndex, layer, 'render');
         this.logRender({
@@ -135,6 +135,7 @@ export class NestedHistogram {
             // if (currentLayer === 1 && startIndex === 0) {
             //    console.log('start: ', startIndex, ', end: ', endIndex, ', limits: ', limits);
             // }
+            console.log(startIndex, endIndex, currentLayer, layer)
             if (currentLayer > layer) return;
             if (!obj) return;
 
@@ -370,7 +371,7 @@ export class NestedHistogram {
         let t = this.pointer.origin;
         for (let i = 0; i < position.length; i++) {
             ind[i] = t.getBin(position[i].x + 1, position[i].y + 1, position[i].z + 1);
-            if (t.children.content) {
+            if (t.children?.content) {
                 t = t.children.content[ind[i]];
             } else {
                 return ind;
@@ -404,7 +405,36 @@ export class NestedHistogram {
             .reduce((acc, value) => {
                 return acc * value;
             }, 1);
+
+        canvasSubjectGet().next({
+            id: this.id + '-cinema',
+            obj: this.getChildByPosition(
+                this.pointer.origin,
+                [...position]) //[...] for shallow copy
+        });
+
         this.renderHistogram(ind.slice(-1)[0], ind.slice(-1)[0] + multiplier, position.length);
+    }
+
+    getChildByPosition(origin, position) {
+        const pos = position[0];
+        let obj = origin;
+        if (pos) {
+            const index = origin.getBin(pos.x + 1, pos.y + 1, pos.z + 1);
+            if (origin.children?.content) {
+                obj = origin.children.content[index];
+            } else if (origin.children?.[this.selectedSet]) {
+                obj = origin.children[this.selectedSet][index];
+            }
+            if (origin.children && position[1]) {
+                position.splice(0, 1);
+                return this.getChildByPosition(obj, position);
+            } else {
+                return obj;
+            }
+        } else {
+            return origin;
+        }
     }
 
     hideChildHistogram(index) {
@@ -487,10 +517,10 @@ export class NestedHistogram {
     }
 
     setAvailableSets(origin) {
-        if (origin.children.content) {
+        if (origin.children?.content) {
             const firstChild = origin.children.content.find((child) => {return child});
             this.setAvailableSets(firstChild);
-        } else if (origin.children) {
+        } else if (origin?.children) {
             const currentValue = stateSubjectGet().getValue();
             currentValue.sets = Object.keys(origin.children);
             stateSubjectGet().next(currentValue);
