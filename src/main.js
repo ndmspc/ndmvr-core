@@ -206,7 +206,9 @@ const functions = [
       },
       function: function (event, context) {
          console.log(event)
-         context.showChildHistogram(event);
+         console.log('index: ', context.computeIndexFromPosition(event.index))
+         console.log('jsrootIndex: ', context.computeJsRootIndexFromPosition(event.index))
+         context.showChildHistogram(event.index);
       }
    },
    {
@@ -216,7 +218,7 @@ const functions = [
          id: '*'
       },
       function: function (event, context) {
-         context.hideChildHistogram(event);
+         context.hideChildHistogram(event.index);
       }
    },
    {
@@ -227,7 +229,7 @@ const functions = [
       },
       function: function (event, context) {
          // console.log('index: ', context.computeJsRootIndexFromPosition(event))
-         context.setPointerToChild(context.computeJsRootIndexFromPosition(event), 'unlikepm');
+         context.setPointerToChild(context.computeJsRootIndexFromPosition(event.index), 'unlikepm');
       }
    },
    {

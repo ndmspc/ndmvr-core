@@ -95,6 +95,9 @@ export class NestedHistogram {
         window.removeEventListener('keydown', this.keyUpHandler);
     }
 
+    /**
+     * @desc Initializes base values and objects.
+     * */
     init() {
         this.maxInstancesPerLayer = this.computeMaxInstancesPerLayer();
         this.maxContentPerLayer = this.computeMaxContentPerLayer();
@@ -109,6 +112,15 @@ export class NestedHistogram {
         this.setupInstancedMesh();
     }
 
+    /**
+     * @desc Render whole or part of histogram.
+     * @param startIndex Linear index of bin from which render will start.
+     * @param endIndex Linear index of bin on which render will end.
+     * @param layer Defines layer which will be rendered.
+     * @note Linear index is set in this form:
+     *  Bins of the deepest layer are offset by 1.
+     *  Bins from each upward layer are offset by maximum number of layer beneath.
+     * */
     renderHistogram(startIndex, endIndex, layer) {
         if (!this.pointer ||
             layer >= this.maxInstancesPerLayer.length - 1) return;
@@ -261,6 +273,10 @@ export class NestedHistogram {
         this.instancedMesh.computeBoundingBox();
     }
 
+    /**
+     * @desc This method sets up base for instanced mesh, which will be rendered.
+     * Precisely, geometry, material, count and ray-cast interaction are being set.
+     * */
     setupInstancedMesh() {
         let parent = undefined;
         if (this.instancedMesh) {
@@ -298,7 +314,7 @@ export class NestedHistogram {
                 const triggerSource = raycaster._triggerSource;
                 this.mouseEvents
                     .filter(mouseEvent => mouseEvent.event === triggerSource)
-                    .forEach(mouseEvent => mouseEvent.function(res[0].index, this));
+                    .forEach(mouseEvent => mouseEvent.function(res[0], this));
             }
         }
         if (parent) {
@@ -306,6 +322,12 @@ export class NestedHistogram {
         }
     }
 
+    /**
+     * @spec Adds function that will be called, if specified event is triggered.
+     * @param event can be either mouseevent in which only name of event is required (e.g. mousclick, shiftmousedbclick),
+     * or keyboard event which has to concise state (keydown or keyup) and keyCode (e.g. Numpad1)
+     * @param func Function that is called if event is triggered.
+     * */
     addEvent(event, func) {
         if (event?.state === 'keydown') {
             this.keydownEvents.push({
@@ -326,11 +348,24 @@ export class NestedHistogram {
         }
     }
 
+    /**
+     * @spec Removes function from event listener.
+     * @param event Defines from which event should listening be removed.
+     * @func Function has to have same reference to one that was added by addEvent.
+     * */
     removeEvent(event, func) {
         const index = this.mouseEvents.find((f) => f === func);
         if (index) this.mouseEvents.splice(index, 1);
     }
 
+    /**
+     * @desc Computes linear index of bin by position.
+     * @param position should be array with position for each layer.
+     * e.g. ([{x: 1, y: 3, z: 2}, {x: 89, 0, 0}])
+     * @return Array in which entries represents linear index of bins for each index.
+     * If used with combination from position obtained by ray-cast event,
+     * the last entry is always index of visible bin.
+     * */
     computeIndexFromPosition(position) {
         let ind = Array(position.length).fill(0);
         const rec = (layer, obj, index) => {
@@ -366,6 +401,14 @@ export class NestedHistogram {
         return ind;
     }
 
+    /**
+     * @desc Computes jsroot (Root specification) index of bin by position.
+     * @param position should be array with position for each layer.
+     * e.g. ([{x: 1, y: 3, z: 2}, {x: 89, 0, 0}])
+     * @return Array in which entries represents jsroot index of bins for each index.
+     * If used with combination from position obtained by ray-cast event,
+     * the last entry is always index of visible bin.
+     * */
     computeJsRootIndexFromPosition(position) {
         let ind = Array(position.length).fill(0);
         let t = this.pointer.origin;
@@ -380,14 +423,25 @@ export class NestedHistogram {
         return ind;
     }
 
-    setPointerToChild(index, set) {
-        this.pointer.setOriginToChild(index, set);
+    /**
+     * @desc Method to set pointers origin to one of origins child.
+     * In result, only part of histogram specified by child is rendered.
+     * @param position Array in which each entry represents position specified by jsroot.
+     * e.g. ([{x: 1, y: 3, z: 2}, {x: 89, 0, 0}])
+     * @param set Specifies from which set should child be chosen.
+     * If children contains sets, parameter need to be specified.
+     * */
+    setPointerToChild(position, set) {
+        this.pointer.setOriginToChild(position, set);
         this.init();
         console.log('path: ', this.pointer.path);
         console.log('title: ', this.pointer.title)
         this.renderHistogram(0, this.totalInstances, 0);
     }
 
+    /**
+     * @desc Method to set pointers origin to its parent.
+     * * */
     setPointerToParent() {
         this.pointer.setOriginToParent(1);
         console.log('path: ', this.pointer.path);
@@ -396,6 +450,11 @@ export class NestedHistogram {
         this.renderHistogram(0, this.totalInstances, 0);
     }
 
+    /**
+     * @desc Method to show (render) histogram that is currently represented by bin.
+     * @param position – should be array with position for each layer.
+     * e.g. ([{x: 1, y: 3, z: 2}, {x: 89, 0, 0}])
+     * */
     showChildHistogram(position) {
         const ind = this.computeIndexFromPosition(position);
 
@@ -416,6 +475,12 @@ export class NestedHistogram {
         this.renderHistogram(ind.slice(-1)[0], ind.slice(-1)[0] + multiplier, position.length);
     }
 
+    /**
+     * Method to get child (jsroot object) by position
+     * @param origin Defines origin from which child set by position is obtained.
+     * @param position Defines position specified by jsroot indexing of bins.
+     * Has to be array (ca go through more layers at once) where each entry represents children position in layer.
+     * */
     getChildByPosition(origin, position) {
         const pos = position[0];
         let obj = origin;
@@ -437,6 +502,11 @@ export class NestedHistogram {
         }
     }
 
+    /**
+     * @desc Method to hide (child) histogram and show (render) bin from layer above.
+     * @param index – should be array with position for each layer.
+     * e.g. ([{x: 1, y: 3, z: 2}, {x: 89, 0, 0}])
+     * */
     hideChildHistogram(index) {
         if (index.length === 1) return;
 
@@ -459,6 +529,51 @@ export class NestedHistogram {
         });
         this.renderHistogram(startIndexFloored, startIndexFloored + totalMultiplier, index.length - 2);
         this.renderHistory.pop(); //removes duplicit renderHistogram call
+    }
+
+    /**
+     * Method to obtain range of axes from each layer.
+     * @param position – should be array with position for each layer.
+     * e.g. ([{x: 1, y: 3, z: 2}, {x: 89, 0, 0}])
+     * @param obj Jsroot object from which histogram is computed range of bin.
+     * @default Pointers origin.
+     * */
+    getRangeByPosition(position, obj = this.pointer.origin) {
+        const range = {
+            x: {min: undefined, max: undefined},
+            y: {min: undefined, max: undefined},
+            z: {min: undefined, max: undefined}
+        }
+        if (position[0]) {
+            range.x.min = obj.fXaxis.GetBinLowEdge(position[0].x + 1);
+            range.x.max = (obj.fXaxis.GetBinCenter(position[0].x + 1) * 2) -
+                obj.fXaxis.GetBinLowEdge(position[0].x + 1);
+            range.y.min = obj.fYaxis.GetBinLowEdge(position[0].y + 1);
+            range.y.max = (obj.fYaxis.GetBinCenter(position[0].y + 1) * 2) -
+                obj.fYaxis.GetBinLowEdge(position[0].y + 1);
+            range.z.min = obj.fZaxis.GetBinLowEdge(position[0].z + 1);
+            range.z.max = (obj.fZaxis.GetBinCenter(position[0].z + 1) * 2) -
+                obj.fZaxis.GetBinLowEdge(position[0].z + 1);
+        }
+        if (position[1]) {
+            let child = undefined;
+            if (obj.children?.content) {
+                child = obj.children.content[obj.getBin(
+                    position[0].x + 1,
+                    position[0].y + 1,
+                    position[0].z + 1,
+                )];
+            } else if (obj.children?.[this.selectedSet]) {
+                child = obj.children[this.selectedSet][obj.getBin(
+                    position[0].x + 1,
+                    position[0].y + 1,
+                    position[0].z + 1,
+                )];
+            }
+            return [range, ...this.getRangeByPosition(position.slice(1), child)]
+        } else {
+            return [range];
+        }
     }
 
     calculateHierarchicalIndex(index) {
@@ -518,7 +633,9 @@ export class NestedHistogram {
 
     setAvailableSets(origin) {
         if (origin.children?.content) {
-            const firstChild = origin.children.content.find((child) => {return child});
+            const firstChild = origin.children.content.find((child) => {
+                return child
+            });
             this.setAvailableSets(firstChild);
         } else if (origin?.children) {
             const currentValue = stateSubjectGet().getValue();
@@ -690,7 +807,13 @@ export class NestedHistogram {
                             result.push(...childResults);
 
                         } else {
-                            result.push({index: fullPath, target: x.target, distance: x.distance});
+                            result.push({
+                                index: fullPath,
+                                target: x.target,
+                                distance: x.distance,
+                                instanceId: this.computeIndexFromPosition(fullPath),
+                                range: this.getRangeByPosition(fullPath)
+                            });
                         }
                     });
                 });
@@ -784,7 +907,7 @@ export class NestedHistogram {
 
         const max = [];
 
-        max[0] = { content: getMax(this.pointer.origin.fArray) };
+        max[0] = {content: getMax(this.pointer.origin.fArray)};
 
         const computation = (children, layer = 1) => {
             if (!max[layer]) {
