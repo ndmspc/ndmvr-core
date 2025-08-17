@@ -323,7 +323,7 @@ export class NestedHistogram {
     }
 
     /**
-     * @spec Adds function that will be called, if specified event is triggered.
+     * @desc Adds function that will be called, if specified event is triggered.
      * @param event can be either mouseevent in which only name of event is required (e.g. mousclick, shiftmousedbclick),
      * or keyboard event which has to concise state (keydown or keyup) and keyCode (e.g. Numpad1)
      * @param func Function that is called if event is triggered.
@@ -349,7 +349,7 @@ export class NestedHistogram {
     }
 
     /**
-     * @spec Removes function from event listener.
+     * @desc Removes function from event listener.
      * @param event Defines from which event should listening be removed.
      * @func Function has to have same reference to one that was added by addEvent.
      * */
@@ -504,30 +504,34 @@ export class NestedHistogram {
 
     /**
      * @desc Method to hide (child) histogram and show (render) bin from layer above.
-     * @param index – should be array with position for each layer.
+     * @param position – should be array with position for each layer.
      * e.g. ([{x: 1, y: 3, z: 2}, {x: 89, 0, 0}])
      * */
-    hideChildHistogram(index) {
-        if (index.length === 1) return;
+    hideChildHistogram(position) {
+        if (position.length === 1) return;
 
-        const layerDimensions = this.maxInstancesPerLayer.slice(index.length - 1);
+        const layerDimensions = this.maxInstancesPerLayer.slice(position.length - 1);
         const cacheLayerDimensions = this.maxInstancesPerLayer.slice(
-            index.length - 1,
+            position.length - 1,
             this.maxInstancesPerLayer.length - 1
         );
-
+        console.log(this.maxInstancesPerLayer);
+        console.log(cacheLayerDimensions);
         const totalMultiplier = layerDimensions.reduce((acc, value) => acc * value, 1);
+        console.log(totalMultiplier);
 
-        const startIndex = this.calculateHierarchicalIndex(index);
+        const startIndex = this.calculateHierarchicalIndex(position);
+        console.log(position.length - 1)
         const startIndexFloored = Math.floor(startIndex / totalMultiplier) * totalMultiplier;
+        console.log(startIndexFloored);
 
-        this.clearMatrixCacheRange(startIndexFloored, totalMultiplier, cacheLayerDimensions, index.length - 1);
+        this.clearMatrixCacheRange(startIndexFloored, totalMultiplier, cacheLayerDimensions, position.length - 1);
         this.hideInstanceRange(startIndexFloored, totalMultiplier);
         this.logRender({
             procedure: 'hide',
-            value: index
+            value: position
         });
-        this.renderHistogram(startIndexFloored, startIndexFloored + totalMultiplier, index.length - 2);
+        this.renderHistogram(startIndexFloored, startIndexFloored + totalMultiplier, position.length - 2);
         this.renderHistory.pop(); //removes duplicit renderHistogram call
     }
 
@@ -576,7 +580,13 @@ export class NestedHistogram {
         }
     }
 
-    calculateHierarchicalIndex(index) {
+    /**
+     * @desc Calculates linear index of bin that starts the histogram specified by position.
+     * @param position – should be array with position for each layer.
+     * e.g. ([{x: 1, y: 3, z: 2}, {x: 89, 0, 0}])
+     * @return Linear index of starting bin of the histogram specified by position.
+     * * */
+    calculateHierarchicalIndex(position) {
         let calculatedIndex = 0;
         const layerSizes = this.maxInstancesPerLayer.slice(1);
         const multipliers = [];
@@ -591,14 +601,14 @@ export class NestedHistogram {
             const {fNbins: fY} = obj.fYaxis;
             const {fNbins: fZ} = obj.fZaxis;
 
-            const linearIndex = index[layer].x +
-                (index[layer].y * fX) +
-                (index[layer].z * fX * fY);
+            const linearIndex = position[layer].x +
+                (position[layer].y * fX) +
+                (position[layer].z * fX * fY);
 
             calculatedIndex += linearIndex * multipliers[layer];
 
-            if (layer + 1 < index.length) {
-                const child = this.getChildObject(obj, index[layer]);
+            if (layer + 1 < position.length) {
+                const child = this.getChildObject(obj, position[layer]);
                 traverse(layer + 1, child);
             }
         };
@@ -607,8 +617,15 @@ export class NestedHistogram {
         return calculatedIndex;
     }
 
-    getChildObject(obj, indexLayer) {
-        const binIndex = obj.getBin(indexLayer.x + 1, indexLayer.y + 1, indexLayer.z + 1);
+    /**
+     * @desc Getter function for child in jsroot histogram object.
+     * @param obj Jsroot histogram object
+     * @param positionLayer - JS object with position for each axis.
+     * e.g. ({x: 0, y: 2, z: 1})
+     * @return Jsroot histogram object of children specified by indexLayer from obj.
+     * */
+    getChildObject(obj, positionLayer) {
+        const binIndex = obj.getBin(positionLayer.x + 1, positionLayer.y + 1, positionLayer.z + 1);
 
         if (obj.children.content) {
             return obj.children.content[binIndex];
@@ -617,6 +634,15 @@ export class NestedHistogram {
         }
     }
 
+    /**
+     * @desc Method to clear matrix cache from start index to end index,
+     * including objects in sub-layers with corresponding index.
+     * @param startIndex Defines linear index from which objects will be deleted.
+     * @param multiplier Defines offset from start index to end index.
+     * At upmost layer endIndex = startIndex + multiplier.
+     * @param dimensions Array with number of instances for each layer that will be cleared.
+     * @param baseLayerIndex start index of layer from which cache is cleared.
+     * */
     clearMatrixCacheRange(startIndex, multiplier, dimensions, baseLayerIndex) {
         let currentIndex = startIndex;
         let currentMultiplier = multiplier;
@@ -631,6 +657,11 @@ export class NestedHistogram {
         }
     }
 
+    /**
+     * @desc Method to set available sets based on origin.
+     * @param origin Jsroot histogram object
+     * @return is null. Sets that are found are set in stateSubject.
+     * */
     setAvailableSets(origin) {
         if (origin.children?.content) {
             const firstChild = origin.children.content.find((child) => {
@@ -644,6 +675,11 @@ export class NestedHistogram {
         }
     }
 
+    /**
+     * @desc Key down handler for nested histogram.
+     * Creates functionality where user can render each layer at once.
+     * @param event Defines incoming event which will be put against regex.
+     * */
     keyDownHandler(event) {
         // console.log(this.keydownEvents);
         const regex = /^(?:Digit|Numpad)(\d+)$/;
@@ -666,6 +702,22 @@ export class NestedHistogram {
         // console.log(event);
     }
 
+    /**
+     * Logs rendering events (including showing and hiding child histograms)
+     * to the `renderHistory`.
+     *
+     * This is especially useful when the selected set changes.
+     *
+     * @param {Object} obj - The render operation details.
+     * @param {"render" | "hide"} obj.procedure - The type of operation.
+     * @param {number | Object} obj.value - The associated value:
+     *   - If `procedure` is `"hide"`, this is the position used in the hide method.
+     *   - If `procedure` is `"render"`, this is an object containing:
+     *     @param {number} obj.value.startIndex - The starting index.
+     *     @param {number} obj.value.endIndex - The ending index.
+     *     @param {number} obj.value.layer - The layer used in rendering.
+     */
+
     logRender(obj) {
         if (obj.procedure === 'render') {
             if (obj.value.startIndex === 0 && obj.value.endIndex === this.totalInstances) {
@@ -675,6 +727,11 @@ export class NestedHistogram {
         this.renderHistory.push(obj);
     }
 
+    /**
+     * @desc Hides rendered bins by transforming instanced mesh.
+     * @param startIndex Linear index of instance from hiding will start.
+     * @param count Number of instances to be hidden.
+     * */
     hideInstanceRange(startIndex, count) {
         const hiddenMatrix = new THREE.Matrix4().makeScale(0, 0, 0);
 
@@ -684,6 +741,15 @@ export class NestedHistogram {
         this.instancedMesh.instanceMatrix.needsUpdate = true;
     }
 
+    /**
+     * @desc Method to check bins intersection against ray.
+     * Can be used to define instanced mesh intersection behaviour
+     * and override basic (traverse all instances) behaviour.
+     * Performs much better especially if number of instances are enormous.
+     * @param ray Instance of Three.Ray part of Three.Raycaster.
+     * @return Array of intersected bins,
+     * including their position, instanceId, Jsroot index and other infos.
+     * */
     checkIntersection(ray) {
         // console.log('inter');
         const target = new THREE.Vector3();
@@ -892,6 +958,10 @@ export class NestedHistogram {
         return 1 - Math.pow(1 - t, 3);
     }
 
+    /**
+     * @desc Computes max numeric content for each layer and each set if available.
+     * @return Array of content or set objects containing max value.
+     * */
     computeMaxContentPerLayer() {
         if (!this.pointer) return;
 
@@ -939,6 +1009,10 @@ export class NestedHistogram {
     }
 
 
+    /**
+     * @desc Computes Maximum number of instances for each layer of histogram.
+     * @return Array of numbers representing max value for each layer.
+     * */
     computeMaxInstancesPerLayer() {
         if (!this.pointer) return;
         const temp = this.pointer.origin.fXaxis.fNbins * this.pointer.origin.fYaxis.fNbins * this.pointer.origin.fZaxis.fNbins;
