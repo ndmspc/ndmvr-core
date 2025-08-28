@@ -34,7 +34,7 @@ export class NdmvrRaycaster {
          if (now - lastCheck < checkInterval) return; // Skip if too soon
          lastCheck = now;
 
-         // this.updateRaycaster(event);
+         this.updateRaycaster(event);
       });
 
       window.addEventListener("click", (event) => {

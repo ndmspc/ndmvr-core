@@ -1,0 +1,62 @@
+{
+  "config": {
+    "camera": {
+      "position": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      }
+    },
+    "histogramMatrix": {
+      "position": {
+        "x": 0,
+        "y": 0,
+        "z": 10
+      },
+      "scale": {
+        "x": 10,
+        "y": 5,
+        "z": 10
+      }
+    },
+    "padding": {
+      "default": {
+        "x": 0.1,
+        "y": 0.1,
+        "z": 0.1
+      },
+      "layer": [
+        {
+          "x": 0.1,
+          "y": 0.1,
+          "z": 0.1
+        }
+      ]
+    },
+    "color": {
+      "default": {
+        "min": "0x0000ff",
+        "max": "0xff0000"
+      },
+      "layer": [],
+      "set": [
+        {
+          "min": "0x222222",
+          "max": "0xffaa00"
+        },
+        {
+          "min": "0x00ffff",
+          "max": "0xff7f00"
+        },
+        {
+          "min": "0x00ff00",
+          "max": "0x800080"
+        },
+        {
+          "min": "0x0000ff",
+          "max": "0xff0000"
+        }
+      ]
+    }
+  }
+}

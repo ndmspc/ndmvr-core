@@ -13,6 +13,8 @@ import {functionSubjectGet} from "./rxjs/FunctionSubject.js";
 import {initNdmvrAframe} from "./core/ndmvr-aframe-core.js";
 import histogramRecursive from "../public/histograms/THrecursive.json";
 
+import config from "./config.json";
+
 import histo125 from "../public/histograms/nested/test_125.json";
 import histo12_5 from "../public/histograms/nested/test_12_5.json";
 import histo1_25 from "../public/histograms/nested/test_1_25.json";
@@ -32,6 +34,9 @@ import {parse, redraw, makeSVG, openFile, makeImage} from "jsroot";
 import {stateSubjectGet} from "./rxjs/StateSubject.js";
 import {filter} from "rxjs";
 import {NestedHistogram} from "./component/nested-histogram-class.js";
+import {canvasSubjectGet} from "./rxjs/CanvasSubject.js";
+import {configSubjectGet} from "./rxjs/ConfigSubject.js";
+import {binInfoSubjectGet} from "./rxjs/BinInfoSubject.js";
 
 initNdmvrAframe();
 
@@ -41,7 +46,7 @@ const sceneElm = generate_AFrame_blank_scene_html();
 document.querySelector("#app").appendChild(sceneElm);
 
 //    // const geom = new THREE.BoxGeometry(0.128821, 0.1515151515151515,0.9174311926605504);
-//    const geom = new THREE.BoxGeometry(10,5,10);
+//    const geom = new THREE.BoxGeometry(1,1,1);
 //    const mate = new THREE.MeshNormalMaterial();
 //    const cube = new THREE.Mesh(geom, mate);
 //    // cube.position.set(-4.9358974,-1.13636363,4.541284403669724);
@@ -49,7 +54,7 @@ document.querySelector("#app").appendChild(sceneElm);
 // sceneElm.object3D.add(cube)
 
 // const cube2 = new THREE.Mesh(geom, mate);
-// cube2.position.set(-4.87179,5,0);
+// cube2.position.set(0,0,0);
 // sceneElm.object3D.add(cube2)
 //
 // const cube2 = new THREE.Mesh(geom, mate);
@@ -113,73 +118,92 @@ const urlInput = document.getElementById('custom-url-input');
 const loadButton = document.getElementById('load-custom-url');
 
 histogramSelect.addEventListener('change', (event) => {
-   const selectedValue = event.target.value;
-   if (selectedValue === "custom") {
-      urlInput.style.display = "inline-block";
-      loadButton.style.display = "inline-block";
-   } else {
-      urlInput.style.display = "none";
-      loadButton.style.display = "none";
-      histogramSubjectGet().next({ id: 'histogram1', histogram: options.get(selectedValue) });
-   }
+    const selectedValue = event.target.value;
+    if (selectedValue === "custom") {
+        urlInput.style.display = "inline-block";
+        loadButton.style.display = "inline-block";
+    } else {
+        urlInput.style.display = "none";
+        loadButton.style.display = "none";
+        histogramSubjectGet().next({id: 'histogram1', histogram: options.get(selectedValue)});
+    }
 });
 
 const setDiv = document.createElement('div');
 setDiv.innerHTML = `
   <div style="position: absolute; top: 80px; right: 50px;">
-    <select name="set" id="set-select">
-      <option value="loading">Loading...</option>
-    </select>
+    <div id="set-checkboxes"></div>
   </div>
 `;
 document.querySelector("#app").appendChild(setDiv);
 
-const selectEl = document.getElementById("set-select");
+const checkboxContainer = document.getElementById("set-checkboxes");
 
 stateSubjectGet().getObservable().subscribe(state => {
     const newOptions = state.sets || [];
 
-    selectEl.innerHTML = "";
+    // Clear previous checkboxes
+    checkboxContainer.innerHTML = "";
 
     newOptions.forEach(value => {
-        const option = document.createElement("option");
-        option.value = value;
-        option.textContent = value;
-        selectEl.appendChild(option);
+        const label = document.createElement("label");
+        label.style.display = "block"; // stack them vertically
+
+        const checkbox = document.createElement("input");
+        checkbox.type = "checkbox";
+        checkbox.value = value;
+
+        // Check if this one should be selected
+        if (Array.isArray(state.selectedSet)) {
+            // If selectedSet is multiple
+            checkbox.checked = state.selectedSet.includes(value);
+        } else {
+            // If selectedSet is single
+            checkbox.checked = state.selectedSet === value;
+        }
+
+        label.appendChild(checkbox);
+        label.appendChild(document.createTextNode(" " + value));
+        checkboxContainer.appendChild(label);
     });
-    selectEl.value = state.selectedSet;
 });
 
-const setSelect = document.getElementById('set-select');
-setSelect.addEventListener('change', (event) => {
-   const currentValue = stateSubjectGet().getValue();
+checkboxContainer.addEventListener("change", (event) => {
+    if (event.target.type === "checkbox") {
+        const currentValue = stateSubjectGet().getValue();
 
-   if (currentValue.selectedSet !== event.target.value) {
-       currentValue.selectedSet = event.target.value;
-       stateSubjectGet().next(currentValue);
-   }
+        // Collect all checked values
+        const checkedValues = Array.from(
+            checkboxContainer.querySelectorAll("input[type='checkbox']:checked")
+        ).map(cb => cb.value);
+
+        // Only update if something changed
+        if (JSON.stringify(currentValue.selectedSet) !== JSON.stringify(checkedValues)) {
+            currentValue.selectedSet = checkedValues;
+            stateSubjectGet().next(currentValue);
+        }
+    }
 });
 
 loadButton.addEventListener('click', async () => {
-   const url = urlInput.value.trim();
-   if (!url) {
-      alert("Please enter a valid URL.");
-      return;
-   }
+    const url = urlInput.value.trim();
+    if (!url) {
+        alert("Please enter a valid URL.");
+        return;
+    }
 
-   try {
-      const response = await fetch(url);
-      const data  = await response.json()
-      console.log(data);
-      // if (!response.ok) throw new Error("Network response was not ok");
+    try {
+        const response = await fetch(url);
+        const data = await response.json()
+        console.log(data);
+        // if (!response.ok) throw new Error("Network response was not ok");
 
-      histogramSubjectGet().next({ id: 'histogram1', histogram: data });
-   } catch (error) {
-      console.error("Failed to load histogram from URL:", error);
-      alert("Failed to load histogram from the specified URL.");
-   }
+        histogramSubjectGet().next({id: 'histogram1', histogram: data});
+    } catch (error) {
+        console.error("Failed to load histogram from URL:", error);
+        alert("Failed to load histogram from the specified URL.");
+    }
 });
-
 
 
 // histogramSubjectGet().next({id: 'histogram1', histogram: parse(histoSparse)});
@@ -196,65 +220,76 @@ histogramSubjectGet().next({id: 'histogram1', histogram: histo6x2x1});
 
 // histogramSubjectGet().next({id: 'histogram1', histogram: parse(histo4x3x1)});
 
+configSubjectGet().next(config);
 
-const functions = [
-   {
-      event: 'mouseclick',
-      target: {
-         entity: 'nested-histogram',
-         id: '*'
-      },
-      function: function (event, context) {
-         console.log(event)
-         console.log('index: ', context.computeIndexFromPosition(event.index))
-         console.log('jsrootIndex: ', context.computeJsRootIndexFromPosition(event.index))
-         context.showChildHistogram(event.index);
-      }
-   },
-   {
-      event: 'shiftmouseclick',
-      target: {
-         entity: 'nested-histogram',
-         id: '*'
-      },
-      function: function (event, context) {
-         context.hideChildHistogram(event.index);
-      }
-   },
-   {
-      event: 'mousedbclick',
-      target: {
-         entity: 'nested-histogram',
-         id: '*'
-      },
-      function: function (event, context) {
-         // console.log('index: ', context.computeJsRootIndexFromPosition(event))
-         context.setPointerToChild(context.computeJsRootIndexFromPosition(event.index), 'unlikepm');
-      }
-   },
-   {
-      event: 'shiftmousedbclick',
-      target: {
-         entity: 'nested-histogram',
-         id: '*'
-      },
-      function: function (event, context) {
-         // console.log(event)
-         // console.log('shiftmousedbclick');
-         context.setPointerToParent();
-      }
-   },
-   {
-      event: 'mousemove',
-      target: {
-         entity: 'nested-histogram',
-         id: '*'
-      },
-      function: function (event, context) {
-         console.log('mousemove: ', event);
-         // this.showChildHistogram(event)
-      }
-   }
-];
+binInfoSubjectGet().getObservable().subscribe((event) => {
+    console.log(event);
+})
 
-setTimeout(() => functionSubjectGet().addFunctions(functions), 100);
+// const functions = [
+//     {
+//         event: 'mouseclick',
+//         target: {
+//             entity: 'nested-histogram',
+//             id: '*'
+//         },
+//         function: function (event, context) {
+//             console.log(event)
+//             console.log('index: ', context.computeIndexFromPosition(event.index))
+//             console.log('jsrootIndex: ', context.computeJsRootIndexFromPosition(event.index))
+//             const histo = context.getChildByPosition(context.pointer.origin, [...event.index], event.set);
+//             console.log(histo);
+//             context.showChildHistogram(event.index);
+//             canvasSubjectGet().next({
+//                 id: context.id + '-cinema',
+//                 obj: histo
+//             });
+//         }
+//     },
+//     {
+//         event: 'shiftmouseclick',
+//         target: {
+//             entity: 'nested-histogram',
+//             id: '*'
+//         },
+//         function: function (event, context) {
+//             context.hideChildHistogram(event.index);
+//         }
+//     },
+//     {
+//         event: 'mousedbclick',
+//         target: {
+//             entity: 'nested-histogram',
+//             id: '*'
+//         },
+//         function: function (event, context) {
+//             // console.log('index: ', context.computeJsRootIndexFromPosition(event))
+//             context.setPointerToChild(context.computeJsRootIndexFromPosition(event.index), 'unlikepm');
+//         }
+//     },
+//     {
+//         event: 'shiftmousedbclick',
+//         target: {
+//             entity: 'nested-histogram',
+//             id: '*'
+//         },
+//         function: function (event, context) {
+//             // console.log(event)
+//             // console.log('shiftmousedbclick');
+//             context.setPointerToParent();
+//         }
+//     },
+//     {
+//         event: 'mousemove',
+//         target: {
+//             entity: 'nested-histogram',
+//             id: '*'
+//         },
+//         function: function (event, context) {
+//             console.log('mousemove: ', event);
+//             // this.showChildHistogram(event)
+//         }
+//     }
+// ];
+
+// setTimeout(() => functionSubjectGet().addFunctions(functions), 100);
