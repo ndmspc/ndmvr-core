@@ -213,8 +213,8 @@ export class NestedHistogram {
                         binSizePos.z.size = 0.1;
                     } else {
                         this.config.TH1ZScale?.layer?.[currentLayer]
-                            ? binSizePos.z.size *= scaleFactor * this.config.TH1ZScale.layer[currentLayer]
-                            : binSizePos.z.size *= scaleFactor * this.config.TH1ZScale.default
+                            ? binSizePos.z.size = limits.scale.z * this.config.TH1ZScale.layer[currentLayer]
+                            : binSizePos.z.size = limits.scale.z * this.config.TH1ZScale.default
                     }
                 }
 
@@ -394,7 +394,10 @@ export class NestedHistogram {
                     this.hideChildHistogram(intersection.index);
                     break;
                 case "mousedbclick":
-                    this.setPointerToChild(this.computeJsRootIndexFromPosition(intersection.index), intersection.set);
+                    console.log(intersection.set);
+                    intersection.set
+                        ? this.setPointerToChild(this.computeJsRootIndexFromPosition(intersection.index), intersection.set)
+                        : this.setPointerToChild(this.computeJsRootIndexFromPosition(intersection.index), this.selectedSet[0])
                     break;
                 case "shiftmousedbclick":
                     this.setPointerToParent();
@@ -772,15 +775,24 @@ export class NestedHistogram {
         let currentIndex = startIndex;
         let currentMultiplier = multiplier;
 
+        // console.log(this.matrixCache);
+
         for (let i = baseLayerIndex + dimensions.length - 1; i >= baseLayerIndex; i--) {
-            this.matrixCache[i].fill(null, currentIndex, currentIndex + currentMultiplier);
+            if (Array.isArray(this.matrixCache[i][0])) {
+                console.log(this.matrixCache[i]);
+                for (let j = 0; j < this.matrixCache[i].length; j++) {
+                    this.matrixCache[i][j].fill(null, currentIndex, currentIndex + currentMultiplier);
+                }
+            } else {
+                this.matrixCache[i].fill(null, currentIndex, currentIndex + currentMultiplier);
+            }
 
             if (i > baseLayerIndex) {
                 currentIndex /= dimensions[i - baseLayerIndex];
                 currentMultiplier /= dimensions[i - baseLayerIndex];
             }
         }
-        console.log(this.matrixCache)
+        // console.log(this.matrixCache)
     }
 
     /**
@@ -954,6 +966,7 @@ export class NestedHistogram {
         const recursiveSearch = (node, layer, offset = 0, path = [], set = undefined) => {
             // console.log(layer, node, offset)
 
+
             const fX = node.fXaxis.fNbins;
             const fY = node.fYaxis.fNbins;
             const fZ = node.fZaxis.fNbins;
@@ -982,16 +995,13 @@ export class NestedHistogram {
                         const fullPath = [...path, {x: xIndex, y: yIndex, z: zIndex}];
                         const binIndex = node.getBin(xIndex + 1, yIndex + 1, zIndex + 1);
 
-                        if (layer === 2) {
-                            console.log(fullPath);
-                        }
+
                         //if node has children
                         if (node.children) {
                             const children = Object.entries(node.children);
 
                             //loop through children, store result for each
                             const childResults = children.flatMap(([setX, childX]) => {
-                                console.log(setX)
                                 //get child jsroot node
                                 const child = childX?.[binIndex];
                                 if (!child) return [];
@@ -1007,7 +1017,9 @@ export class NestedHistogram {
 
                                 //!next return, child was not yet rendered
                                 if (!next) return [];
-
+                                // if (layer === 1) {
+                                //     console.log('DVOJKA')
+                                // }
                                 //child was rendered, return the return value from next layer search
                                 return recursiveSearch(child, layer + 1, childOffset, fullPath, setX)
                                     .map(res => ({...res, set: setX}));
@@ -1019,26 +1031,25 @@ export class NestedHistogram {
                             } else {
                                 //no child returned result, if flag rendered is true, it is the last layer rendered
                                 //thus valid intersection
-                                const childOffset = (offset ) +
-                                    ((xIndex + (yIndex * fX) + (zIndex * (fX * fY))) );
-                                console.log(childOffset);
+                                const childOffset = (offset) +
+                                    ((xIndex + (yIndex * fX) + (zIndex * (fX * fY))));
                                 const instance = set && set !== 'content'
                                     ? this.matrixCache[layer]?.[this.availableSets.indexOf(set)]?.[childOffset]
                                     : this.matrixCache[layer]?.[childOffset];
                                 if (instance.rendered)
-                                result.push({
-                                    index: fullPath,
-                                    target: x.target,
-                                    distance: x.distance,
-                                    set,
-                                    instanceId: this.computeIndexFromPosition(fullPath),
-                                    jsrootInstance: this.computeJsRootIndexFromPosition(fullPath),
-                                    range: this.getRangeByPosition(fullPath),
-                                    origin: this,
-                                    jsrootObj: node,
-                                    content: node.getBinContent(xIndex + 1, yIndex + 1, zIndex + 1),
-                                    error: node.getBinError(xIndex + 1, yIndex + 1, zIndex + 1),
-                                });
+                                    result.push({
+                                        index: fullPath,
+                                        target: x.target,
+                                        distance: x.distance,
+                                        set,
+                                        instanceId: this.computeIndexFromPosition(fullPath),
+                                        jsrootInstance: this.computeJsRootIndexFromPosition(fullPath),
+                                        range: this.getRangeByPosition(fullPath),
+                                        origin: this,
+                                        jsrootObj: node,
+                                        content: node.getBinContent(xIndex + 1, yIndex + 1, zIndex + 1),
+                                        error: node.getBinError(xIndex + 1, yIndex + 1, zIndex + 1),
+                                    });
                             }
 
                         } else {
