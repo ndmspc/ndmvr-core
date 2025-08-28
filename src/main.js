@@ -182,7 +182,6 @@ loadButton.addEventListener('click', async () => {
 
 
 
-// histogramSubjectGet().next({id: 'histogram1', histogram: parse(histoWithOutsideContent)});
 // histogramSubjectGet().next({id: 'histogram1', histogram: parse(histoSparse)});
 
 // histogramSubjectGet().next({id: 'histogram1', histogram: nestedHisto});
@@ -190,10 +189,10 @@ loadButton.addEventListener('click', async () => {
 // histogramSubjectGet().next({id: 'histogram1', histogram: 'https://eos.ndmspc.io//eos/ndmspc/scratch/ndmspc/ndmvr-aframe/demo/hist3D.axis1-pt_axis2-ce_axis5-eta.root'});
 // histogramSubjectGet().next({id: 'histogram1', histogram: parse(nestedHisto4)});
 
-// histogramSubjectGet().next({id: 'histogram1', histogram: histo6x2x1});
+histogramSubjectGet().next({id: 'histogram1', histogram: histo6x2x1});
 // histogramSubjectGet().next({id: 'histogram1', histogram: histo125});
 // histogramSubjectGet().next({id: 'histogram1', histogram: histo12_5});
-histogramSubjectGet().next({id: 'histogram1', histogram: histo1_2_5});
+// histogramSubjectGet().next({id: 'histogram1', histogram: histo1_2_5});
 
 // histogramSubjectGet().next({id: 'histogram1', histogram: parse(histo4x3x1)});
 
@@ -207,8 +206,9 @@ const functions = [
       },
       function: function (event, context) {
          console.log(event)
-         console.log('mouselcick');
-         context.showChildHistogram(event);
+         console.log('index: ', context.computeIndexFromPosition(event.index))
+         console.log('jsrootIndex: ', context.computeJsRootIndexFromPosition(event.index))
+         context.showChildHistogram(event.index);
       }
    },
    {
@@ -218,10 +218,7 @@ const functions = [
          id: '*'
       },
       function: function (event, context) {
-         // console.log(event)
-         console.log('shiftmouselcick');
-
-         context.hideChildHistogram(event);
+         context.hideChildHistogram(event.index);
       }
    },
    {
@@ -231,9 +228,8 @@ const functions = [
          id: '*'
       },
       function: function (event, context) {
-         console.log(event)
          // console.log('index: ', context.computeJsRootIndexFromPosition(event))
-         context.setPointerToChild(context.computeJsRootIndexFromPosition(event), 'unlikepm');
+         context.setPointerToChild(context.computeJsRootIndexFromPosition(event.index), 'unlikepm');
       }
    },
    {
@@ -255,7 +251,7 @@ const functions = [
          id: '*'
       },
       function: function (event, context) {
-         // console.log('mousemove: ', event);
+         console.log('mousemove: ', event);
          // this.showChildHistogram(event)
       }
    }

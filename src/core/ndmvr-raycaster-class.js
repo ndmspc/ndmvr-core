@@ -87,7 +87,7 @@ export class NdmvrRaycaster {
    handleRaycast() {
       const hits = this.raycaster.intersectObjects(this.sceneElement.children, true);
       if (hits.length > 0) {
-         console.log(`${this.raycaster._triggerSource}:`, hits);
+         // console.log(`${this.raycaster._triggerSource}:`, hits);
       }
    }
 
