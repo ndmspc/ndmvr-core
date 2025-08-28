@@ -213,7 +213,7 @@ loadButton.addEventListener('click', async () => {
 // histogramSubjectGet().next({id: 'histogram1', histogram: 'https://eos.ndmspc.io//eos/ndmspc/scratch/ndmspc/ndmvr-aframe/demo/hist3D.axis1-pt_axis2-ce_axis5-eta.root'});
 // histogramSubjectGet().next({id: 'histogram1', histogram: parse(nestedHisto4)});
 
-histogramSubjectGet().next({id: '*', histogram: histo6x2x1});
+histogramSubjectGet().next({id: 'histogram1', histogram: histo6x2x1});
 // histogramSubjectGet().next({id: 'histogram1', histogram: histo125});
 // histogramSubjectGet().next({id: 'histogram1', histogram: histo12_5});
 // histogramSubjectGet().next({id: 'histogram1', histogram: histo1_2_5});

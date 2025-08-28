@@ -60,7 +60,10 @@ export class NestedHistogram {
             .pipe(filter(e =>
                 ((e.target.id.includes('*')) || (e.target.id.includes(this.id)))))
             .subscribe((v) => {
+                console.log('dojde config');
+                console.log(v.config.TH1ZScale);
                 this.config = v.config;
+                console.log(this.config.TH1ZScale);
             });
 
         this.handleStateChange = this.handleStateChange.bind(this);
@@ -205,8 +208,15 @@ export class NestedHistogram {
                     binSizePos.y.size = t;
                 } else {
                     binSizePos.y.pos -= (binSizePos.y.size - t) / 2;
-                    binSizePos.y.size = t;
-                    binSizePos.z.size = 0.1;
+                    binSizePos.y.size = t
+                    if (set) {
+                        binSizePos.z.size = 0.1;
+                    } else {
+                        this.config.TH1ZScale?.layer?.[currentLayer]
+                            ? binSizePos.z.size *= scaleFactor * this.config.TH1ZScale.layer[currentLayer]
+                            : binSizePos.z.size *= scaleFactor * this.config.TH1ZScale.default
+                        console.log(binSizePos.z.size)
+                    }
                 }
 
                 if (!set) {
@@ -215,6 +225,7 @@ export class NestedHistogram {
                         scale: new THREE.Vector3(binSizePos.x.size, binSizePos.y.size, binSizePos.z.size),
                     }
                 } else {
+                    binSizePos.z.size = 0.1;
                     binSizePos.z.pos -= limits.scale.z / 2;
                     const index = this.selectedSet.indexOf(set);
                     binSizePos.z.pos += (index * 0.15);

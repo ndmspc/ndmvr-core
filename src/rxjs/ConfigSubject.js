@@ -86,7 +86,7 @@ class ConfigSubject {
                 // inject default target if missing
                 if (!("target" in result)) {
                     result.target = {
-                        entity: "nested-histogram",
+                        entity: "*",
                         id: "*"
                     };
                 }
