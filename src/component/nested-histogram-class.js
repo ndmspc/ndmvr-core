@@ -215,7 +215,6 @@ export class NestedHistogram {
                         this.config.TH1ZScale?.layer?.[currentLayer]
                             ? binSizePos.z.size *= scaleFactor * this.config.TH1ZScale.layer[currentLayer]
                             : binSizePos.z.size *= scaleFactor * this.config.TH1ZScale.default
-                        console.log(binSizePos.z.size)
                     }
                 }
 
@@ -223,6 +222,7 @@ export class NestedHistogram {
                     this.matrixCache[currentLayer][i / stepFor] = {
                         position: new THREE.Vector3(binSizePos.x.pos, binSizePos.y.pos, binSizePos.z.pos),
                         scale: new THREE.Vector3(binSizePos.x.size, binSizePos.y.size, binSizePos.z.size),
+                        rendered: currentLayer === layer
                     }
                 } else {
                     binSizePos.z.size = 0.1;
@@ -232,6 +232,7 @@ export class NestedHistogram {
                     this.matrixCache[currentLayer][this.availableSets.indexOf(set)][i / stepFor] = {
                         position: new THREE.Vector3(binSizePos.x.pos, binSizePos.y.pos, binSizePos.z.pos),
                         scale: new THREE.Vector3(binSizePos.x.size, binSizePos.y.size, binSizePos.z.size),
+                        rendered: currentLayer === layer
                     };
                 }
 
@@ -269,7 +270,7 @@ export class NestedHistogram {
         }
 
         render(startIndex, endIndex, 0, this.pointer.origin, this.config.histogramMatrix);
-        // console.log(this.matrixCache);
+        console.log(this.matrixCache);
         this.instancedMesh.computeBoundingBox();
     }
 
@@ -373,11 +374,12 @@ export class NestedHistogram {
             };
 
             const eventWithSource = {...intersection, triggerSource};
+            console.log(eventWithSource)
             if (!(triggerSource === "mousemove" && areIndexesEqual(intersection.index, this.dirtyInstance))) {
-                const merged = this.mergeInfo({...eventWithSource, index: [...eventWithSource.index]});
-                const {range: coords, content, error, set, triggerSource} = merged;
-                const minimizedEvent = {coords, content, error, set, triggerSource};
-                binInfoSubjectGet().next(minimizedEvent);
+                // const merged = this.mergeInfo({...eventWithSource, index: [...eventWithSource.index]});
+                // const {range: coords, content, error, set, triggerSource} = merged;
+                // const minimizedEvent = {coords, content, error, set, triggerSource};
+                // binInfoSubjectGet().next(minimizedEvent);
             }
 
             switch (triggerSource) {
@@ -980,29 +982,50 @@ export class NestedHistogram {
                         const fullPath = [...path, {x: xIndex, y: yIndex, z: zIndex}];
                         const binIndex = node.getBin(xIndex + 1, yIndex + 1, zIndex + 1);
 
+                        if (layer === 2) {
+                            console.log(fullPath);
+                        }
+                        //if node has children
                         if (node.children) {
                             const children = Object.entries(node.children);
 
+                            //loop through children, store result for each
                             const childResults = children.flatMap(([setX, childX]) => {
+                                console.log(setX)
+                                //get child jsroot node
                                 const child = childX?.[binIndex];
                                 if (!child) return [];
 
+                                //calculate child index of instance in matrixCache
                                 const childOffset = (offset * perInstance) +
                                     ((xIndex + (yIndex * fX) + (zIndex * (fX * fY))) * perInstance);
 
+                                //get instance from matrixCache with actually looping set
                                 const next = setX === 'content'
                                     ? this.matrixCache?.[layer + 1]?.[childOffset]
                                     : this.matrixCache[layer + 1][this.availableSets.indexOf(setX)][childOffset];
 
+                                //!next return, child was not yet rendered
                                 if (!next) return [];
 
+                                //child was rendered, return the return value from next layer search
                                 return recursiveSearch(child, layer + 1, childOffset, fullPath, setX)
                                     .map(res => ({...res, set: setX}));
                             });
 
+                            //if any child has returned result, its valid
                             if (childResults.length > 0) {
                                 result.push(...childResults);
                             } else {
+                                //no child returned result, if flag rendered is true, it is the last layer rendered
+                                //thus valid intersection
+                                const childOffset = (offset ) +
+                                    ((xIndex + (yIndex * fX) + (zIndex * (fX * fY))) );
+                                console.log(childOffset);
+                                const instance = set && set !== 'content'
+                                    ? this.matrixCache[layer]?.[this.availableSets.indexOf(set)]?.[childOffset]
+                                    : this.matrixCache[layer]?.[childOffset];
+                                if (instance.rendered)
                                 result.push({
                                     index: fullPath,
                                     target: x.target,
