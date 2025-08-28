@@ -10,6 +10,8 @@ export * from "./src/rxjs/StateSubject.js";
 export * from "./src/rxjs/FunctionSubject";
 export * from "./src/rxjs/HistogramSubject";
 export * from "./src/rxjs/CanvasSubject.js";
+export * from "./src/rxjs/ConfigSubject.js";
+export * from "./src/rxjs/BinInfoSubject.js";
 export * from "./src/component/camera.component";
 export * from "./src/controllers/mobile/mobileController";
 export * from "./src/utils/htmlGenerators";
