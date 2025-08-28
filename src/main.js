@@ -89,6 +89,7 @@ histogramContainer.setAttribute('position', "0 0 0");
 sceneElm.appendChild(histogramContainer);
 
 const options = new Map();
+options.set("test6x2x1", histo6x2x1);
 options.set("histo125", histo125);
 options.set("histo12_5", histo12_5);
 options.set("histo1_25", histo1_25);
@@ -99,6 +100,7 @@ const selectDiv = document.createElement('div');
 selectDiv.innerHTML = `
   <div style="position: absolute; top: 50px; right: 50px;">
     <select name="histograms" id="histogram-select">
+      <option value="test6x2x1">text6x2x1</option>
       <option value="histo125">histo125</option>
       <option value="histo12_5">histo12_5</option>
       <option value="histo1_25">histo1_25</option>
