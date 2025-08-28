@@ -58,7 +58,7 @@ export class NestedHistogram {
 
         this.configSub = configSubjectGet().getObservable()
             .pipe(filter(e =>
-                (e.target.entity === 'nested-histogram') && ((e.target.id.includes('*')) || (e.target.id.includes(this.id)))))
+                ((e.target.id.includes('*')) || (e.target.id.includes(this.id)))))
             .subscribe((v) => {
                 this.config = v.config;
             });
@@ -258,7 +258,7 @@ export class NestedHistogram {
         }
 
         render(startIndex, endIndex, 0, this.pointer.origin, this.config.histogramMatrix);
-        console.log(this.matrixCache);
+        // console.log(this.matrixCache);
         this.instancedMesh.computeBoundingBox();
     }
 

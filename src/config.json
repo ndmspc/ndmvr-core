@@ -7,6 +7,21 @@
         "z": 0
       }
     },
+    "canvas": {
+      "position": {
+        "x": 0,
+        "y": 5,
+        "z": -15
+      }, "rotation": {
+        "x": 10,
+        "y": 0,
+        "z": 0
+      }, "scale": {
+        "x": 10,
+        "y": 10,
+        "z": 0
+      }
+    },
     "histogramMatrix": {
       "position": {
         "x": 0,
