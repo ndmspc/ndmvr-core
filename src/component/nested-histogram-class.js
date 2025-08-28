@@ -18,20 +18,18 @@ export class NestedHistogram {
     pointer = undefined;
     instancedMesh = undefined;
     maxInstancesPerLayer = undefined;
+    maxContentPerLayer = undefined;
     totalInstances = undefined;
     color = new THREE.Color();
     matrixCache = undefined;
     selectedSet = 'unlikepm';
+    availableSets = [];
     renderHistory = [];
     mouseEvents = [];
     keydownEvents = [];
     keyupEvents = [];
     // clickEvents = [];
     // mousemoveEvents = [];
-
-    rerenderHistory() {
-
-    }
 
     handleStateChange(state) {
         if (state.selectedSet && state.selectedSet !== this.selectedSet) {
@@ -52,6 +50,8 @@ export class NestedHistogram {
                     this.hideChildHistogram(call.value);
                 }
             });
+        } else if (state.availableSets && state.availableSets !== this.availableSets) {
+            this.availableSets = state.availableSets;
         }
     }
 
@@ -85,28 +85,6 @@ export class NestedHistogram {
 
     }
 
-    keyDownHandler(event) {
-        // console.log(this.keydownEvents);
-        const regex = /^(?:Digit|Numpad)(\d+)$/;
-        const match = event.code.match(regex);
-
-        if (match) {
-            const dummy = new THREE.Object3D();
-            dummy.scale.set(0, 0, 0);
-            dummy.updateMatrix();
-            for (let i = 0; i < this.totalInstances; i++) {
-                this.instancedMesh.setMatrixAt(i, dummy.matrix);
-            }
-            this.matrixCache = new Array(this.maxInstancesPerLayer.length).fill().map(() => []);
-
-            this.renderHistogram(0, this.totalInstances, parseInt(match[1]) - 1);
-        }
-    }
-
-    keyUpHandler(event) {
-        // console.log(event);
-    }
-
     remove() {
         this.matrixCache = [];
         this.instancedMesh.dispose();
@@ -117,8 +95,13 @@ export class NestedHistogram {
         window.removeEventListener('keydown', this.keyUpHandler);
     }
 
+    /**
+     * @desc Initializes base values and objects.
+     * */
     init() {
         this.maxInstancesPerLayer = this.computeMaxInstancesPerLayer();
+        this.maxContentPerLayer = this.computeMaxContentPerLayer();
+        // console.log(this.maxContentPerLayer);
         // console.log(this.maxInstancesPerLayer)
         this.matrixCache = new Array(this.maxInstancesPerLayer.length).fill().map(() => []);
         this.totalInstances = this.maxInstancesPerLayer
@@ -129,34 +112,18 @@ export class NestedHistogram {
         this.setupInstancedMesh();
     }
 
-    addEvent(event, func) {
-        if (event?.state === 'keydown') {
-            this.keydownEvents.push({
-                key: event.key,
-                function: func
-            });
-            console.log('down');
-        } else if (event?.state === 'keyup') {
-            this.keyupEvents.push({
-                key: event.key,
-                function: func
-            });
-        } else {
-            this.mouseEvents.push({
-                event: event,
-                function: func
-            });
-        }
-    }
-
-    removeEvent(event, func) {
-        const index = this.mouseEvents.find((f) => f === func);
-        if (index) this.mouseEvents.splice(index, 1);
-    }
-
+    /**
+     * @desc Render whole or part of histogram.
+     * @param startIndex Linear index of bin from which render will start.
+     * @param endIndex Linear index of bin on which render will end.
+     * @param layer Defines layer which will be rendered.
+     * @note Linear index is set in this form:
+     *  Bins of the deepest layer are offset by 1.
+     *  Bins from each upward layer are offset by maximum number of layer beneath.
+     * */
     renderHistogram(startIndex, endIndex, layer) {
         if (!this.pointer ||
-            layer > this.maxInstancesPerLayer.length - 1) return;
+            layer >= this.maxInstancesPerLayer.length - 1) return;
         this.currentLayer = layer;
         // this.logRender(startIndex, endIndex, layer, 'render');
         this.logRender({
@@ -180,6 +147,7 @@ export class NestedHistogram {
             // if (currentLayer === 1 && startIndex === 0) {
             //    console.log('start: ', startIndex, ', end: ', endIndex, ', limits: ', limits);
             // }
+            console.log(startIndex, endIndex, currentLayer, layer)
             if (currentLayer > layer) return;
             if (!obj) return;
 
@@ -193,7 +161,10 @@ export class NestedHistogram {
             const fZbins = obj.fZaxis.fNbins;
 
             const counter = new RadixCounter([fXbins, fYbins, fZbins]);
-            const contentMax = Math.max(...this.filterOutsideContent(obj));
+            // const contentMax = Math.max(...this.filterOutsideContent(obj));
+            const contentMax = this.maxContentPerLayer[currentLayer].content ?
+                this.maxContentPerLayer[currentLayer].content :
+                this.maxContentPerLayer[currentLayer][this.selectedSet];
             const isTH3 = obj._typename.substring(0, 3) === 'TH3';
             const isTH2 = obj._typename.substring(0, 3) === 'TH2';
             const stepFor = this.maxInstancesPerLayer
@@ -240,42 +211,19 @@ export class NestedHistogram {
 
                 //TODO ASI TREBA FlipLocalZAxis (zatial netreba ak je len 1D)
 
+                //-------------ODTADIAL---------
                 const content = obj.getBinContent(relPos.x + 1, relPos.y + 1, relPos.z + 1);
                 let scaleFactor = 1;
                 if (currentLayer === 0) {
                     scaleFactor = content / contentMax;
-
                     // scaleFactor = 0.2 + 0.8 * this.easeOutCubic(content / contentMax);
                 } else {
                     scaleFactor = content / contentMax;
                 }
-                if (content === 0) {
-                    scaleFactor = 0;
-                }
-                let t = content / contentMax;
-                // this.color = new THREE.Color(t, 0, 1 - t);
-                // this.color = new THREE.Color(1, 0, 0);
+
                 this.color = new THREE.Color(counter.getIndex() / 10, 0, 1 - counter.getIndex() / 10);
 
-                // if (currentLayer === 0) {
-                //    // console.log(i / stepFor)
-                //    const color = new THREE.Color(255, 0, 0);
-                //    const box = new THREE.Box3().setFromCenterAndSize(
-                //       new THREE.Vector3(binSizePos.x.pos, binSizePos.y.pos, binSizePos.z.pos),
-                //       new THREE.Vector3(binSizePos.x.size, binSizePos.y.size, binSizePos.z.size)
-                //    );
-                //    const helper = new THREE.Box3Helper(box, color);
-                //    helper.raycast = () => {
-                //    };
-                //
-                //    const index = obj.getBin(relPos.x + 1, relPos.y + 1, relPos.z + 1)
-                //    const child = obj.children[this.selectedChildren[currentLayer]][index];
-                //    if (child) {
-                //       this.el.object3D.add(helper);
-                //    }
-                // }
-
-                t = binSizePos.y.size * scaleFactor;
+                const t = binSizePos.y.size * scaleFactor;
 
                 if (isTH3) {
                     binSizePos.x.size *= scaleFactor;
@@ -300,13 +248,9 @@ export class NestedHistogram {
                 dummy.updateMatrix();
 
                 if (currentLayer === layer) {
-                    // console.log(dummy.scale)
-                    // console.log(dummy.position)
-                    // console.log('')
                     this.instancedMesh.setMatrixAt(i, dummy.matrix);
                     this.instancedMesh.setColorAt(i, this.color);
                 } else if (this.maxInstancesPerLayer.length - 1 > layer) {
-                    // console.log(relPos.x + 1, relPos.y + 1, relPos.z + 1)
                     const index = obj.getBin(relPos.x + 1, relPos.y + 1, relPos.z + 1)
                     let child = undefined;
                     if (obj.children.content) {
@@ -314,10 +258,10 @@ export class NestedHistogram {
                     } else {
                         child = obj.children[this.selectedSet][index];
                     }
-                    // console.log(child)
-                    // render(i, i + stepFor, currentLayer + 1, child, this.matrixCache[currentLayer][i / stepFor]);
                     render(i, endIndex, currentLayer + 1, child, this.matrixCache[currentLayer][i / stepFor]);
                 }
+
+                //---------POTADIAL------------
                 if (!counter.increment(0)) break;
             }
             this.instancedMesh.instanceMatrix.needsUpdate = true;
@@ -329,6 +273,10 @@ export class NestedHistogram {
         this.instancedMesh.computeBoundingBox();
     }
 
+    /**
+     * @desc This method sets up base for instanced mesh, which will be rendered.
+     * Precisely, geometry, material, count and ray-cast interaction are being set.
+     * */
     setupInstancedMesh() {
         let parent = undefined;
         if (this.instancedMesh) {
@@ -340,11 +288,20 @@ export class NestedHistogram {
         const geometry = new THREE.BoxGeometry(1, 1, 1);
         const material = new THREE.MeshPhongMaterial({color: 0xaaaaaa});
         // const material = new THREE.MeshMatcapMaterial({color: 0xaaaaaa});
-        this.instancedMesh = new THREE.InstancedMesh(geometry, material, this.totalInstances);
+
+        let totalInst = this.maxInstancesPerLayer
+            .reduce((acc, value) => {
+                return acc * value;
+            }, 1);
+        if (this.availableSets > 1) {
+            totalInst += this.maxInstancesPerLayer[-2] * (this.availableSets - 1)
+        }
+
+        this.instancedMesh = new THREE.InstancedMesh(geometry, material, totalInst);
         const dummy = new THREE.Object3D();
         dummy.scale.set(0, 0, 0);
         dummy.updateMatrix();
-        for (let i = 0; i < this.totalInstances; i++) {
+        for (let i = 0; i < totalInst; i++) {
             this.instancedMesh.setMatrixAt(i, dummy.matrix);
         }
         // this.instancedMesh.frustrumCulled = false
@@ -357,7 +314,7 @@ export class NestedHistogram {
                 const triggerSource = raycaster._triggerSource;
                 this.mouseEvents
                     .filter(mouseEvent => mouseEvent.event === triggerSource)
-                    .forEach(mouseEvent => mouseEvent.function(res[0].index, this));
+                    .forEach(mouseEvent => mouseEvent.function(res[0], this));
             }
         }
         if (parent) {
@@ -365,6 +322,50 @@ export class NestedHistogram {
         }
     }
 
+    /**
+     * @desc Adds function that will be called, if specified event is triggered.
+     * @param event can be either mouseevent in which only name of event is required (e.g. mousclick, shiftmousedbclick),
+     * or keyboard event which has to concise state (keydown or keyup) and keyCode (e.g. Numpad1)
+     * @param func Function that is called if event is triggered.
+     * */
+    addEvent(event, func) {
+        if (event?.state === 'keydown') {
+            this.keydownEvents.push({
+                key: event.key,
+                function: func
+            });
+            console.log('down');
+        } else if (event?.state === 'keyup') {
+            this.keyupEvents.push({
+                key: event.key,
+                function: func
+            });
+        } else {
+            this.mouseEvents.push({
+                event: event,
+                function: func
+            });
+        }
+    }
+
+    /**
+     * @desc Removes function from event listener.
+     * @param event Defines from which event should listening be removed.
+     * @func Function has to have same reference to one that was added by addEvent.
+     * */
+    removeEvent(event, func) {
+        const index = this.mouseEvents.find((f) => f === func);
+        if (index) this.mouseEvents.splice(index, 1);
+    }
+
+    /**
+     * @desc Computes linear index of bin by position.
+     * @param position should be array with position for each layer.
+     * e.g. ([{x: 1, y: 3, z: 2}, {x: 89, 0, 0}])
+     * @return Array in which entries represents linear index of bins for each index.
+     * If used with combination from position obtained by ray-cast event,
+     * the last entry is always index of visible bin.
+     * */
     computeIndexFromPosition(position) {
         let ind = Array(position.length).fill(0);
         const rec = (layer, obj, index) => {
@@ -400,12 +401,20 @@ export class NestedHistogram {
         return ind;
     }
 
+    /**
+     * @desc Computes jsroot (Root specification) index of bin by position.
+     * @param position should be array with position for each layer.
+     * e.g. ([{x: 1, y: 3, z: 2}, {x: 89, 0, 0}])
+     * @return Array in which entries represents jsroot index of bins for each index.
+     * If used with combination from position obtained by ray-cast event,
+     * the last entry is always index of visible bin.
+     * */
     computeJsRootIndexFromPosition(position) {
         let ind = Array(position.length).fill(0);
         let t = this.pointer.origin;
         for (let i = 0; i < position.length; i++) {
             ind[i] = t.getBin(position[i].x + 1, position[i].y + 1, position[i].z + 1);
-            if (t.children.content) {
+            if (t.children?.content) {
                 t = t.children.content[ind[i]];
             } else {
                 return ind;
@@ -414,14 +423,25 @@ export class NestedHistogram {
         return ind;
     }
 
-    setPointerToChild(index, set) {
-        this.pointer.setOriginToChild(index, set);
+    /**
+     * @desc Method to set pointers origin to one of origins child.
+     * In result, only part of histogram specified by child is rendered.
+     * @param position Array in which each entry represents position specified by jsroot.
+     * e.g. ([{x: 1, y: 3, z: 2}, {x: 89, 0, 0}])
+     * @param set Specifies from which set should child be chosen.
+     * If children contains sets, parameter need to be specified.
+     * */
+    setPointerToChild(position, set) {
+        this.pointer.setOriginToChild(position, set);
         this.init();
         console.log('path: ', this.pointer.path);
         console.log('title: ', this.pointer.title)
         this.renderHistogram(0, this.totalInstances, 0);
     }
 
+    /**
+     * @desc Method to set pointers origin to its parent.
+     * * */
     setPointerToParent() {
         this.pointer.setOriginToParent(1);
         console.log('path: ', this.pointer.path);
@@ -430,6 +450,11 @@ export class NestedHistogram {
         this.renderHistogram(0, this.totalInstances, 0);
     }
 
+    /**
+     * @desc Method to show (render) histogram that is currently represented by bin.
+     * @param position – should be array with position for each layer.
+     * e.g. ([{x: 1, y: 3, z: 2}, {x: 89, 0, 0}])
+     * */
     showChildHistogram(position) {
         const ind = this.computeIndexFromPosition(position);
 
@@ -439,34 +464,129 @@ export class NestedHistogram {
             .reduce((acc, value) => {
                 return acc * value;
             }, 1);
+
+        canvasSubjectGet().next({
+            id: this.id + '-cinema',
+            obj: this.getChildByPosition(
+                this.pointer.origin,
+                [...position]) //[...] for shallow copy
+        });
+
         this.renderHistogram(ind.slice(-1)[0], ind.slice(-1)[0] + multiplier, position.length);
     }
 
-    hideChildHistogram(index) {
-        if (index.length === 1) return;
+    /**
+     * Method to get child (jsroot object) by position
+     * @param origin Defines origin from which child set by position is obtained.
+     * @param position Defines position specified by jsroot indexing of bins.
+     * Has to be array (ca go through more layers at once) where each entry represents children position in layer.
+     * */
+    getChildByPosition(origin, position) {
+        const pos = position[0];
+        let obj = origin;
+        if (pos) {
+            const index = origin.getBin(pos.x + 1, pos.y + 1, pos.z + 1);
+            if (origin.children?.content) {
+                obj = origin.children.content[index];
+            } else if (origin.children?.[this.selectedSet]) {
+                obj = origin.children[this.selectedSet][index];
+            }
+            if (origin.children && position[1]) {
+                position.splice(0, 1);
+                return this.getChildByPosition(obj, position);
+            } else {
+                return obj;
+            }
+        } else {
+            return origin;
+        }
+    }
 
-        const layerDimensions = this.maxInstancesPerLayer.slice(index.length - 1);
+    /**
+     * @desc Method to hide (child) histogram and show (render) bin from layer above.
+     * @param position – should be array with position for each layer.
+     * e.g. ([{x: 1, y: 3, z: 2}, {x: 89, 0, 0}])
+     * */
+    hideChildHistogram(position) {
+        if (position.length === 1) return;
+
+        const layerDimensions = this.maxInstancesPerLayer.slice(position.length - 1);
         const cacheLayerDimensions = this.maxInstancesPerLayer.slice(
-            index.length - 1,
+            position.length - 1,
             this.maxInstancesPerLayer.length - 1
         );
-
+        console.log(this.maxInstancesPerLayer);
+        console.log(cacheLayerDimensions);
         const totalMultiplier = layerDimensions.reduce((acc, value) => acc * value, 1);
+        console.log(totalMultiplier);
 
-        const startIndex = this.calculateHierarchicalIndex(index);
+        const startIndex = this.calculateHierarchicalIndex(position);
+        console.log(position.length - 1)
         const startIndexFloored = Math.floor(startIndex / totalMultiplier) * totalMultiplier;
+        console.log(startIndexFloored);
 
-        this.clearMatrixCacheRange(startIndexFloored, totalMultiplier, cacheLayerDimensions, index.length - 1);
+        this.clearMatrixCacheRange(startIndexFloored, totalMultiplier, cacheLayerDimensions, position.length - 1);
         this.hideInstanceRange(startIndexFloored, totalMultiplier);
         this.logRender({
             procedure: 'hide',
-            value: index
+            value: position
         });
-        this.renderHistogram(startIndexFloored, startIndexFloored + totalMultiplier, index.length - 2);
+        this.renderHistogram(startIndexFloored, startIndexFloored + totalMultiplier, position.length - 2);
         this.renderHistory.pop(); //removes duplicit renderHistogram call
     }
 
-    calculateHierarchicalIndex(index) {
+    /**
+     * Method to obtain range of axes from each layer.
+     * @param position – should be array with position for each layer.
+     * e.g. ([{x: 1, y: 3, z: 2}, {x: 89, 0, 0}])
+     * @param obj Jsroot object from which histogram is computed range of bin.
+     * @default Pointers origin.
+     * */
+    getRangeByPosition(position, obj = this.pointer.origin) {
+        const range = {
+            x: {min: undefined, max: undefined},
+            y: {min: undefined, max: undefined},
+            z: {min: undefined, max: undefined}
+        }
+        if (position[0]) {
+            range.x.min = obj.fXaxis.GetBinLowEdge(position[0].x + 1);
+            range.x.max = (obj.fXaxis.GetBinCenter(position[0].x + 1) * 2) -
+                obj.fXaxis.GetBinLowEdge(position[0].x + 1);
+            range.y.min = obj.fYaxis.GetBinLowEdge(position[0].y + 1);
+            range.y.max = (obj.fYaxis.GetBinCenter(position[0].y + 1) * 2) -
+                obj.fYaxis.GetBinLowEdge(position[0].y + 1);
+            range.z.min = obj.fZaxis.GetBinLowEdge(position[0].z + 1);
+            range.z.max = (obj.fZaxis.GetBinCenter(position[0].z + 1) * 2) -
+                obj.fZaxis.GetBinLowEdge(position[0].z + 1);
+        }
+        if (position[1]) {
+            let child = undefined;
+            if (obj.children?.content) {
+                child = obj.children.content[obj.getBin(
+                    position[0].x + 1,
+                    position[0].y + 1,
+                    position[0].z + 1,
+                )];
+            } else if (obj.children?.[this.selectedSet]) {
+                child = obj.children[this.selectedSet][obj.getBin(
+                    position[0].x + 1,
+                    position[0].y + 1,
+                    position[0].z + 1,
+                )];
+            }
+            return [range, ...this.getRangeByPosition(position.slice(1), child)]
+        } else {
+            return [range];
+        }
+    }
+
+    /**
+     * @desc Calculates linear index of bin that starts the histogram specified by position.
+     * @param position – should be array with position for each layer.
+     * e.g. ([{x: 1, y: 3, z: 2}, {x: 89, 0, 0}])
+     * @return Linear index of starting bin of the histogram specified by position.
+     * * */
+    calculateHierarchicalIndex(position) {
         let calculatedIndex = 0;
         const layerSizes = this.maxInstancesPerLayer.slice(1);
         const multipliers = [];
@@ -481,14 +601,14 @@ export class NestedHistogram {
             const {fNbins: fY} = obj.fYaxis;
             const {fNbins: fZ} = obj.fZaxis;
 
-            const linearIndex = index[layer].x +
-                (index[layer].y * fX) +
-                (index[layer].z * fX * fY);
+            const linearIndex = position[layer].x +
+                (position[layer].y * fX) +
+                (position[layer].z * fX * fY);
 
             calculatedIndex += linearIndex * multipliers[layer];
 
-            if (layer + 1 < index.length) {
-                const child = this.getChildObject(obj, index[layer]);
+            if (layer + 1 < position.length) {
+                const child = this.getChildObject(obj, position[layer]);
                 traverse(layer + 1, child);
             }
         };
@@ -497,8 +617,15 @@ export class NestedHistogram {
         return calculatedIndex;
     }
 
-    getChildObject(obj, indexLayer) {
-        const binIndex = obj.getBin(indexLayer.x + 1, indexLayer.y + 1, indexLayer.z + 1);
+    /**
+     * @desc Getter function for child in jsroot histogram object.
+     * @param obj Jsroot histogram object
+     * @param positionLayer - JS object with position for each axis.
+     * e.g. ({x: 0, y: 2, z: 1})
+     * @return Jsroot histogram object of children specified by indexLayer from obj.
+     * */
+    getChildObject(obj, positionLayer) {
+        const binIndex = obj.getBin(positionLayer.x + 1, positionLayer.y + 1, positionLayer.z + 1);
 
         if (obj.children.content) {
             return obj.children.content[binIndex];
@@ -507,6 +634,15 @@ export class NestedHistogram {
         }
     }
 
+    /**
+     * @desc Method to clear matrix cache from start index to end index,
+     * including objects in sub-layers with corresponding index.
+     * @param startIndex Defines linear index from which objects will be deleted.
+     * @param multiplier Defines offset from start index to end index.
+     * At upmost layer endIndex = startIndex + multiplier.
+     * @param dimensions Array with number of instances for each layer that will be cleared.
+     * @param baseLayerIndex start index of layer from which cache is cleared.
+     * */
     clearMatrixCacheRange(startIndex, multiplier, dimensions, baseLayerIndex) {
         let currentIndex = startIndex;
         let currentMultiplier = multiplier;
@@ -521,16 +657,66 @@ export class NestedHistogram {
         }
     }
 
+    /**
+     * @desc Method to set available sets based on origin.
+     * @param origin Jsroot histogram object
+     * @return is null. Sets that are found are set in stateSubject.
+     * */
     setAvailableSets(origin) {
-        if (origin.children.content) {
-            const firstChild = origin.children.content.find((child) => {return child});
+        if (origin.children?.content) {
+            const firstChild = origin.children.content.find((child) => {
+                return child
+            });
             this.setAvailableSets(firstChild);
-        } else if (origin.children) {
+        } else if (origin?.children) {
             const currentValue = stateSubjectGet().getValue();
             currentValue.sets = Object.keys(origin.children);
             stateSubjectGet().next(currentValue);
         }
     }
+
+    /**
+     * @desc Key down handler for nested histogram.
+     * Creates functionality where user can render each layer at once.
+     * @param event Defines incoming event which will be put against regex.
+     * */
+    keyDownHandler(event) {
+        // console.log(this.keydownEvents);
+        const regex = /^(?:Digit|Numpad)(\d+)$/;
+        const match = event.code.match(regex);
+
+        if (match) {
+            const dummy = new THREE.Object3D();
+            dummy.scale.set(0, 0, 0);
+            dummy.updateMatrix();
+            for (let i = 0; i < this.totalInstances; i++) {
+                this.instancedMesh.setMatrixAt(i, dummy.matrix);
+            }
+            this.matrixCache = new Array(this.maxInstancesPerLayer.length).fill().map(() => []);
+
+            this.renderHistogram(0, this.totalInstances, parseInt(match[1]) - 1);
+        }
+    }
+
+    keyUpHandler(event) {
+        // console.log(event);
+    }
+
+    /**
+     * Logs rendering events (including showing and hiding child histograms)
+     * to the `renderHistory`.
+     *
+     * This is especially useful when the selected set changes.
+     *
+     * @param {Object} obj - The render operation details.
+     * @param {"render" | "hide"} obj.procedure - The type of operation.
+     * @param {number | Object} obj.value - The associated value:
+     *   - If `procedure` is `"hide"`, this is the position used in the hide method.
+     *   - If `procedure` is `"render"`, this is an object containing:
+     *     @param {number} obj.value.startIndex - The starting index.
+     *     @param {number} obj.value.endIndex - The ending index.
+     *     @param {number} obj.value.layer - The layer used in rendering.
+     */
 
     logRender(obj) {
         if (obj.procedure === 'render') {
@@ -541,6 +727,11 @@ export class NestedHistogram {
         this.renderHistory.push(obj);
     }
 
+    /**
+     * @desc Hides rendered bins by transforming instanced mesh.
+     * @param startIndex Linear index of instance from hiding will start.
+     * @param count Number of instances to be hidden.
+     * */
     hideInstanceRange(startIndex, count) {
         const hiddenMatrix = new THREE.Matrix4().makeScale(0, 0, 0);
 
@@ -550,6 +741,15 @@ export class NestedHistogram {
         this.instancedMesh.instanceMatrix.needsUpdate = true;
     }
 
+    /**
+     * @desc Method to check bins intersection against ray.
+     * Can be used to define instanced mesh intersection behaviour
+     * and override basic (traverse all instances) behaviour.
+     * Performs much better especially if number of instances are enormous.
+     * @param ray Instance of Three.Ray part of Three.Raycaster.
+     * @return Array of intersected bins,
+     * including their position, instanceId, Jsroot index and other infos.
+     * */
     checkIntersection(ray) {
         // console.log('inter');
         const target = new THREE.Vector3();
@@ -673,7 +873,13 @@ export class NestedHistogram {
                             result.push(...childResults);
 
                         } else {
-                            result.push({index: fullPath, target: x.target, distance: x.distance});
+                            result.push({
+                                index: fullPath,
+                                target: x.target,
+                                distance: x.distance,
+                                instanceId: this.computeIndexFromPosition(fullPath),
+                                range: this.getRangeByPosition(fullPath)
+                            });
                         }
                     });
                 });
@@ -752,6 +958,61 @@ export class NestedHistogram {
         return 1 - Math.pow(1 - t, 3);
     }
 
+    /**
+     * @desc Computes max numeric content for each layer and each set if available.
+     * @return Array of content or set objects containing max value.
+     * */
+    computeMaxContentPerLayer() {
+        if (!this.pointer) return;
+
+        // looping is faster than Math.max or reduce
+        const getMax = (arr) => {
+            let max = -Infinity;
+            for (let i = 0; i < arr.length; i++) {
+                const v = arr[i];
+                if (v > max) max = v;
+            }
+            return max;
+        };
+
+        const max = [];
+
+        max[0] = {content: getMax(this.pointer.origin.fArray)};
+
+        const computation = (children, layer = 1) => {
+            if (!max[layer]) {
+                max[layer] = {};
+            }
+
+            Object.entries(children).forEach(([key, childArray]) => {
+                childArray.forEach(child => {
+                    if (!child) return;
+
+                    const temp = getMax(child.fArray);
+
+                    if (!(key in max[layer]) || temp > max[layer][key]) {
+                        max[layer][key] = temp;
+                    }
+
+                    if (child.children) {
+                        computation(child.children, layer + 1);
+                    }
+                });
+            });
+        };
+
+        if (this.pointer.origin.children) {
+            computation(this.pointer.origin.children);
+        }
+
+        return max;
+    }
+
+
+    /**
+     * @desc Computes Maximum number of instances for each layer of histogram.
+     * @return Array of numbers representing max value for each layer.
+     * */
     computeMaxInstancesPerLayer() {
         if (!this.pointer) return;
         const temp = this.pointer.origin.fXaxis.fNbins * this.pointer.origin.fYaxis.fNbins * this.pointer.origin.fZaxis.fNbins;
