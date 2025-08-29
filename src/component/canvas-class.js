@@ -6,7 +6,7 @@ import {configSubjectGet} from "../rxjs/ConfigSubject.js";
 export class CanvasClass {
 
     plane = undefined;
-    cinemaSub= undefined;
+    cinemaSub = undefined;
     position;
     rotation;
     scale;
@@ -16,7 +16,7 @@ export class CanvasClass {
     constructor(image, position, rotation, scale, id) {
         const geometry = new THREE.PlaneGeometry(scale.x, scale.y);
         const material = new THREE.MeshBasicMaterial({
-            color: new THREE.Color().setHex( 0xFFFFFF ),
+            color: new THREE.Color().setHex(0xFFFFFF),
             side: THREE.DoubleSide
         });
         if (!this.plane) {
@@ -73,6 +73,11 @@ export class CanvasClass {
         );
     }
 
+    remove() {
+        this.plane.parent.remove(this.plane);
+        this.cinemaSub.unsubscribe();
+        this.configSub.unsubscribe();
+    }
 
     getPlane() {
         return this.plane;
