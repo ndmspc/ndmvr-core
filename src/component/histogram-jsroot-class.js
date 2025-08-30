@@ -19,15 +19,18 @@ export class HistogramJsrootClass {
         this.histogramGroup = new THREE.Group();
         this.dummyEl = document.createElement('div');
         this.dummyEl.id = "dummyDiv";
-        document.querySelector("#app").appendChild(this.dummyEl);
+        document.body.appendChild(this.dummyEl);
 
         this.configSub = configSubjectGet().getObservable()
             .pipe(filter(e =>
                 ((e.target.id.includes('*')) || (e.target.id.includes(this.id)))))
             .subscribe((v) => {
-                console.log('dojde config');
                 console.log(v.config.TH1ZScale);
                 this.config = v.config;
+                const pos = this.config.jsrootHistogramMatrix.position;
+                const scale = this.config.jsrootHistogramMatrix.scale;
+                this.histogramGroup.position.set(pos.x, pos.y, pos.z);
+                this.histogramGroup.scale.set(scale.x, scale.y, scale.z);
                 console.log(this.config.TH1ZScale);
             });
 
@@ -36,8 +39,11 @@ export class HistogramJsrootClass {
                 filter(e => e.id === this.id)
             )
             .subscribe((histo) => {
+                const opts = histo.histogram._typename.substring(0, 3) === 'TH3'
+                    ? ""
+                    : "lego";
                 if (!this.framePainter) {
-                    draw("dummyDiv", histo.histogram).then(retValue => {
+                    draw("dummyDiv", histo.histogram, opts).then(retValue => {
                         this.framePainter = retValue.getFramePainter();
                         this.histogramGroup.clear();
                         if (this.framePainter.scene.children[0]) {
@@ -55,9 +61,8 @@ export class HistogramJsrootClass {
                         }
                     })
                 } else {
-                    draw("dummyDiv", histo.histogram).then(retValue => {
+                    draw("dummyDiv", histo.histogram, opts).then(retValue => {
                         this.histogramGroup.clear();
-                        console.log(retValue.getFramePainter().scene);
                         if (this.framePainter.scene.children[1]) {
                             this.framePainter.scene.children[1].scale.set(0.01, 0.01, 0.05);
 

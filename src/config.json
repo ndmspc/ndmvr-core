@@ -34,6 +34,18 @@
         "z": 10
       }
     },
+    "jsrootHistogramMatrix": {
+      "position": {
+        "x": 0,
+        "y": 0,
+        "z": -20
+      },
+      "scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      }
+    },
     "padding": {
       "default": {
         "x": 0.1,

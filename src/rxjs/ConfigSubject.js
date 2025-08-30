@@ -17,6 +17,10 @@ class ConfigSubject {
                     position: new THREE.Vector3(0, 0, 0),
                     scale: new THREE.Vector3(10, 5, 10)
                 },
+                jsrootHistogramMatrix: {
+                    position: new THREE.Vector3(0, 0, -20),
+                    scale: new THREE.Vector3(1, 1, 1)
+                },
                 canvas: {
                     position: {x: 0, y: 5, z: -15},
                     rotation: {x: 10, y: 0, z: 0},
