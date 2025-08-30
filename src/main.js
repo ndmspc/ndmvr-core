@@ -22,7 +22,8 @@ import histo1_2_5 from "../public/histograms/nested/test_1_2_5.json";
 import histo5_2_1 from "../public/histograms/nested/test_5_2_1.json";
 
 import histogram2x2x3 from "../public/histograms/TH3variableBinning2x2x3OnlyInsideContent.json";
-import histo6x2x1 from "../public/histograms/TH3variableBinning2x2x3WOutsideContent.json";
+import histo2x2x3 from "../public/histograms/TH3variableBinning2x2x3WOutsideContent.json";
+import histo6x2x1 from "../public/histograms/TH3variable6x2x1wOutsideContent.json";
 import {histogramSubjectGet} from "./rxjs/HistogramSubject.js";
 import histoSparse2 from "../public/histograms/THnSparse3.json"
 import nestedHisto from "../public/histograms/hist3D.axis1-pt_axis2-ce_axis5-eta.json"
@@ -46,12 +47,12 @@ const sceneElm = generate_AFrame_blank_scene_html();
 document.querySelector("#app").appendChild(sceneElm);
 
 //    // const geom = new THREE.BoxGeometry(0.128821, 0.1515151515151515,0.9174311926605504);
-//    const geom = new THREE.BoxGeometry(1,1,1);
-//    const mate = new THREE.MeshNormalMaterial();
-//    const cube = new THREE.Mesh(geom, mate);
+   const geom = new THREE.BoxGeometry(1,1,1);
+   const mate = new THREE.MeshNormalMaterial();
+   const cube = new THREE.Mesh(geom, mate);
 //    // cube.position.set(-4.9358974,-1.13636363,4.541284403669724);
-//    cube.position.set(0,0,0);
-// sceneElm.object3D.add(cube)
+   cube.position.set(0,0,-4);
+sceneElm.object3D.add(cube)
 
 // const cube2 = new THREE.Mesh(geom, mate);
 // cube2.position.set(0,0,0);
@@ -81,6 +82,12 @@ imageContainer.setAttribute('canvas-component', '');
 imageContainer.setAttribute('scale', "10 10 10");
 
 sceneElm.appendChild(imageContainer);
+
+const jsrootHistogramContainer = document.createElement('a-entity');
+jsrootHistogramContainer.id = "histogram1-jsroot";
+jsrootHistogramContainer.setAttribute('jsroot-histogram', '');
+jsrootHistogramContainer.setAttribute('position', "0 0 0");
+sceneElm.appendChild(jsrootHistogramContainer);
 
 const histogramContainer = document.createElement('a-entity');
 histogramContainer.id = "histogram1";
@@ -215,7 +222,15 @@ loadButton.addEventListener('click', async () => {
 // histogramSubjectGet().next({id: 'histogram1', histogram: 'https://eos.ndmspc.io//eos/ndmspc/scratch/ndmspc/ndmvr-aframe/demo/hist3D.axis1-pt_axis2-ce_axis5-eta.root'});
 // histogramSubjectGet().next({id: 'histogram1', histogram: parse(nestedHisto4)});
 
-histogramSubjectGet().next({id: 'histogram1', histogram: histo6x2x1});
+// histogramSubjectGet().next({id: 'histogram1-jsroot', histogram: histo6x2x1});
+histogramSubjectGet().next({id: 'histogram1-jsroot', histogram: histo2x2x3});
+
+// setTimeout(()=> {
+//
+//     // histogramSubjectGet().next({id: 'histogram1-jsroot', histogram: histo2x2x3});
+//     histogramSubjectGet().next({id: 'histogram1-jsroot', histogram: histo6x2x1});
+//
+// }, 5000)
 // histogramSubjectGet().next({id: 'histogram1', histogram: histo125});
 // histogramSubjectGet().next({id: 'histogram1', histogram: histo12_5});
 // histogramSubjectGet().next({id: 'histogram1', histogram: histo1_2_5});

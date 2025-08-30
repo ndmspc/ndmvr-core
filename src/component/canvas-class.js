@@ -22,10 +22,12 @@ export class CanvasClass {
         if (!this.plane) {
             this.plane = new THREE.Mesh(geometry, material);
             this.plane.position.set(position.x, position.y, position.z);
+            console.log('const', this.plane);
         }
 
         if (image) {
-            this.updateTexture(png);
+            console.log('img, ', image);
+            this.updateTexture(image);
         }
 
         this.id = id;
@@ -38,8 +40,10 @@ export class CanvasClass {
                 filter(e => e.id === this.id)
             )
             .subscribe(obj => {
+                console.log('obj: ', obj)
                 const object = obj.obj
                 makeImage({format: 'png', object, width: 600, height: 600}).then(png => {
+                    console.log('png, ', png);
                     this.updateTexture(png);
                 })
             });
@@ -64,14 +68,33 @@ export class CanvasClass {
     }
 
     updateTexture(image) {
+        if (!image) {
+            console.warn("updateTexture called with null/undefined");
+            return;
+        }
+
         const loader = new THREE.TextureLoader();
-        loader.load(
-            image, texture => {
-                this.plane.material.map = texture;
-                this.plane.material.needsUpdate = true;
-            },
-        );
+
+        if (typeof image === "string" && (image.startsWith("data:") || image.startsWith("http"))) {
+            loader.load(
+                image,
+                texture => {
+                    this.plane.material.map = texture;
+                    this.plane.material.needsUpdate = true;
+                },
+                undefined,
+                err => console.error("Texture load failed", err)
+            );
+        } else if (image instanceof HTMLImageElement) {
+            const texture = new THREE.Texture(image);
+            texture.needsUpdate = true;
+            this.plane.material.map = texture;
+            this.plane.material.needsUpdate = true;
+        } else {
+            console.error("Unsupported image type passed to updateTexture:", image);
+        }
     }
+
 
     remove() {
         this.plane.parent.remove(this.plane);
@@ -80,6 +103,7 @@ export class CanvasClass {
     }
 
     getPlane() {
+        console.log('get', this.plane);
         return this.plane;
     }
 }
