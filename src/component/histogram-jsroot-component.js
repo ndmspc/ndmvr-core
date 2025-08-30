@@ -5,7 +5,7 @@ const registerHistogramJsrootComponent = () => {
 
         jsrootHistogram: undefined,
 
-        init: function() {
+        init: function () {
             this.jsrootHistogram = new HistogramJsrootClass(this.el.id);
             this.el.object3D.add(this.jsrootHistogram.getHistogramMesh());
         }
