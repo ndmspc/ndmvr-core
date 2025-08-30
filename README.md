@@ -24,22 +24,126 @@ npm install @ndmspc/ndmvr-aframe
 npm run dev
 ```
 
-## Examples
+## Configuration Documentation
 
-After you have ndmvr-aframe package installed, you can use it like this.
+This project supports a flexible JSON configuration to control positioning, scaling, padding, and visual styling of histograms and canvases.
+<br>Below is the reference for each configuration section.
 
-### Basic example
+The configuration is contained within a main "config" object.
 
-In main.js
+```json
+{
+  "config": { ... }
+}
+```
+### **_camera_**
 
-```javascript
-import { fullAframeScene, registerComponents } from "ndmvr-aframe";
+This section is intended to configure the camera's position. Note: This feature is not yet functional.
 
-registerComponents();
-document.querySelector("#app").appendChild(fullAframeScene());
+```json
+"camera": {
+  "position": { "x": 0, "y": 0, "z": 0 }
+}
 ```
 
-### How to pass functions to component
+### **_canvas_**
+
+>Controls the main canvas mesh.<br>
+>**Position**: sets canvas location.<br>
+>**Rotation**: in degrees.<br>
+>**Scale**: width/height/depth scaling (Three.js units).<br>
+
+```json
+"canvas": {
+    "position": { "x": 0, "y": 5, "z": -15 },
+    "rotation": { "x": 10, "y": 0, "z": 0 },
+    "scale":    { "x": 10, "y": 10, "z": 0 }
+}
+```
+
+### **_histogramMatrix_**
+
+>Controls all nested histograms.<br>
+>**Position**: moves the histogram matrix as a whole.<br>
+>**Scale**: dimensions in Three.js units.<br>
+ 
+ ```json
+"histogramMatrix": {
+    "position": { "x": 0, "y": 0, "z": 10 },
+    "scale":    { "x": 10, "y": 5, "z": 10 }
+}
+```
+
+### **_jsrootHistogramMatrix_**
+
+>Controls histograms rendered via JSROOT renderer.<br>
+>**Position**: moves the JSROOT-rendered histogram.<br>
+>**Scale**: in 0–1 percentage, relative scaling factor applied to the whole histogram.<br>
+
+ ```json
+"histogramMatrix": {
+    "position": { "x": 0, "y": 0, "z": 10 },
+    "scale":    { "x": 10, "y": 5, "z": 10 }
+}
+```
+
+### **_padding_**
+
+>Controls spacing between nested histograms.<br>
+>**default**: applies to all TH1/TH2/TH3 histograms.<br>
+>**layer**: overrides default for specific histogram layers.<br>
+
+ ```json
+"padding": {
+    "default": { "x": 0.1, "y": 0.1, "z": 0.1 },
+    "layer": [
+        { "x": 0.1, "y": 0.1, "z": 0.1 }
+    ]
+}
+```
+
+### **_TH1ZScale_**
+
+>Controls depth of TH1 bins.<br>
+>Values are 0–1 (percentage):<br>
+>>0 = no depth,<br>
+>>1 = full depth.<br>
+> 
+>default: applies to all TH1 histograms.<br>
+>layer: overrides default for specific layers.<br>
+
+ ```json
+"TH1ZScale": {
+    "default": 0.8,
+    "layer": [0.2, 1, 1, 1]
+}
+```
+
+### **_Color_**
+
+>Defines bin colors as gradients.<br>
+>min/max: hex strings (e.g. "0x0000ff").<br>
+>Gradient is calculated between min and max according to bin content (0 → max bin content).<br>
+>**default**: applied to all histograms.<br>
+>**layer**: overrides default per layer.<br>
+>**set**: overrides both default and layer for specific sets of histograms.<br>
+
+ ```json
+"color": {
+    "default": { "min": "0x0000ff", "max": "0xff0000" },
+    "layer": [],
+    "set": [
+        { "min": "0x222222", "max": "0xffaa00" },
+        { "min": "0x00ffff", "max": "0xff7f00" },
+        { "min": "0x00ff00", "max": "0x800080" },
+        { "min": "0x0000ff", "max": "0xff0000" }
+    ]
+}
+```
+
+
+
+## How to pass functions to component
 
 - You can pass single or array of functions to function subject.
 - event identifies type of event on which the component will then listen to.
