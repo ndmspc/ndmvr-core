@@ -29,7 +29,12 @@ npm run dev
 This project supports a flexible JSON configuration to control positioning, scaling, padding, and visual styling of histograms and canvases.
 <br>Below is the reference for each configuration section.
 
-The configuration is contained within a main "config" object.
+#### Configuration can be passed through config subject.
+```js
+configSubjectGet().next(config);
+```
+
+The configuration is contained within a main **config** object.
 
 ```json
 {
