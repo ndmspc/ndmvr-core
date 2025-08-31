@@ -225,7 +225,7 @@ loadButton.addEventListener('click', async () => {
 
 // histogramSubjectGet().next({id: 'histogram1-jsroot', histogram: histo6x2x1});
 // histogramSubjectGet().next({id: 'histogram1-jsroot', histogram: histo2x2x3});
-histogramSubjectGet().next({id: 'histogram1-jsroot', histogram: h3scat});
+histogramSubjectGet().next({id: 'histogram1', histogram: h3scat});
 
 // setTimeout(()=> {
 //

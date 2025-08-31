@@ -22,11 +22,9 @@ export class CanvasClass {
         if (!this.plane) {
             this.plane = new THREE.Mesh(geometry, material);
             this.plane.position.set(position.x, position.y, position.z);
-            console.log('const', this.plane);
         }
 
         if (image) {
-            console.log('img, ', image);
             this.updateTexture(image);
         }
 
@@ -43,7 +41,6 @@ export class CanvasClass {
                 console.log('obj: ', obj)
                 const object = obj.obj
                 makeImage({format: 'png', object, width: 600, height: 600}).then(png => {
-                    console.log('png, ', png);
                     this.updateTexture(png);
                 })
             });
@@ -52,7 +49,6 @@ export class CanvasClass {
             .pipe(filter(e =>
                 ((e.target.id.includes('*')) || (e.target.id.includes(this.id)))))
             .subscribe((v) => {
-                console.log(v)
                 this.position = v.config.canvas.position;
                 this.rotation = v.config.canvas.rotation;
                 this.scale = v.config.canvas.scale;
@@ -103,7 +99,6 @@ export class CanvasClass {
     }
 
     getPlane() {
-        console.log('get', this.plane);
         return this.plane;
     }
 }

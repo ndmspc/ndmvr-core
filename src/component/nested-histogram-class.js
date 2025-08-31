@@ -7,6 +7,7 @@ import {stateSubjectGet} from "../rxjs/StateSubject.js";
 import {canvasSubjectGet} from "../rxjs/CanvasSubject.js";
 import {configSubjectGet} from "../rxjs/ConfigSubject.js";
 import {binInfoSubjectGet} from "../rxjs/BinInfoSubject.js";
+import HistogramWireframeClass from "./histogram-wireframe-class.js";
 
 export class NestedHistogram {
     bin_padding_x;
@@ -19,6 +20,7 @@ export class NestedHistogram {
     rootObj = undefined;
     pointer = undefined;
     instancedMesh = undefined;
+    wireframe = undefined;
     maxInstancesPerLayer = undefined;
     maxContentPerLayer = undefined;
     totalInstances = undefined;
@@ -60,10 +62,7 @@ export class NestedHistogram {
             .pipe(filter(e =>
                 ((e.target.id.includes('*')) || (e.target.id.includes(this.id)))))
             .subscribe((v) => {
-                console.log('dojde config');
-                console.log(v.config.TH1ZScale);
                 this.config = v.config;
-                console.log(this.config.TH1ZScale);
             });
 
         this.handleStateChange = this.handleStateChange.bind(this);
@@ -95,13 +94,13 @@ export class NestedHistogram {
         this.maxInstancesPerLayer = this.computeMaxInstancesPerLayer();
         this.maxContentPerLayer = this.computeMaxContentPerLayer();
         // console.log(this.maxContentPerLayer);
-        console.log(this.maxInstancesPerLayer)
         this.totalInstances = this.maxInstancesPerLayer
             .reduce((acc, value) => {
                 return acc * value;
             }, 1);
 
         this.setupInstancedMesh();
+        this.wireframe = new HistogramWireframeClass(this.maxInstancesPerLayer, this.matrixCache);
     }
 
     /**
@@ -270,7 +269,7 @@ export class NestedHistogram {
         }
 
         render(startIndex, endIndex, 0, this.pointer.origin, this.config.histogramMatrix);
-        console.log(this.matrixCache);
+        this.wireframe.render(this.matrixCache, 0, layer + 1, startIndex, endIndex);
         this.instancedMesh.computeBoundingBox();
     }
 
@@ -298,7 +297,6 @@ export class NestedHistogram {
 
         this.matrixCache = new Array(this.maxInstancesPerLayer.length - 1).fill().map(() => []);
         this.matrixCache[this.matrixCache.length - 1] = Array.from({length: this.availableSets.length}, () => []);
-        console.log(this.matrixCache);
 
         const geometry = new THREE.BoxGeometry(1, 1, 1);
         const material = new THREE.MeshPhongMaterial({color: 0xaaaaaa});
@@ -437,7 +435,6 @@ export class NestedHistogram {
         }
         if (state.sets && state.sets !== this.availableSets) {
             this.availableSets = state.sets;
-            console.log(this.availableSets)
         }
     }
 
