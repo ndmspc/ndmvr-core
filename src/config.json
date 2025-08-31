@@ -64,6 +64,18 @@
       "default": 0.8,
       "layer": [0.2, 1, 1, 1]
     },
+    "wireframe": {
+      "display": {
+        "start": 0,
+        "end": 2
+      },
+      "layer": [],
+      "color": {
+        "default": "0x00FF00",
+        "layer": ["0x000000", "0x0000FF"],
+        "set": []
+      }
+    },
     "color": {
       "default": {
         "min": "0x0000ff",

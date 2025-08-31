@@ -80,6 +80,7 @@ export class NestedHistogram {
         this.matrixCache = [];
         this.instancedMesh.dispose();
         this.instancedMesh.parent.remove(this.instancedMesh);
+        this.wireframe.dispose();
         this.sub.unsubscribe();
         this.stateSub.unsubscribe();
         this.configSub.unsubscribe();
@@ -269,7 +270,8 @@ export class NestedHistogram {
         }
 
         render(startIndex, endIndex, 0, this.pointer.origin, this.config.histogramMatrix);
-        this.wireframe.render(this.matrixCache, 0, layer + 1, startIndex, endIndex);
+        const selectedSetIndexes = this.selectedSet.map(item => this.availableSets.indexOf(item));
+        this.wireframe.render(this.matrixCache, 0, layer + 1, startIndex, endIndex, selectedSetIndexes);
         this.instancedMesh.computeBoundingBox();
     }
 
@@ -372,7 +374,7 @@ export class NestedHistogram {
             };
 
             const eventWithSource = {...intersection, triggerSource};
-            console.log(eventWithSource)
+            // console.log(eventWithSource)
             if (!(triggerSource === "mousemove" && areIndexesEqual(intersection.index, this.dirtyInstance))) {
                 // const merged = this.mergeInfo({...eventWithSource, index: [...eventWithSource.index]});
                 // const {range: coords, content, error, set, triggerSource} = merged;

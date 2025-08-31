@@ -38,6 +38,18 @@ class ConfigSubject {
                     default: 0.8,
                     layer: [0.2, 1, 1, 1]
                 },
+                wireframe: {
+                    display: {
+                        start: 0,
+                        end: 5
+                    },
+                    layer: [],
+                    color: {
+                        default: "0x000000",
+                        layer: [],
+                        set: []
+                    }
+                },
                 color: {
                     default: {
                         min: new THREE.Color(0x0000ff),
