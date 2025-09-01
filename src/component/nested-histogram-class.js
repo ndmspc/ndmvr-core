@@ -636,15 +636,17 @@ export class NestedHistogram {
             position.length - 1,
             this.maxInstancesPerLayer.length - 1
         );
-        console.log(this.maxInstancesPerLayer);
-        console.log(cacheLayerDimensions);
+        // console.log(this.maxInstancesPerLayer);
+        // console.log(cacheLayerDimensions);
         const totalMultiplier = layerDimensions.reduce((acc, value) => acc * value, 1);
-        console.log(totalMultiplier);
+        // console.log(totalMultiplier);
 
         const startIndex = this.calculateHierarchicalIndex(position);
         console.log(position.length - 1)
         const startIndexFloored = Math.floor(startIndex / totalMultiplier) * totalMultiplier;
-        console.log(startIndexFloored);
+        console.log(startIndexFloored, totalMultiplier, cacheLayerDimensions, position.length - 1);
+
+        this.wireframe.clearSection(this.matrixCache, startIndexFloored, totalMultiplier, cacheLayerDimensions, position.length - 1);
 
         this.clearMatrixCacheRange(startIndexFloored, totalMultiplier, cacheLayerDimensions, position.length - 1);
         this.hideInstanceRange(startIndexFloored, totalMultiplier);
@@ -840,6 +842,7 @@ export class NestedHistogram {
             }
             this.matrixCache = new Array(this.maxInstancesPerLayer.length - 1).fill().map(() => []);
             this.matrixCache[this.matrixCache.length - 1] = Array.from({length: this.availableSets.length}, () => []);
+            this.wireframe.clearWireframe();
 
             this.renderHistogram(0, this.totalInstances, parseInt(match[1]) - 1);
         }

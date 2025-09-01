@@ -18,6 +18,7 @@ export default class HistogramWireframeClass {
 
     constructor(maxInstancesPerLayer, matrixCache) {
         this.maxInstancesPerLayer = maxInstancesPerLayer;
+        console.log(this.maxInstancesPerLayer);
         this.totalInstances = this.computeTotalInstances(maxInstancesPerLayer, matrixCache);
         const baseBox = new THREE.BoxGeometry(1, 1, 1);
         const baseEdges = new THREE.EdgesGeometry(baseBox);
@@ -98,8 +99,8 @@ export default class HistogramWireframeClass {
                     return acc * value;
                 }, 1);
 
-            const start = startIndex / stepFor;
-            const n = (endIndex - startIndex) / stepFor;
+            const start = Math.floor(startIndex / stepFor);
+            const n = Math.floor((endIndex - startIndex) / stepFor);
 
             if (Array.isArray(matrixCache[i][0])) {
                 const total = this.maxInstancesPerLayer
@@ -120,9 +121,6 @@ export default class HistogramWireframeClass {
                     }
                 })
             } else {
-                if (this.config.color.layer[i]) {
-                    console.log('je ina farba-----', i + 1);
-                }
                 const colorIndex = this.config.color.layer[i]
                     ? i + 1
                     : 0
@@ -139,7 +137,6 @@ export default class HistogramWireframeClass {
         this.instGeom.attributes.instancePosition.needsUpdate = true;
         this.instGeom.attributes.instanceScale.needsUpdate = true;
         this.instGeom.attributes.instanceColorIndex.needsUpdate = true;
-        console.log(this.instanceColors);
     }
 
     dispose() {
@@ -147,6 +144,55 @@ export default class HistogramWireframeClass {
         this.instanceScales = [];
         this.wireframe.parent.remove(this.wireframe);
         this.instGeom.dispose();
+    }
+
+    clearWireframe() {
+        this.instancePositions.fill(0);
+        this.instanceScales.fill(0);
+        this.instanceColors.fill(0);
+        this.instGeom.attributes.instancePosition.needsUpdate = true;
+        this.instGeom.attributes.instanceScale.needsUpdate = true;
+        this.instGeom.attributes.instanceColorIndex.needsUpdate = true;
+    }
+
+    clearSection(matrixCache, startIndex, offset, dimensions, baseLayerIndex) {
+        let currentMultiplier = this.maxInstancesPerLayer
+            .slice(baseLayerIndex)
+            .reduce((acc, value) => {
+                return acc * value;
+            }, 1);
+        let layerOffset = this.maxInstancesPerLayer
+            .slice(0, baseLayerIndex + dimensions.length)
+            .reduce((acc, value) => {
+                return acc * value;
+            }, 1);
+
+        for (let i = baseLayerIndex + dimensions.length - 1; i >= baseLayerIndex; i--) {
+            console.log('i', i, layerOffset, ((startIndex / currentMultiplier) + layerOffset) * 3);
+            if (Array.isArray(matrixCache[i][0])){
+
+            } else {
+                this.instancePositions.subarray(
+                    ((startIndex / currentMultiplier) + layerOffset) * 3,
+                    (((startIndex + offset) / currentMultiplier) + layerOffset) * 3)
+                    .fill(0);
+                this.instanceScales.subarray(
+                    ((startIndex / currentMultiplier) + layerOffset) * 3,
+                    (((startIndex + offset) / currentMultiplier) + layerOffset) * 3)
+                    .fill(0);
+                this.instanceColors.subarray(
+                    (startIndex / currentMultiplier) + layerOffset,
+                    ((startIndex + offset) / currentMultiplier) + layerOffset )
+                    .fill(0);
+                this.instGeom.attributes.instancePosition.needsUpdate = true;
+                this.instGeom.attributes.instanceScale.needsUpdate = true;
+                this.instGeom.attributes.instanceColorIndex.needsUpdate = true;
+            }
+            if (i > baseLayerIndex) {
+                currentMultiplier /= dimensions[i - baseLayerIndex];
+                layerOffset /= this.maxInstancesPerLayer[i];
+            }
+        }
     }
 
     computeTotalInstances(maxInstancesPerLayer, matrixCache) {
