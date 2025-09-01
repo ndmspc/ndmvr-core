@@ -155,43 +155,45 @@ export default class HistogramWireframeClass {
         this.instGeom.attributes.instanceColorIndex.needsUpdate = true;
     }
 
+
     clearSection(matrixCache, startIndex, offset, dimensions, baseLayerIndex) {
         let currentMultiplier = this.maxInstancesPerLayer
-            .slice(baseLayerIndex)
+            .slice(0, baseLayerIndex)
             .reduce((acc, value) => {
                 return acc * value;
             }, 1);
+        // currentMultiplier -= 1;
         let layerOffset = this.maxInstancesPerLayer
-            .slice(0, baseLayerIndex + dimensions.length)
+            .slice(0, baseLayerIndex)
             .reduce((acc, value) => {
-                return acc * value;
+                return acc + (acc * value);
             }, 1);
+        layerOffset -= 1;
 
-        for (let i = baseLayerIndex + dimensions.length - 1; i >= baseLayerIndex; i--) {
-            console.log('i', i, layerOffset, ((startIndex / currentMultiplier) + layerOffset) * 3);
-            if (Array.isArray(matrixCache[i][0])){
+        for (let i = baseLayerIndex; i < baseLayerIndex + dimensions.length; i++) {
+            // console.log('i', i, layerOffset, ((startIndex / currentMultiplier) + layerOffset) * 3);
+            console.log('i', i, currentMultiplier, layerOffset);
+            if (Array.isArray(matrixCache[i][0])) {
 
             } else {
-                this.instancePositions.subarray(
-                    ((startIndex / currentMultiplier) + layerOffset) * 3,
-                    (((startIndex + offset) / currentMultiplier) + layerOffset) * 3)
-                    .fill(0);
-                this.instanceScales.subarray(
-                    ((startIndex / currentMultiplier) + layerOffset) * 3,
-                    (((startIndex + offset) / currentMultiplier) + layerOffset) * 3)
-                    .fill(0);
-                this.instanceColors.subarray(
-                    (startIndex / currentMultiplier) + layerOffset,
-                    ((startIndex + offset) / currentMultiplier) + layerOffset )
-                    .fill(0);
-                this.instGeom.attributes.instancePosition.needsUpdate = true;
-                this.instGeom.attributes.instanceScale.needsUpdate = true;
-                this.instGeom.attributes.instanceColorIndex.needsUpdate = true;
+                // this.instancePositions.subarray(
+                //     ((startIndex / currentMultiplier) + layerOffset) * 3,
+                //     (((startIndex + offset) / currentMultiplier) + layerOffset) * 3)
+                //     .fill(0);
+                // this.instanceScales.subarray(
+                //     ((startIndex / currentMultiplier) + layerOffset) * 3,
+                //     (((startIndex + offset) / currentMultiplier) + layerOffset) * 3)
+                //     .fill(0);
+                // this.instanceColors.subarray(
+                //     (startIndex / currentMultiplier) + layerOffset,
+                //     ((startIndex + offset) / currentMultiplier) + layerOffset )
+                //     .fill(0);
+                // this.instGeom.attributes.instancePosition.needsUpdate = true;
+                // this.instGeom.attributes.instanceScale.needsUpdate = true;
+                // this.instGeom.attributes.instanceColorIndex.needsUpdate = true;
             }
-            if (i > baseLayerIndex) {
-                currentMultiplier /= dimensions[i - baseLayerIndex];
-                layerOffset /= this.maxInstancesPerLayer[i];
-            }
+            layerOffset += currentMultiplier * this.maxInstancesPerLayer[i];
+            currentMultiplier *= this.maxInstancesPerLayer[i + 1];
         }
     }
 
