@@ -84,12 +84,12 @@ imageContainer.setAttribute('scale', "10 10 10");
 
 sceneElm.appendChild(imageContainer);
 
-const jsrootHistogramContainer = document.createElement('a-entity');
-jsrootHistogramContainer.id = "histogram1-jsroot";
-jsrootHistogramContainer.setAttribute('jsroot-histogram', '');
-jsrootHistogramContainer.setAttribute('position', "0 0 0");
-sceneElm.appendChild(jsrootHistogramContainer);
-
+// const jsrootHistogramContainer = document.createElement('a-entity');
+// jsrootHistogramContainer.id = "histogram1-jsroot";
+// jsrootHistogramContainer.setAttribute('jsroot-histogram', '');
+// jsrootHistogramContainer.setAttribute('position', "0 0 0");
+// sceneElm.appendChild(jsrootHistogramContainer);
+//
 const histogramContainer = document.createElement('a-entity');
 histogramContainer.id = "histogram1";
 histogramContainer.setAttribute('histogram', '');
@@ -225,14 +225,17 @@ loadButton.addEventListener('click', async () => {
 
 // histogramSubjectGet().next({id: 'histogram1-jsroot', histogram: histo6x2x1});
 // histogramSubjectGet().next({id: 'histogram1-jsroot', histogram: histo2x2x3});
-histogramSubjectGet().next({id: 'histogram1', histogram: h3scat});
+histogramSubjectGet().next({id: 'histogram1', opts: {render: "nested"}, histogram: h3scat});
 
-// setTimeout(()=> {
-//
-//     // histogramSubjectGet().next({id: 'histogram1-jsroot', histogram: histo2x2x3});
-//     histogramSubjectGet().next({id: 'histogram1-jsroot', histogram: histo6x2x1});
-//
-// }, 5000)
+setTimeout(()=> {
+    histogramSubjectGet().next({id: 'histogram1', opts: {render: "nested"}, histogram: h3scat});
+}, 2000);
+setTimeout(()=> {
+    histogramSubjectGet().next({id: 'histogram1', opts: {render: "jsroot"}, histogram: h3scat});
+}, 4000);
+setTimeout(()=> {
+    histogramSubjectGet().next({id: 'histogram1', opts: {render: "nested"}, histogram: h3scat});
+}, 6000);
 // histogramSubjectGet().next({id: 'histogram1', histogram: histo125});
 // histogramSubjectGet().next({id: 'histogram1', histogram: histo12_5});
 // histogramSubjectGet().next({id: 'histogram1', histogram: histo1_2_5});

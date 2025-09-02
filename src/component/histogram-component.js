@@ -29,16 +29,24 @@ const registerHistogramComponent = () => {
                   // histo.opts.render = 'nested';
 
                   if (histo?.opts?.render === 'jsroot') {
-                      if (this.nestedHistogram) this.nestedHistogram.remove();
+                      if (this.nestedHistogram) {
+                          this.nestedHistogram.remove();
+                          this.nestedHistogram = undefined;
+                      }
 
                       if (this.jsrootHistogram) {
                           this.jsrootHistogram.updateHistogram(histo.histogram);
                       } else {
+                          console.log('novy jsroot');
                           this.jsrootHistogram = new HistogramJsrootClass(this.el.id, histo.histogram);
+                          console.log(this.jsrootHistogram.getHistogramMesh());
                           this.el.object3D.add(this.jsrootHistogram.getHistogramMesh());
                       }
                   } else {
-                      if (this.jsrootHistogram) this.jsrootHistogram.remove();
+                      if (this.jsrootHistogram) {
+                          this.jsrootHistogram.remove();
+                          this.jsrootHistogram = undefined;
+                      }
 
                       if (this.nestedHistogram) {
                           this.nestedHistogram.updateHistogram(histo);
@@ -52,6 +60,31 @@ const registerHistogramComponent = () => {
                           this.el.object3D.add(this.nestedHistogram.wireframe.wireframe);
                       }
                   }
+
+                  // if (histo?.opts?.render === 'jsroot') {
+                  //     if (this.nestedHistogram) this.nestedHistogram.remove();
+                  //
+                  //     if (this.jsrootHistogram) {
+                  //         this.jsrootHistogram.updateHistogram(histo.histogram);
+                  //     } else {
+                  //         this.jsrootHistogram = new HistogramJsrootClass(this.el.id, histo.histogram);
+                  //         this.el.object3D.add(this.jsrootHistogram.getHistogramMesh());
+                  //     }
+                  // } else {
+                  //     if (this.jsrootHistogram) this.jsrootHistogram.remove();
+                  //
+                  //     if (this.nestedHistogram) {
+                  //         this.nestedHistogram.updateHistogram(histo);
+                  //     } else {
+                  //         this.nestedHistogram = new NestedHistogram(
+                  //             this.data.bin_padding_x,
+                  //             this.data.bin_padding_y,
+                  //             this.data.bin_padding_z,
+                  //             histo, this.el.id);
+                  //         this.el.object3D.add(this.nestedHistogram.instancedMesh);
+                  //         this.el.object3D.add(this.nestedHistogram.wireframe.wireframe);
+                  //     }
+                  // }
               });
       },
 

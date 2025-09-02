@@ -88,6 +88,7 @@ export class HistogramJsrootClass {
 
     remove() {
         this.histogramGroup.parent.remove(this.histogramGroup);
+        document.body.removeChild(this.dummyEl);
         this.configSub.unsubscribe();
     }
 
