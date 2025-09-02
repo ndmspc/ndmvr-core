@@ -53,11 +53,7 @@
         "z": 0.1
       },
       "layer": [
-        {
-          "x": 0.1,
-          "y": 0.1,
-          "z": 0.1
-        }
+        { "x": 0.1, "y": 0.1, "z": 0.1}
       ]
     },
     "TH1ZScale": {
@@ -67,12 +63,12 @@
     "wireframe": {
       "display": {
         "start": 0,
-        "end": 2
+        "end": 4
       },
       "layer": [],
       "color": {
         "default": "0x00FF00",
-        "layer": ["0x000000", "0x0000FF"],
+        "layer": ["0x000000", "0x0000FF", "0x00FF00", "0x00FFFF"],
         "set": []
       }
     },

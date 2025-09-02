@@ -1,6 +1,7 @@
 import {configSubjectGet} from "../rxjs/ConfigSubject.js";
 import {filter} from "rxjs";
 import {FloatType} from "three";
+import {stateSubjectGet} from "../rxjs/StateSubject.js";
 
 export default class HistogramWireframeClass {
 
@@ -14,7 +15,9 @@ export default class HistogramWireframeClass {
     instanceColors = undefined;
     colorArray = undefined;
     configSub = undefined;
+    stateSub = undefined;
     config = undefined;
+    numOfavailableSets = undefined;
 
     constructor(maxInstancesPerLayer, matrixCache) {
         this.maxInstancesPerLayer = maxInstancesPerLayer;
@@ -58,6 +61,10 @@ export default class HistogramWireframeClass {
         this.wireframe = new THREE.LineSegments(this.instGeom, this.material);
         this.wireframe.frustumCulled = false;
 
+        this.stateSub = stateSubjectGet().getObservable().subscribe(v => {
+            this.numOfavailableSets = v.sets.length;
+        });
+
         this.configSub = configSubjectGet().getObservable()
             .subscribe((v) => {
                 this.config = v.config.wireframe;
@@ -70,10 +77,6 @@ export default class HistogramWireframeClass {
                 this.config.color.set
                     .map(c => new THREE.Color(c))
                     .forEach((color, i) => color.toArray(this.colorArray, (this.config.color.layer.length + 1 + i) * 3));
-                // this.colorArray[0].set(parseFloat(this.config.color.default));
-                // this.colorArray.set(this.config.color.layer.map(parseFloat), 1);
-                // this.colorArray.set(this.config.color.set.map(parseFloat), this.config.color.layer.length + 1);
-                console.log(this.colorArray);
                 this.material.uniforms.colorArray = {value: this.colorArray};
                 this.wireframe.material.uniformsNeedUpdate = true;
             });
@@ -158,7 +161,7 @@ export default class HistogramWireframeClass {
 
     clearSection(matrixCache, startIndex, offset, dimensions, baseLayerIndex) {
         let currentMultiplier = this.maxInstancesPerLayer
-            .slice(0, baseLayerIndex)
+            .slice(0, baseLayerIndex + 1)
             .reduce((acc, value) => {
                 return acc * value;
             }, 1);
@@ -166,35 +169,55 @@ export default class HistogramWireframeClass {
         let layerOffset = this.maxInstancesPerLayer
             .slice(0, baseLayerIndex)
             .reduce((acc, value) => {
-                return acc + (acc * value);
+                return acc + value;
             }, 1);
         layerOffset -= 1;
 
-        for (let i = baseLayerIndex; i < baseLayerIndex + dimensions.length; i++) {
-            // console.log('i', i, layerOffset, ((startIndex / currentMultiplier) + layerOffset) * 3);
-            console.log('i', i, currentMultiplier, layerOffset);
-            if (Array.isArray(matrixCache[i][0])) {
+        let mult = this.maxInstancesPerLayer
+            .slice(baseLayerIndex + 1)
+            .reduce((acc, value) => {
+                return acc * value;
+            }, 1);
 
+        for (let i = baseLayerIndex; i < baseLayerIndex + dimensions.length; i++) {
+
+            if (Array.isArray(matrixCache[i][0])) {
+                for (let j = 0; j < this.numOfavailableSets; j++) {
+
+                    this.instancePositions.subarray(
+                        ((Math.floor(startIndex / mult) + layerOffset) + (currentMultiplier * j)) * 3,
+                        ((Math.floor((startIndex + offset) / mult) + layerOffset) + (currentMultiplier * j)) * 3)
+                        .fill(0);
+                    this.instanceScales.subarray(
+                        ((Math.floor(startIndex / mult) + layerOffset) + (currentMultiplier * j)) * 3,
+                        ((Math.floor((startIndex + offset) / mult) + layerOffset) + (currentMultiplier * j)) * 3)
+                        .fill(0);
+                    this.instanceColors.subarray(
+                        (Math.floor(startIndex / mult) + layerOffset) + (currentMultiplier * j),
+                        (Math.floor((startIndex + offset) / mult) + layerOffset) + (currentMultiplier * j))
+                        .fill(0);
+                }
             } else {
-                // this.instancePositions.subarray(
-                //     ((startIndex / currentMultiplier) + layerOffset) * 3,
-                //     (((startIndex + offset) / currentMultiplier) + layerOffset) * 3)
-                //     .fill(0);
-                // this.instanceScales.subarray(
-                //     ((startIndex / currentMultiplier) + layerOffset) * 3,
-                //     (((startIndex + offset) / currentMultiplier) + layerOffset) * 3)
-                //     .fill(0);
-                // this.instanceColors.subarray(
-                //     (startIndex / currentMultiplier) + layerOffset,
-                //     ((startIndex + offset) / currentMultiplier) + layerOffset )
-                //     .fill(0);
-                // this.instGeom.attributes.instancePosition.needsUpdate = true;
-                // this.instGeom.attributes.instanceScale.needsUpdate = true;
-                // this.instGeom.attributes.instanceColorIndex.needsUpdate = true;
+                this.instancePositions.subarray(
+                    (Math.floor(startIndex / mult) + layerOffset) * 3,
+                    (Math.floor((startIndex + offset) / mult) + layerOffset) * 3)
+                    .fill(0);
+                this.instanceScales.subarray(
+                    (Math.floor(startIndex / mult) + layerOffset) * 3,
+                    (Math.floor((startIndex + offset) / mult) + layerOffset) * 3)
+                    .fill(0);
+                this.instanceColors.subarray(
+                    Math.floor(startIndex / mult) + layerOffset,
+                    Math.floor((startIndex + offset) / mult) + layerOffset)
+                    .fill(0);
             }
-            layerOffset += currentMultiplier * this.maxInstancesPerLayer[i];
+            layerOffset += currentMultiplier;
             currentMultiplier *= this.maxInstancesPerLayer[i + 1];
+            mult /= this.maxInstancesPerLayer[i + 1];
         }
+        this.instGeom.attributes.instancePosition.needsUpdate = true;
+        this.instGeom.attributes.instanceScale.needsUpdate = true;
+        this.instGeom.attributes.instanceColorIndex.needsUpdate = true;
     }
 
     computeTotalInstances(maxInstancesPerLayer, matrixCache) {
