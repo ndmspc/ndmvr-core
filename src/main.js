@@ -92,7 +92,7 @@ sceneElm.appendChild(jsrootHistogramContainer);
 
 const histogramContainer = document.createElement('a-entity');
 histogramContainer.id = "histogram1";
-histogramContainer.setAttribute('nested-histogram', '');
+histogramContainer.setAttribute('histogram', '');
 histogramContainer.setAttribute('position', "0 0 0");
 sceneElm.appendChild(histogramContainer);
 

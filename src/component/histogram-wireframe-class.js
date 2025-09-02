@@ -21,7 +21,6 @@ export default class HistogramWireframeClass {
 
     constructor(maxInstancesPerLayer, matrixCache) {
         this.maxInstancesPerLayer = maxInstancesPerLayer;
-        console.log(this.maxInstancesPerLayer);
         this.totalInstances = this.computeTotalInstances(maxInstancesPerLayer, matrixCache);
         const baseBox = new THREE.BoxGeometry(1, 1, 1);
         const baseEdges = new THREE.EdgesGeometry(baseBox);
@@ -43,7 +42,6 @@ export default class HistogramWireframeClass {
         this.instancePositions = new Float32Array(this.totalInstances * 3);
         this.instanceScales = new Float32Array(this.totalInstances * 3);
         this.instanceColors = new Float32Array(this.totalInstances);
-        console.log(this.instancePositions);
 
         this.instGeom.setAttribute(
             "instancePosition",
@@ -68,7 +66,6 @@ export default class HistogramWireframeClass {
         this.configSub = configSubjectGet().getObservable()
             .subscribe((v) => {
                 this.config = v.config.wireframe;
-                console.log(this.colorArray);
 
                 new THREE.Color(this.config.color.default).toArray(this.colorArray, 0);
                 this.config.color.layer
@@ -86,7 +83,6 @@ export default class HistogramWireframeClass {
     render(matrixCache, startLayer, endLayer, startIndex, endIndex, setIndexes) {
         if (this.config.display.start > startLayer) startLayer = this.config.display.start;
         if ((this.config.display.end < endLayer) && (this.config.display.end <= matrixCache.length)) endLayer = this.config.display.end;
-        console.log(startLayer, endLayer, startIndex, endIndex, setIndexes)
         let offset = 0;
 
         const setInstance = (index, position, scale) => {

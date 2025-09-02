@@ -74,6 +74,19 @@ export class NestedHistogram {
         window.addEventListener('keydown', this.keyDownHandler);
         window.addEventListener('keydown', this.keyUpHandler);
 
+        this.init();
+        this.renderHistogram(0, this.totalInstances, 0);
+    }
+
+    updateHistogram(histo) {
+        this.rootObj = histo.histogram;
+        this.pointer = new HistogramPointerClass(this.rootObj);
+        this.setAvailableSets(this.pointer.origin);
+        const parent = this.wireframe.wireframe.parent
+        this.wireframe.dispose();
+        this.init();
+        this.renderHistogram(0, this.totalInstances, 0);
+        parent.add(this.wireframe.wireframe);
     }
 
     remove() {
@@ -287,16 +300,6 @@ export class NestedHistogram {
             this.instancedMesh.dispose();
         }
 
-        // const setupMatrixCache = () => {
-        //     this.matrixCache = new Array(this.maxInstancesPerLayer.length - 1).fill().map(() => []);
-        //
-        //     const traverse = (obj, layer) => {
-        //         const childrens = Object.entries(obj.children);
-        //         this.matrixCache[layer] = Array.from({length: childrens.length}, () => []);
-        //     }
-        //     traverse(this.pointer.origin, 0);
-        // }
-
         this.matrixCache = new Array(this.maxInstancesPerLayer.length - 1).fill().map(() => []);
         this.matrixCache[this.matrixCache.length - 1] = Array.from({length: this.availableSets.length}, () => []);
 
@@ -318,7 +321,6 @@ export class NestedHistogram {
         for (let i = 0; i < totalInst; i++) {
             this.instancedMesh.setMatrixAt(i, dummy.matrix);
         }
-        // this.instancedMesh.frustrumCulled = false
         this.instancedMesh.frustumCulled = false;
         this.instancedMesh.instanceMatrix.needsUpdate = true;
 

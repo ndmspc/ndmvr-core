@@ -14,8 +14,9 @@ export class HistogramJsrootClass {
     histoSub = undefined;
     dummyEl = undefined;
 
-    constructor(id) {
+    constructor(id, rootObj) {
         this.id = id;
+        this.rootObj = rootObj;
         this.histogramGroup = new THREE.Group();
         this.dummyEl = document.createElement('div');
         this.dummyEl.id = "dummyDiv";
@@ -32,52 +33,62 @@ export class HistogramJsrootClass {
                 this.histogramGroup.scale.set(scale.x, scale.y, scale.z);
             });
 
-        this.histoSub = histogramSubjectGet().getStream()
-            .pipe(
-                filter(e => e.id === this.id)
-            )
-            .subscribe((histo) => {
-                const opts = histo.histogram._typename.substring(0, 3) === 'TH3'
-                    ? ""
-                    : "lego";
-                if (!this.framePainter) {
-                    draw("dummyDiv", histo.histogram, opts).then(retValue => {
-                        this.framePainter = retValue.getFramePainter();
-                        this.histogramGroup.clear();
-                        if (this.framePainter.scene.children[0]) {
-                            this.framePainter.scene.children[0].scale.set(0.01, 0.01, 0.05);
+        this.render();
+    }
 
-                            this.framePainter.scene.children[0].children[0].children
-                                .filter(child => child.type === "Object3D")
-                                .forEach(child => {
-                                    child.children
-                                        .filter(childX => childX.type === "Mesh")
-                                        .forEach(childX => childX.scale.set(5, 1.7, 5))
-                                })
-                            this.framePainter.scene.children[0].rotateX(-Math.PI / 2);
-                            this.histogramGroup.add(this.framePainter.scene.children[0]);
-                        }
-                    })
-                } else {
-                    draw("dummyDiv", histo.histogram, opts).then(retValue => {
-                        this.histogramGroup.clear();
-                        if (this.framePainter.scene.children[1]) {
-                            this.framePainter.scene.children[1].scale.set(0.01, 0.01, 0.05);
+    updateHistogram(histo) {
+        this.rootObj = histo;
+        this.histogramGroup.clear();
+        this.render();
+    }
 
-                            this.framePainter.scene.children[1].children[0].children
-                                .filter(child => child.type === "Object3D")
-                                .forEach(child => {
-                                    child.children
-                                        .filter(childX => childX.type === "Mesh")
-                                        .forEach(childX => childX.scale.set(5, 1.7, 5))
-                                })
-                            this.framePainter.scene.children[1].rotateX(-Math.PI / 2);
-                            this.histogramGroup.add(this.framePainter.scene.children[1]);
-                        }
-                    })
+    render() {
+        console.log('dojde', this.rootObj)
+        const opts = this.rootObj._typename.substring(0, 3) === 'TH3'
+            ? ""
+            : "lego";
+        if (!this.framePainter) {
+            draw("dummyDiv", this.rootObj, opts).then(retValue => {
+                this.framePainter = retValue.getFramePainter();
+                this.histogramGroup.clear();
+                if (this.framePainter.scene.children[0]) {
+                    this.framePainter.scene.children[0].scale.set(0.01, 0.01, 0.05);
+
+                    this.framePainter.scene.children[0].children[0].children
+                        .filter(child => child.type === "Object3D")
+                        .forEach(child => {
+                            child.children
+                                .filter(childX => childX.type === "Mesh")
+                                .forEach(childX => childX.scale.set(5, 1.7, 5))
+                        })
+                    this.framePainter.scene.children[0].rotateX(-Math.PI / 2);
+                    this.histogramGroup.add(this.framePainter.scene.children[0]);
                 }
+            })
+        } else {
+            draw("dummyDiv", this.rootObj, opts).then(retValue => {
+                this.histogramGroup.clear();
+                if (this.framePainter.scene.children[1]) {
+                    this.framePainter.scene.children[1].scale.set(0.01, 0.01, 0.05);
 
-            });
+                    this.framePainter.scene.children[1].children[0].children
+                        .filter(child => child.type === "Object3D")
+                        .forEach(child => {
+                            child.children
+                                .filter(childX => childX.type === "Mesh")
+                                .forEach(childX => childX.scale.set(5, 1.7, 5))
+                        })
+                    this.framePainter.scene.children[1].rotateX(-Math.PI / 2);
+                    this.histogramGroup.add(this.framePainter.scene.children[1]);
+                }
+            })
+        }
+        console.log(this.histogramGroup)
+    }
+
+    remove() {
+        this.histogramGroup.parent.remove(this.histogramGroup);
+        this.configSub.unsubscribe();
     }
 
     getHistogramMesh() {
