@@ -19,6 +19,7 @@ export class HistogramJsrootClass {
         this.rootObj = rootObj;
         this.histogramGroup = new THREE.Group();
         this.dummyEl = document.getElementById('dummyDiv');
+        if (this.dummyEl) document.body.removeChild(this.dummyEl);
 
         this.dummyEl = document.createElement('div');
         this.dummyEl.id = "dummyDiv";
@@ -90,7 +91,7 @@ export class HistogramJsrootClass {
 
     remove() {
         this.histogramGroup.parent.remove(this.histogramGroup);
-        document.body.removeChild(this.dummyEl);
+        if (this.dummyEl) document.body.removeChild(this.dummyEl);
         this.configSub.unsubscribe();
     }
 
