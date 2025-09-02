@@ -163,11 +163,11 @@ export default class HistogramWireframeClass {
             }, 1);
         // currentMultiplier -= 1;
         let layerOffset = this.maxInstancesPerLayer
-            .slice(0, baseLayerIndex)
+            .slice(1, baseLayerIndex)
             .reduce((acc, value) => {
-                return acc + value;
-            }, 1);
-        layerOffset -= 1;
+                return acc + (acc * value);
+            }, this.maxInstancesPerLayer[0]);
+        // layerOffset -= 1;
 
         let mult = this.maxInstancesPerLayer
             .slice(baseLayerIndex + 1)
@@ -177,6 +177,7 @@ export default class HistogramWireframeClass {
 
         for (let i = baseLayerIndex; i < baseLayerIndex + dimensions.length; i++) {
 
+            console.log(i, 'offset: ', layerOffset, ', currentMult:', currentMultiplier, ', mult: ', mult);
             if (Array.isArray(matrixCache[i][0])) {
                 for (let j = 0; j < this.numOfavailableSets; j++) {
 
@@ -194,6 +195,8 @@ export default class HistogramWireframeClass {
                         .fill(0);
                 }
             } else {
+                console.log(i, 'start: ', (Math.floor(startIndex / mult) + layerOffset),
+                    ', end: ', (Math.floor((startIndex + offset) / mult) + layerOffset));
                 this.instancePositions.subarray(
                     (Math.floor(startIndex / mult) + layerOffset) * 3,
                     (Math.floor((startIndex + offset) / mult) + layerOffset) * 3)
@@ -210,10 +213,11 @@ export default class HistogramWireframeClass {
             layerOffset += currentMultiplier;
             currentMultiplier *= this.maxInstancesPerLayer[i + 1];
             mult /= this.maxInstancesPerLayer[i + 1];
+            this.instGeom.attributes.instancePosition.needsUpdate = true;
+            this.instGeom.attributes.instanceScale.needsUpdate = true;
+            this.instGeom.attributes.instanceColorIndex.needsUpdate = true;
         }
-        this.instGeom.attributes.instancePosition.needsUpdate = true;
-        this.instGeom.attributes.instanceScale.needsUpdate = true;
-        this.instGeom.attributes.instanceColorIndex.needsUpdate = true;
+
     }
 
     computeTotalInstances(maxInstancesPerLayer, matrixCache) {
