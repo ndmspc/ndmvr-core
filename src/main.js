@@ -225,17 +225,18 @@ loadButton.addEventListener('click', async () => {
 
 // histogramSubjectGet().next({id: 'histogram1-jsroot', histogram: histo6x2x1});
 // histogramSubjectGet().next({id: 'histogram1-jsroot', histogram: histo2x2x3});
-histogramSubjectGet().next({id: 'histogram1', opts: {render: "nested"}, histogram: h3scat});
+histogramSubjectGet().next({id: 'histogram1', opts: {render: "jsroot"}, histogram: h3scat});
+histogramSubjectGet().next({id: 'histogram1', opts: {render: "jsroot"}, histogram: h3scat});
 
 setTimeout(()=> {
-    histogramSubjectGet().next({id: 'histogram1', opts: {render: "nested"}, histogram: h3scat});
-}, 2000);
-setTimeout(()=> {
     histogramSubjectGet().next({id: 'histogram1', opts: {render: "jsroot"}, histogram: h3scat});
-}, 4000);
-setTimeout(()=> {
-    histogramSubjectGet().next({id: 'histogram1', opts: {render: "nested"}, histogram: h3scat});
-}, 6000);
+}, 2000);
+// setTimeout(()=> {
+//     histogramSubjectGet().next({id: 'histogram1', opts: {render: "jsroot"}, histogram: h3scat});
+// }, 4000);
+// setTimeout(()=> {
+//     histogramSubjectGet().next({id: 'histogram1', opts: {render: "nested"}, histogram: h3scat});
+// }, 6000);
 // histogramSubjectGet().next({id: 'histogram1', histogram: histo125});
 // histogramSubjectGet().next({id: 'histogram1', histogram: histo12_5});
 // histogramSubjectGet().next({id: 'histogram1', histogram: histo1_2_5});

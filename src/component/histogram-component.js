@@ -37,9 +37,7 @@ const registerHistogramComponent = () => {
                       if (this.jsrootHistogram) {
                           this.jsrootHistogram.updateHistogram(histo.histogram);
                       } else {
-                          console.log('novy jsroot');
                           this.jsrootHistogram = new HistogramJsrootClass(this.el.id, histo.histogram);
-                          console.log(this.jsrootHistogram.getHistogramMesh());
                           this.el.object3D.add(this.jsrootHistogram.getHistogramMesh());
                       }
                   } else {

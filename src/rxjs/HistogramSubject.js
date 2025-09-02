@@ -8,7 +8,7 @@ class HistogramSubject {
    #subject;
 
    constructor() {
-      this.#subject = new ReplaySubject();
+      this.#subject = new ReplaySubject(1);
    }
 
    getStream() {

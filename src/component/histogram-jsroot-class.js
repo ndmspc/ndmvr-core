@@ -18,6 +18,8 @@ export class HistogramJsrootClass {
         this.id = id;
         this.rootObj = rootObj;
         this.histogramGroup = new THREE.Group();
+        this.dummyEl = document.getElementById('dummyDiv');
+
         this.dummyEl = document.createElement('div');
         this.dummyEl.id = "dummyDiv";
         document.body.appendChild(this.dummyEl);
