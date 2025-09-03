@@ -20,7 +20,7 @@ export class HistogramPointerClass {
     * @param set if children contains sets, parameter need to be specified.
     * */
    setOriginToChild(index, set) {
-      console.log('vojde', this.origin);
+      console.log('vojde', this.origin, ', set: ', set);
       if (!index) return;
       console.log(index)
       const currentIndex = index.splice(0,1);

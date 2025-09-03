@@ -1,44 +1,104 @@
+import {canvasSubjectGet} from "../rxjs/CanvasSubject.js";
+import {filter} from "rxjs";
+import {makeImage} from "jsroot";
+import {configSubjectGet} from "../rxjs/ConfigSubject.js";
+
 export class CanvasClass {
 
     plane = undefined;
-    _planePromise = undefined;
+    cinemaSub = undefined;
+    position;
+    rotation;
+    scale;
+    id;
+    configSub = undefined;
 
-    constructor(image, position, rotation, scale) {
-        this._planePromise = this.loadTexture(image, position, rotation, scale);
+    constructor(image, position, rotation, scale, id) {
+        const geometry = new THREE.PlaneGeometry(scale.x, scale.y);
+        const material = new THREE.MeshBasicMaterial({
+            color: new THREE.Color().setHex(0xFFFFFF),
+            side: THREE.DoubleSide
+        });
+        if (!this.plane) {
+            this.plane = new THREE.Mesh(geometry, material);
+            this.plane.position.set(position.x, position.y, position.z);
+        }
+
+        if (image) {
+            this.updateTexture(image);
+        }
+
+        this.id = id;
+        this.position = position;
+        this.rotation = rotation;
+        this.scale = scale;
+
+        this.cinemaSub = canvasSubjectGet().getObservable()
+            .pipe(
+                filter(e => e.id === this.id)
+            )
+            .subscribe(obj => {
+                console.log('obj: ', obj)
+                const object = obj.obj
+                makeImage({format: 'png', object, width: 600, height: 600}).then(png => {
+                    this.updateTexture(png);
+                })
+            });
+
+        this.configSub = configSubjectGet().getObservable()
+            .pipe(filter(e =>
+                ((e.target.id.includes('*')) || (e.target.id.includes(this.id)))))
+            .subscribe((v) => {
+                this.position = v.config.canvas.position;
+                this.rotation = v.config.canvas.rotation;
+                this.scale = v.config.canvas.scale;
+                this.updateMesh();
+            });
     }
 
-    loadTexture(image, position, rotation, scale) {
-        return new Promise((resolve, reject) => {
-            const loader = new THREE.TextureLoader();
+    updateMesh() {
+        this.plane.scale.set(this.scale.x, this.scale.y, this.scale.z);
+        this.plane.position.set(this.position.x, this.position.y, this.position.z);
+        const factor = Math.PI / 180;
+        this.plane.rotation.set(this.rotation.x * factor, this.rotation.y * factor, this.rotation.z * factor);
+    }
+
+    updateTexture(image) {
+        if (!image) {
+            console.warn("updateTexture called with null/undefined");
+            return;
+        }
+
+        const loader = new THREE.TextureLoader();
+
+        if (typeof image === "string" && (image.startsWith("data:") || image.startsWith("http"))) {
             loader.load(
                 image,
                 texture => {
-                    const geometry = new THREE.PlaneGeometry(scale.x, scale.y);
-                    const material = new THREE.MeshBasicMaterial({
-                        map: texture,
-                        side: THREE.DoubleSide
-                    });
-                    const mesh = new THREE.Mesh(geometry, material);
-                    mesh.position.set(position.x, position.y, position.z);
-                    mesh.rotation.set(rotation.x, rotation.y, rotation.z);
-                    resolve(mesh);
+                    this.plane.material.map = texture;
+                    this.plane.material.needsUpdate = true;
                 },
                 undefined,
-                reject
+                err => console.error("Texture load failed", err)
             );
-        });
-    }
-
-    update(position, rotation) {
-        if (this.plane) {
-            this.plane.position.set(position.x, position.y, position.z);
-            this.plane.rotation.set(rotation.x, rotation.y, rotation.z);
+        } else if (image instanceof HTMLImageElement) {
+            const texture = new THREE.Texture(image);
+            texture.needsUpdate = true;
+            this.plane.material.map = texture;
+            this.plane.material.needsUpdate = true;
         } else {
-            console.warn('Plane is not initialized yet.');
+            console.error("Unsupported image type passed to updateTexture:", image);
         }
     }
 
+
+    remove() {
+        this.plane.parent.remove(this.plane);
+        this.cinemaSub.unsubscribe();
+        this.configSub.unsubscribe();
+    }
+
     getPlane() {
-        return this._planePromise;
+        return this.plane;
     }
 }

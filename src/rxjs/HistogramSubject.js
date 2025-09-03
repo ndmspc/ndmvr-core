@@ -8,13 +8,14 @@ class HistogramSubject {
    #subject;
 
    constructor() {
-      this.#subject = new ReplaySubject();
+      this.#subject = new ReplaySubject(1);
    }
 
    getStream() {
       return this.#subject.asObservable();
    }
 
+   //TODO better check if the object is already parsed by jsroot
    async next(e) {
       if (typeof e.histogram === 'string') {
          e.histogram = await FileHandler.parseFile(e.histogram);
