@@ -17,6 +17,15 @@ class ConfigSubject {
                     position: new THREE.Vector3(0, 0, 0),
                     scale: new THREE.Vector3(10, 5, 10)
                 },
+                jsrootHistogramMatrix: {
+                    position: new THREE.Vector3(0, 0, -20),
+                    scale: new THREE.Vector3(1, 1, 1)
+                },
+                canvas: {
+                    position: {x: 0, y: 5, z: -15},
+                    rotation: {x: 10, y: 0, z: 0},
+                    scale: {x: 10, y: 10, z: 0}
+                },
                 padding: {
                     default: {
                         x: 0.1, y: 0.1, z: 0.1
@@ -24,6 +33,22 @@ class ConfigSubject {
                     layer: [
                         {x: 0.1, y: 0.1, z: 0.1},
                     ]
+                },
+                TH1ZScale: {
+                    default: 0.8,
+                    layer: [0.2, 1, 1, 1]
+                },
+                wireframe: {
+                    display: {
+                        start: 0,
+                        end: 5
+                    },
+                    layer: [],
+                    color: {
+                        default: "0x000000",
+                        layer: [],
+                        set: []
+                    }
                 },
                 color: {
                     default: {
@@ -86,7 +111,7 @@ class ConfigSubject {
                 // inject default target if missing
                 if (!("target" in result)) {
                     result.target = {
-                        entity: "nested-histogram",
+                        entity: "*",
                         id: "*"
                     };
                 }

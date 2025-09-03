@@ -20,9 +20,11 @@ import histo12_5 from "../public/histograms/nested/test_12_5.json";
 import histo1_25 from "../public/histograms/nested/test_1_25.json";
 import histo1_2_5 from "../public/histograms/nested/test_1_2_5.json";
 import histo5_2_1 from "../public/histograms/nested/test_5_2_1.json";
+import h3scat from "../public/histograms/h3scat.json";
 
 import histogram2x2x3 from "../public/histograms/TH3variableBinning2x2x3OnlyInsideContent.json";
-import histo6x2x1 from "../public/histograms/TH3variableBinning2x2x3WOutsideContent.json";
+import histo2x2x3 from "../public/histograms/TH3variableBinning2x2x3WOutsideContent.json";
+import histo6x2x1 from "../public/histograms/TH3variable6x2x1wOutsideContent.json";
 import {histogramSubjectGet} from "./rxjs/HistogramSubject.js";
 import histoSparse2 from "../public/histograms/THnSparse3.json"
 import nestedHisto from "../public/histograms/hist3D.axis1-pt_axis2-ce_axis5-eta.json"
@@ -50,7 +52,7 @@ document.querySelector("#app").appendChild(sceneElm);
 //    const mate = new THREE.MeshNormalMaterial();
 //    const cube = new THREE.Mesh(geom, mate);
 //    // cube.position.set(-4.9358974,-1.13636363,4.541284403669724);
-//    cube.position.set(0,0,0);
+//    cube.position.set(0,0,-4);
 // sceneElm.object3D.add(cube)
 
 // const cube2 = new THREE.Mesh(geom, mate);
@@ -77,18 +79,25 @@ document.querySelector("#app").appendChild(sceneElm);
 const imageContainer = document.createElement('a-entity');
 imageContainer.id = "histogram1-cinema";
 imageContainer.setAttribute('canvas-component', '');
-imageContainer.setAttribute('position', "0 4 -6");
+// imageContainer.setAttribute('position', "0 4 -6");
 imageContainer.setAttribute('scale', "10 10 10");
 
 sceneElm.appendChild(imageContainer);
 
+// const jsrootHistogramContainer = document.createElement('a-entity');
+// jsrootHistogramContainer.id = "histogram1-jsroot";
+// jsrootHistogramContainer.setAttribute('jsroot-histogram', '');
+// jsrootHistogramContainer.setAttribute('position', "0 0 0");
+// sceneElm.appendChild(jsrootHistogramContainer);
+//
 const histogramContainer = document.createElement('a-entity');
 histogramContainer.id = "histogram1";
-histogramContainer.setAttribute('nested-histogram', '');
+histogramContainer.setAttribute('histogram', '');
 histogramContainer.setAttribute('position', "0 0 0");
 sceneElm.appendChild(histogramContainer);
 
 const options = new Map();
+options.set("test6x2x1", histo6x2x1);
 options.set("histo125", histo125);
 options.set("histo12_5", histo12_5);
 options.set("histo1_25", histo1_25);
@@ -99,6 +108,7 @@ const selectDiv = document.createElement('div');
 selectDiv.innerHTML = `
   <div style="position: absolute; top: 50px; right: 50px;">
     <select name="histograms" id="histogram-select">
+      <option value="test6x2x1">text6x2x1</option>
       <option value="histo125">histo125</option>
       <option value="histo12_5">histo12_5</option>
       <option value="histo1_25">histo1_25</option>
@@ -213,7 +223,20 @@ loadButton.addEventListener('click', async () => {
 // histogramSubjectGet().next({id: 'histogram1', histogram: 'https://eos.ndmspc.io//eos/ndmspc/scratch/ndmspc/ndmvr-aframe/demo/hist3D.axis1-pt_axis2-ce_axis5-eta.root'});
 // histogramSubjectGet().next({id: 'histogram1', histogram: parse(nestedHisto4)});
 
-histogramSubjectGet().next({id: 'histogram1', histogram: histo6x2x1});
+// histogramSubjectGet().next({id: 'histogram1-jsroot', histogram: histo6x2x1});
+// histogramSubjectGet().next({id: 'histogram1-jsroot', histogram: histo2x2x3});
+histogramSubjectGet().next({id: 'histogram1', opts: {render: "jsroot"}, histogram: h3scat});
+histogramSubjectGet().next({id: 'histogram1', opts: {render: "jsroot"}, histogram: h3scat});
+
+setTimeout(()=> {
+    histogramSubjectGet().next({id: 'histogram1', opts: {render: "jsroot"}, histogram: h3scat});
+}, 2000);
+setTimeout(()=> {
+    histogramSubjectGet().next({id: 'histogram1', opts: {render: "jsroot"}, histogram: h3scat});
+}, 4000);
+// setTimeout(()=> {
+//     histogramSubjectGet().next({id: 'histogram1', opts: {render: "nested"}, histogram: h3scat});
+// }, 6000);
 // histogramSubjectGet().next({id: 'histogram1', histogram: histo125});
 // histogramSubjectGet().next({id: 'histogram1', histogram: histo12_5});
 // histogramSubjectGet().next({id: 'histogram1', histogram: histo1_2_5});

@@ -13,6 +13,7 @@ import registerHistogramComponent from "../component/histogram-component.js";
 import registerHistogramBorderComponent from "../component/histogram-border-component.js";
 import registerNestedHistogramComponent from "../component/nested-histogram-component.js";
 import registerCanvasComponent from "../component/canvas-component.js";
+import registerHistogramJsrootComponent from "../component/histogram-jsroot-component.js";
 
 export const registerComponents = () => {
    //by D.Chovanec:
@@ -28,6 +29,7 @@ export const registerComponents = () => {
    registerHistogramBorderComponent();
    registerNestedHistogramComponent();
    registerCanvasComponent();
+   registerHistogramJsrootComponent();
    //by S.Korecko:
    registerPseudoHistogramComponent();
 }

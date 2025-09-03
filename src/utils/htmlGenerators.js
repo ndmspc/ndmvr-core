@@ -64,8 +64,12 @@ function generateBlankScene() {
   scene.setAttribute('ndmvr-raycaster', '');
   scene.style.cssText= "position: absolute; height: 100%; width: 100%;";
 
+  const sky = document.createElement('a-sky');
+  sky.setAttribute('color', '#ffffff')
+
   const camera = getCameraComponent();
   scene.appendChild(camera);
+  scene.appendChild(sky);
 
   return scene;
 }

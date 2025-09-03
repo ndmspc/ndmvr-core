@@ -33,7 +33,9 @@ const registerNestedHistogramComponent = () => {
                   histo, this.el.id);
                this.instancedMesh.init();
                this.el.object3D.add(this.instancedMesh.instancedMesh);
+               this.el.object3D.add(this.instancedMesh.wireframe.wireframe);
                this.instancedMesh.renderHistogram(0, this.instancedMesh.totalInstances, 0);
+               console.log(this.el.object3D)
             });
       },
 
