@@ -44,7 +44,7 @@ export class NestedHistogram {
         this.rootObj = histo.histogram;
         this.pointer = new HistogramPointerClass(this.rootObj);
         this.id = id;
-        console.log(this.pointer.origin);
+        // console.log(this.pointer.origin);
         this.setAvailableSets(this.pointer.origin);
 
         this.sub = functionSubjectGet().getObservable()
@@ -62,7 +62,8 @@ export class NestedHistogram {
             .pipe(filter(e =>
                 ((e.target.id.includes('*')) || (e.target.id.includes(this.id)))))
             .subscribe((v) => {
-                this.config = v.config;
+                this.config = { ...v.config };
+                this.config.histogramPads = this.config.histogramPads.find(el => el.id === this.id);
             });
 
         this.handleStateChange = this.handleStateChange.bind(this);
@@ -281,8 +282,9 @@ export class NestedHistogram {
             this.instancedMesh.instanceColor.needsUpdate = true;
 
         }
+        // console.log(this.config.histogramPads)
 
-        render(startIndex, endIndex, 0, this.pointer.origin, this.config.histogramMatrix);
+        render(startIndex, endIndex, 0, this.pointer.origin, this.config.histogramPads);
         const selectedSetIndexes = this.selectedSet.map(item => this.availableSets.indexOf(item));
         this.wireframe.render(this.matrixCache, 0, layer + 1, startIndex, endIndex, selectedSetIndexes);
         this.instancedMesh.computeBoundingBox();

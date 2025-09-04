@@ -96,6 +96,24 @@ histogramContainer.setAttribute('histogram', '');
 histogramContainer.setAttribute('position', "0 0 0");
 sceneElm.appendChild(histogramContainer);
 
+const histogramContainer2 = document.createElement('a-entity');
+histogramContainer2.id = "histogram2";
+histogramContainer2.setAttribute('histogram', '');
+histogramContainer2.setAttribute('position', "0 0 0");
+sceneElm.appendChild(histogramContainer2);
+
+const histogramContainer3 = document.createElement('a-entity');
+histogramContainer3.id = "histogram3";
+histogramContainer3.setAttribute('histogram', '');
+histogramContainer3.setAttribute('position', "0 0 0");
+sceneElm.appendChild(histogramContainer3);
+
+const histogramContainer4 = document.createElement('a-entity');
+histogramContainer4.id = "histogram4";
+histogramContainer4.setAttribute('histogram', '');
+histogramContainer4.setAttribute('position', "0 0 0");
+sceneElm.appendChild(histogramContainer4);
+
 const options = new Map();
 options.set("test6x2x1", histo6x2x1);
 options.set("histo125", histo125);
@@ -127,17 +145,17 @@ const histogramSelect = document.getElementById('histogram-select');
 const urlInput = document.getElementById('custom-url-input');
 const loadButton = document.getElementById('load-custom-url');
 
-histogramSelect.addEventListener('change', (event) => {
-    const selectedValue = event.target.value;
-    if (selectedValue === "custom") {
-        urlInput.style.display = "inline-block";
-        loadButton.style.display = "inline-block";
-    } else {
-        urlInput.style.display = "none";
-        loadButton.style.display = "none";
-        histogramSubjectGet().next({id: 'histogram1', histogram: options.get(selectedValue)});
-    }
-});
+// histogramSelect.addEventListener('change', (event) => {
+//     const selectedValue = event.target.value;
+//     if (selectedValue === "custom") {
+//         urlInput.style.display = "inline-block";
+//         loadButton.style.display = "inline-block";
+//     } else {
+//         urlInput.style.display = "none";
+//         loadButton.style.display = "none";
+//         histogramSubjectGet().next({id: 'histogram1', histogram: options.get(selectedValue)});
+//     }
+// });
 
 const setDiv = document.createElement('div');
 setDiv.innerHTML = `
@@ -223,17 +241,24 @@ loadButton.addEventListener('click', async () => {
 // histogramSubjectGet().next({id: 'histogram1', histogram: 'https://eos.ndmspc.io//eos/ndmspc/scratch/ndmspc/ndmvr-aframe/demo/hist3D.axis1-pt_axis2-ce_axis5-eta.root'});
 // histogramSubjectGet().next({id: 'histogram1', histogram: parse(nestedHisto4)});
 
-// histogramSubjectGet().next({id: 'histogram1-jsroot', histogram: histo6x2x1});
+// histogramSubjectGet().next({id: 'histogram1', histogram: histo6x2x1});
 // histogramSubjectGet().next({id: 'histogram1-jsroot', histogram: histo2x2x3});
 histogramSubjectGet().next({id: 'histogram1', opts: {render: "jsroot"}, histogram: h3scat});
-histogramSubjectGet().next({id: 'histogram1', opts: {render: "jsroot"}, histogram: h3scat});
+histogramSubjectGet().next({id: 'histogram2', opts: {render: "nested"}, histogram: h3scat});
+histogramSubjectGet().next({id: 'histogram3', opts: {render: "jsroot"}, histogram: h3scat});
+histogramSubjectGet().next({id: 'histogram4', opts: {render: "nested"}, histogram: h3scat});
 
-setTimeout(()=> {
-    histogramSubjectGet().next({id: 'histogram1', opts: {render: "jsroot"}, histogram: h3scat});
-}, 2000);
-setTimeout(()=> {
-    histogramSubjectGet().next({id: 'histogram1', opts: {render: "jsroot"}, histogram: h3scat});
-}, 4000);
+// histogramSubjectGet().next({id: 'histogram2', opts: {render: "nested"}, histogram: h3scat});
+// histogramSubjectGet().next({id: 'histogram3', opts: {render: "nested"}, histogram: h3scat});
+// histogramSubjectGet().next({id: 'histogram4', opts: {render: "nested"}, histogram: h3scat});
+// histogramSubjectGet().next({id: 'histogram1', opts: {render: "jsroot"}, histogram: h3scat});
+//
+// setTimeout(()=> {
+//     histogramSubjectGet().next({id: 'histogram1', opts: {render: "jsroot"}, histogram: h3scat});
+// }, 2000);
+// setTimeout(()=> {
+//     histogramSubjectGet().next({id: 'histogram1', opts: {render: "jsroot"}, histogram: h3scat});
+// }, 4000);
 // setTimeout(()=> {
 //     histogramSubjectGet().next({id: 'histogram1', opts: {render: "nested"}, histogram: h3scat});
 // }, 6000);

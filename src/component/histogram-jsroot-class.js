@@ -18,20 +18,21 @@ export class HistogramJsrootClass {
         this.id = id;
         this.rootObj = rootObj;
         this.histogramGroup = new THREE.Group();
-        this.dummyEl = document.getElementById('dummyDiv');
+        this.dummyEl = document.getElementById('dummyDiv' + id);
         if (this.dummyEl) document.body.removeChild(this.dummyEl);
 
         this.dummyEl = document.createElement('div');
-        this.dummyEl.id = "dummyDiv";
+        this.dummyEl.id = "dummyDiv" + id;
         document.body.appendChild(this.dummyEl);
 
         this.configSub = configSubjectGet().getObservable()
             .pipe(filter(e =>
                 ((e.target.id.includes('*')) || (e.target.id.includes(this.id)))))
             .subscribe((v) => {
-                this.config = v.config;
-                const pos = this.config.jsrootHistogramMatrix.position;
-                const scale = this.config.jsrootHistogramMatrix.scale;
+                this.config = { ...v.config };
+                const matrix = this.config.jsrootHistogramPads.find(el => el.id === this.id);
+                const pos = matrix.position;
+                const scale = matrix.scale;
                 this.histogramGroup.position.set(pos.x, pos.y, pos.z);
                 this.histogramGroup.scale.set(scale.x, scale.y, scale.z);
             });
@@ -46,12 +47,12 @@ export class HistogramJsrootClass {
     }
 
     render() {
-        console.log('dojde', this.rootObj)
+        // console.log('dojde', this.rootObj)
         const opts = this.rootObj._typename.substring(0, 3) === 'TH3'
             ? ""
             : "lego";
         if (!this.framePainter) {
-            draw("dummyDiv", this.rootObj, opts).then(retValue => {
+            draw("dummyDiv" + this.id, this.rootObj, opts).then(retValue => {
                 this.framePainter = retValue.getFramePainter();
                 this.histogramGroup.clear();
                 if (this.framePainter.scene.children[0]) {
@@ -69,7 +70,7 @@ export class HistogramJsrootClass {
                 }
             })
         } else {
-            draw("dummyDiv", this.rootObj, opts).then(retValue => {
+            draw("dummyDiv" + this.id, this.rootObj, opts).then(retValue => {
                 this.histogramGroup.clear();
                 if (this.framePainter.scene.children[1]) {
                     this.framePainter.scene.children[1].scale.set(0.01, 0.01, 0.05);
@@ -86,12 +87,12 @@ export class HistogramJsrootClass {
                 }
             })
         }
-        console.log(this.histogramGroup)
+        // console.log(this.histogramGroup)
     }
 
     remove() {
         this.histogramGroup.parent.remove(this.histogramGroup);
-        this.dummyEl = document.getElementById('dummyDiv');
+        this.dummyEl = document.getElementById('dummyDiv' + this.id);
         if (this.dummyEl) document.body.removeChild(this.dummyEl);
         this.configSub.unsubscribe();
     }

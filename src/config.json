@@ -22,28 +22,36 @@
         "z": 0
       }
     },
-    "histogramMatrix": {
-      "position": {
-        "x": 0,
-        "y": 0,
-        "z": 10
-      },
+    "histogramPads": {
+      "type": "grid2x1x2",
       "scale": {
         "x": 10,
         "y": 5,
         "z": 10
-      }
-    },
-    "jsrootHistogramMatrix": {
-      "position": {
-        "x": 0,
-        "y": 0,
-        "z": -20
-      },
-      "scale": {
+      }, "padding" : {
         "x": 1,
         "y": 1,
         "z": 1
+      }, "origin": {
+        "x": 0,
+        "y": 0,
+        "z": 5
+      }
+    },
+    "jsrootHistogramPads": {
+      "type": "grid2x1x2",
+      "scale": {
+        "x": 0.6,
+        "y": 0.6,
+        "z": 0.6
+      }, "padding" : {
+        "x": 10,
+        "y": 10,
+        "z": 10
+      }, "origin": {
+        "x": 0,
+        "y": 0,
+        "z": -15
       }
     },
     "padding": {
