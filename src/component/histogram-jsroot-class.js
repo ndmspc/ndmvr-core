@@ -15,6 +15,7 @@ export class HistogramJsrootClass {
     dummyEl = undefined;
 
     constructor(id, rootObj) {
+        console.log('---------------------------------------------------')
         this.id = id;
         this.rootObj = rootObj;
         this.histogramGroup = new THREE.Group();
@@ -30,11 +31,11 @@ export class HistogramJsrootClass {
                 ((e.target.id.includes('*')) || (e.target.id.includes(this.id)))))
             .subscribe((v) => {
                 this.config = { ...v.config };
-                const matrix = this.config.jsrootHistogramPads.find(el => el.id === this.id);
+                const matrix = this.config.histogramPads.find(el => el.id === this.id);
                 const pos = matrix.position;
-                const scale = matrix.scale;
+                // const scale = matrix.scale;
                 this.histogramGroup.position.set(pos.x, pos.y, pos.z);
-                this.histogramGroup.scale.set(scale.x, scale.y, scale.z);
+                // this.histogramGroup.scale.set(scale.x, scale.y, scale.z);
             });
 
         this.render();
@@ -55,37 +56,63 @@ export class HistogramJsrootClass {
             draw("dummyDiv" + this.id, this.rootObj, opts).then(retValue => {
                 this.framePainter = retValue.getFramePainter();
                 this.histogramGroup.clear();
+
                 if (this.framePainter.scene.children[0]) {
-                    this.framePainter.scene.children[0].scale.set(0.01, 0.01, 0.05);
+                    const matrixScale = this.config.histogramPads.find(el => el.id === this.id)?.scale;
+                    const box = new THREE.Box3().setFromObject(this.framePainter.scene);
+                    const size = new THREE.Vector3();
+                    box.getSize(size);
+
+                    this.framePainter.scene.scale.set(
+                        matrixScale.x / size.x,
+                        matrixScale.y / size.y,
+                        (matrixScale.z / size.z));
 
                     this.framePainter.scene.children[0].children[0].children
                         .filter(child => child.type === "Object3D")
                         .forEach(child => {
                             child.children
                                 .filter(childX => childX.type === "Mesh")
-                                .forEach(childX => childX.scale.set(5, 1.7, 5))
-                        })
-                    this.framePainter.scene.children[0].rotateX(-Math.PI / 2);
-                    this.histogramGroup.add(this.framePainter.scene.children[0]);
+                                .forEach(childX => childX.scale.set(4, 2, 2))
+                        });
+                    this.framePainter.scene.rotateX(-Math.PI / 2);
+                    this.framePainter.scene.translateZ(matrixScale.z / -2);
+                    console.log('add1: ', this.framePainter.scene);
+                    this.histogramGroup.add(this.framePainter.scene);
+                    console.log('add1G: ', this.histogramGroup);
                 }
             })
         } else {
             draw("dummyDiv" + this.id, this.rootObj, opts).then(retValue => {
                 this.histogramGroup.clear();
+
                 if (this.framePainter.scene.children[1]) {
-                    this.framePainter.scene.children[1].scale.set(0.01, 0.01, 0.05);
+                    const matrixScale = this.config.histogramPads.find(el => el.id === this.id)?.scale;
+                    const box = new THREE.Box3().setFromObject(this.framePainter.scene.children[1]);
+                    const size = new THREE.Vector3();
+                    box.getSize(size);
+
+                    this.framePainter.scene.children[1].scale.set(
+                        matrixScale.x / size.x,
+                        matrixScale.y / size.y,
+                        matrixScale.z / size.z
+                    );
 
                     this.framePainter.scene.children[1].children[0].children
                         .filter(child => child.type === "Object3D")
                         .forEach(child => {
                             child.children
                                 .filter(childX => childX.type === "Mesh")
-                                .forEach(childX => childX.scale.set(5, 1.7, 5))
-                        })
-                    this.framePainter.scene.children[1].rotateX(-Math.PI / 2);
-                    this.histogramGroup.add(this.framePainter.scene.children[1]);
+                                .forEach(childX => childX.scale.set(4, 2, 2));
+                        });
+
+                    this.framePainter.scene.rotateX(-Math.PI / 2);
+                    this.framePainter.scene.translateZ(matrixScale.z / -2);
+                    console.log('add2: ', this.framePainter.scene);
+                    this.histogramGroup.add(this.framePainter.scene);
+                    console.log('add2G: ', this.histogramGroup);
                 }
-            })
+            });
         }
         // console.log(this.histogramGroup)
     }

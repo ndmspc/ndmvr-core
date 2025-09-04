@@ -26,7 +26,7 @@
       "type": "grid2x1x2",
       "scale": {
         "x": 10,
-        "y": 5,
+        "y": 10,
         "z": 10
       }, "padding" : {
         "x": 1,
@@ -36,22 +36,6 @@
         "x": 0,
         "y": 0,
         "z": 5
-      }
-    },
-    "jsrootHistogramPads": {
-      "type": "grid2x1x2",
-      "scale": {
-        "x": 0.6,
-        "y": 0.6,
-        "z": 0.6
-      }, "padding" : {
-        "x": 10,
-        "y": 10,
-        "z": 10
-      }, "origin": {
-        "x": 0,
-        "y": 0,
-        "z": -15
       }
     },
     "padding": {

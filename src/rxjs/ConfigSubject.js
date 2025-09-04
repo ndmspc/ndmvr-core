@@ -23,17 +23,6 @@ class ConfigSubject {
                         position: new THREE.Vector3(0, 0, 0),
                         scale: new THREE.Vector3(10, 5, 10),
                     }],
-                jsrootHistogramPads: [
-                    {
-                        id: "histo1",
-                        position: new THREE.Vector3(0, 0, 0),
-                        scale: new THREE.Vector3(10, 5, 10),
-                    }, {
-                        id: "histo2",
-                        position: new THREE.Vector3(0, 0, 0),
-                        scale: new THREE.Vector3(10, 5, 10),
-                    }
-                ],
                 canvas: {
                     position: {x: 0, y: 5, z: -15},
                     rotation: {x: 10, y: 0, z: 0},
@@ -156,7 +145,7 @@ class ConfigSubject {
                 return obj.map(o => transform(o, key));
             } else if (obj && typeof obj === "object") {
                 // Special case for histogramPads
-                if (key === "histogramPads" || key === "jsrootHistogramPads") {
+                if (key === "histogramPads") {
                     return expandHistogramPads(obj).map(pad => transform(pad));
                 }
 

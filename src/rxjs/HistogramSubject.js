@@ -8,9 +8,11 @@ class HistogramSubject {
     #subjects = new Map();  // id → ReplaySubject(1)
 
     getStream(id) {
+        console.log('getting subject: ', id);
         if (!this.#subjects.has(id)) {
             this.#subjects.set(id, new ReplaySubject(1));
         }
+
         return this.#subjects.get(id).asObservable();
     }
 
