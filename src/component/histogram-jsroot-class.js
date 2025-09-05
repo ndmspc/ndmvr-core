@@ -15,7 +15,6 @@ export class HistogramJsrootClass {
     dummyEl = undefined;
 
     constructor(id, rootObj) {
-        console.log('---------------------------------------------------')
         this.id = id;
         this.rootObj = rootObj;
         this.histogramGroup = new THREE.Group();
@@ -65,8 +64,8 @@ export class HistogramJsrootClass {
 
                     this.framePainter.scene.scale.set(
                         matrixScale.x / size.x,
-                        matrixScale.y / size.y,
-                        (matrixScale.z / size.z));
+                        matrixScale.z / size.y,
+                        (matrixScale.y / size.z));
 
                     this.framePainter.scene.children[0].children[0].children
                         .filter(child => child.type === "Object3D")
@@ -76,10 +75,8 @@ export class HistogramJsrootClass {
                                 .forEach(childX => childX.scale.set(4, 2, 2))
                         });
                     this.framePainter.scene.rotateX(-Math.PI / 2);
-                    this.framePainter.scene.translateZ(matrixScale.z / -2);
-                    console.log('add1: ', this.framePainter.scene);
+                    this.framePainter.scene.translateZ(matrixScale.y / -2);
                     this.histogramGroup.add(this.framePainter.scene);
-                    console.log('add1G: ', this.histogramGroup);
                 }
             })
         } else {
@@ -94,8 +91,8 @@ export class HistogramJsrootClass {
 
                     this.framePainter.scene.children[1].scale.set(
                         matrixScale.x / size.x,
-                        matrixScale.y / size.y,
-                        matrixScale.z / size.z
+                        matrixScale.z / size.y,
+                        matrixScale.y / size.z
                     );
 
                     this.framePainter.scene.children[1].children[0].children
@@ -107,10 +104,8 @@ export class HistogramJsrootClass {
                         });
 
                     this.framePainter.scene.rotateX(-Math.PI / 2);
-                    this.framePainter.scene.translateZ(matrixScale.z / -2);
-                    console.log('add2: ', this.framePainter.scene);
+                    this.framePainter.scene.translateZ(matrixScale.y / -2);
                     this.histogramGroup.add(this.framePainter.scene);
-                    console.log('add2G: ', this.histogramGroup);
                 }
             });
         }
