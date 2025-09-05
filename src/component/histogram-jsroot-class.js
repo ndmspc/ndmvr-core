@@ -84,16 +84,17 @@ export class HistogramJsrootClass {
                 this.histogramGroup.clear();
 
                 if (this.framePainter.scene.children[1]) {
-                    const matrixScale = this.config.histogramPads.find(el => el.id === this.id)?.scale;
-                    const box = new THREE.Box3().setFromObject(this.framePainter.scene.children[1]);
-                    const size = new THREE.Vector3();
-                    box.getSize(size);
-
-                    this.framePainter.scene.children[1].scale.set(
-                        matrixScale.x / size.x,
-                        matrixScale.z / size.y,
-                        matrixScale.y / size.z
-                    );
+                    console.log(this.framePainter.scene)
+                    // const matrixScale = this.config.histogramPads.find(el => el.id === this.id)?.scale;
+                    // const box = new THREE.Box3().setFromObject(this.framePainter.scene.children[1]);
+                    // const size = new THREE.Vector3();
+                    // box.getSize(size);
+                    //
+                    // this.framePainter.scene.children[1].scale.set(
+                    //     matrixScale.x / size.x,
+                    //     matrixScale.z / size.y,
+                    //     matrixScale.y / size.z
+                    // );
 
                     this.framePainter.scene.children[1].children[0].children
                         .filter(child => child.type === "Object3D")
@@ -103,8 +104,8 @@ export class HistogramJsrootClass {
                                 .forEach(childX => childX.scale.set(4, 2, 2));
                         });
 
-                    this.framePainter.scene.rotateX(-Math.PI / 2);
-                    this.framePainter.scene.translateZ(matrixScale.y / -2);
+                    // this.framePainter.scene.rotateX(-Math.PI / 2);
+                    // this.framePainter.scene.translateZ(matrixScale.y / -2);
                     this.histogramGroup.add(this.framePainter.scene);
                 }
             });
