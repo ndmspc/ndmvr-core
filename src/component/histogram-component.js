@@ -20,11 +20,9 @@ const registerHistogramComponent = () => {
        histogramSub: undefined,
 
       init: function () {
-          this.histoSub = histogramSubjectGet().getStream()
-              .pipe(
-                  filter(e => e.id === this.el.id)
-              )
+          this.histoSub = histogramSubjectGet().getStream(this.el.id)
               .subscribe((histo) => {
+                  // console.log('prislo: ', histo.id, ',k: ', this.el.id, ', h: ', histo)
                   // histo.opts ??= {};
                   // histo.opts.render = 'nested';
 
@@ -58,31 +56,6 @@ const registerHistogramComponent = () => {
                           this.el.object3D.add(this.nestedHistogram.wireframe.wireframe);
                       }
                   }
-
-                  // if (histo?.opts?.render === 'jsroot') {
-                  //     if (this.nestedHistogram) this.nestedHistogram.remove();
-                  //
-                  //     if (this.jsrootHistogram) {
-                  //         this.jsrootHistogram.updateHistogram(histo.histogram);
-                  //     } else {
-                  //         this.jsrootHistogram = new HistogramJsrootClass(this.el.id, histo.histogram);
-                  //         this.el.object3D.add(this.jsrootHistogram.getHistogramMesh());
-                  //     }
-                  // } else {
-                  //     if (this.jsrootHistogram) this.jsrootHistogram.remove();
-                  //
-                  //     if (this.nestedHistogram) {
-                  //         this.nestedHistogram.updateHistogram(histo);
-                  //     } else {
-                  //         this.nestedHistogram = new NestedHistogram(
-                  //             this.data.bin_padding_x,
-                  //             this.data.bin_padding_y,
-                  //             this.data.bin_padding_z,
-                  //             histo, this.el.id);
-                  //         this.el.object3D.add(this.nestedHistogram.instancedMesh);
-                  //         this.el.object3D.add(this.nestedHistogram.wireframe.wireframe);
-                  //     }
-                  // }
               });
       },
 

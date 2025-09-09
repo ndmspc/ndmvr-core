@@ -22,40 +22,29 @@
         "z": 0
       }
     },
-    "histogramMatrix": {
-      "position": {
-        "x": 0,
-        "y": 0,
-        "z": 10
-      },
+    "histogramPads": {
+      "type": "grid1x1x1",
       "scale": {
         "x": 10,
         "y": 5,
         "z": 10
-      }
-    },
-    "jsrootHistogramMatrix": {
-      "position": {
+      }, "padding" : {
         "x": 0,
         "y": 0,
-        "z": -20
-      },
-      "scale": {
-        "x": 1,
-        "y": 1,
-        "z": 1
+        "z": 0
+      }, "origin": {
+        "x": 0,
+        "y": 0,
+        "z": 0
       }
     },
     "padding": {
       "default": {
-        "x": 0.1,
-        "y": 0.1,
-        "z": 0.1
+        "x": 0,
+        "y": 0,
+        "z": 0
       },
       "layer": [
-        { "x": 0.1, "y": 0.1, "z": 0.1},
-        { "x": 0.1, "y": 0.1, "z": 0.1},
-        { "x": 0.1, "y": 0.1, "z": 0.1}
       ]
     },
     "TH1ZScale": {
@@ -67,6 +56,7 @@
         "start": 0,
         "end": 4
       },
+      "displaySets": false,
       "layer": [],
       "color": {
         "default": "0x00FF00",

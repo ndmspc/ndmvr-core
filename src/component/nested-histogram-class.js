@@ -44,7 +44,7 @@ export class NestedHistogram {
         this.rootObj = histo.histogram;
         this.pointer = new HistogramPointerClass(this.rootObj);
         this.id = id;
-        console.log(this.pointer.origin);
+        // console.log(this.pointer.origin);
         this.setAvailableSets(this.pointer.origin);
 
         this.sub = functionSubjectGet().getObservable()
@@ -62,7 +62,8 @@ export class NestedHistogram {
             .pipe(filter(e =>
                 ((e.target.id.includes('*')) || (e.target.id.includes(this.id)))))
             .subscribe((v) => {
-                this.config = v.config;
+                this.config = { ...v.config };
+                this.config.histogramPads = this.config.histogramPads.find(el => el.id === this.id);
             });
 
         this.handleStateChange = this.handleStateChange.bind(this);
@@ -281,8 +282,9 @@ export class NestedHistogram {
             this.instancedMesh.instanceColor.needsUpdate = true;
 
         }
+        // console.log(this.config.histogramPads)
 
-        render(startIndex, endIndex, 0, this.pointer.origin, this.config.histogramMatrix);
+        render(startIndex, endIndex, 0, this.pointer.origin, this.config.histogramPads);
         const selectedSetIndexes = this.selectedSet.map(item => this.availableSets.indexOf(item));
         this.wireframe.render(this.matrixCache, 0, layer + 1, startIndex, endIndex, selectedSetIndexes);
         this.instancedMesh.computeBoundingBox();
@@ -323,7 +325,6 @@ export class NestedHistogram {
         }
         this.instancedMesh.frustumCulled = false;
         this.instancedMesh.instanceMatrix.needsUpdate = true;
-
         this.instancedMesh.raycast = this.raycastHandler;
 
         if (parent) {
@@ -340,17 +341,20 @@ export class NestedHistogram {
         const val = [];
         for (let i = 0; i < numOfDimensions; i++) {
             const axis = event.range[layer][axes[i]];
-            // console.log(ind);
             const bin = ind[axes[i]] + 1;
             val.push({...axis, bin});
             // val.push({...coords[i]})
         }
+        val.push({color: this.wireframe.getColorAt(layer, event.set)})
         // console.log(val)
         event.range[layer] = val;
-        if (node.children) {
-            const child = node.children?.content
+        if (node.children && event.index.length > 0) {
+            // console.log(node.children)
+            // console.log(event.set)
+            // const child = node.children[event.set][event.jsrootInstance[layer]];
+            const child = node.children?.content || event.set === 'content'
                 ? node.children.content[event.jsrootInstance[layer]]
-                : node.children[this.selectedSet[0]][event.jsrootInstance[layer]];
+                : node.children[event.set][event.jsrootInstance[layer]];
             return this.mergeInfo(event, child, layer + 1);
         } else {
             return event;
@@ -378,10 +382,10 @@ export class NestedHistogram {
             const eventWithSource = {...intersection, triggerSource};
             // console.log(eventWithSource)
             if (!(triggerSource === "mousemove" && areIndexesEqual(intersection.index, this.dirtyInstance))) {
-                // const merged = this.mergeInfo({...eventWithSource, index: [...eventWithSource.index]});
-                // const {range: coords, content, error, set, triggerSource} = merged;
-                // const minimizedEvent = {coords, content, error, set, triggerSource};
-                // binInfoSubjectGet().next(minimizedEvent);
+                const merged = this.mergeInfo({...eventWithSource, index: [...eventWithSource.index]});
+                const {range: coords, content, error, set, triggerSource} = merged;
+                const minimizedEvent = {coords, content, error, set, triggerSource};
+                binInfoSubjectGet().next(minimizedEvent);
             }
 
             switch (triggerSource) {
@@ -396,10 +400,11 @@ export class NestedHistogram {
                     this.hideChildHistogram(intersection.index);
                     break;
                 case "mousedbclick":
-                    console.log(intersection.set);
-                    intersection.set
-                        ? this.setPointerToChild(this.computeJsRootIndexFromPosition(intersection.index), intersection.set)
-                        : this.setPointerToChild(this.computeJsRootIndexFromPosition(intersection.index), this.selectedSet[0])
+                    setTimeout(() => {
+                        intersection.set
+                            ? this.setPointerToChild(this.computeJsRootIndexFromPosition(intersection.index), intersection.set)
+                            : this.setPointerToChild(this.computeJsRootIndexFromPosition(intersection.index), this.selectedSet[0]);
+                    }, 0);
                     break;
                 case "shiftmousedbclick":
                     this.setPointerToParent();
@@ -415,10 +420,6 @@ export class NestedHistogram {
         if (state.selectedSet && !this.areArraysEqual(state.selectedSet, this.selectedSet)) {
             this.selectedSet = state.selectedSet;
             // this.selectedSet[0] = state.selectedSet;
-
-            console.log(state.selectedSet)
-
-            console.log(this.renderHistory);
 
             this.setupInstancedMesh();
 
@@ -552,6 +553,7 @@ export class NestedHistogram {
      * If children contains sets, parameter need to be specified.
      * */
     setPointerToChild(position, set) {
+        this.wireframe.clearWireframe();
         this.pointer.setOriginToChild(position, set);
         this.init();
         console.log('path: ', this.pointer.path);
@@ -911,6 +913,7 @@ export class NestedHistogram {
                 ? this.matrixCache[layer]?.[this.availableSets.indexOf(set)]?.[index]
                 : this.matrixCache[layer]?.[index];
 
+            // console.log(t ? new THREE.Box3().setFromCenterAndSize(t.position, t.scale) : undefined)
             return t ? new THREE.Box3().setFromCenterAndSize(t.position, t.scale) : undefined;
         };
 
@@ -930,11 +933,16 @@ export class NestedHistogram {
             const boundaryFirstHalf = new THREE.Box3().copy(pointMin).union(pointHalfBelow);
             const boundarySecondHalf = new THREE.Box3().copy(pointHalfUpper).union(pointMax);
 
-            // if (layer === 1) {      DEBUG
+            // if (layer === 0) {      DEBUG
             //    const helper = new THREE.Box3Helper(boundaryFirstHalf, new THREE.Color(0, 1, 0));
             //    helper.raycast = () => {};
             //    this.el.object3D.add(helper);
             // }
+
+            // console.log('prvy', startIndex, ', half: ', half, ', ')
+            // console.log('druhy', half + 1, ', end: ', endIndex)
+
+
 
             const resultList = [];
             if (ray.intersectBox(boundaryFirstHalf, target)) {
@@ -954,6 +962,7 @@ export class NestedHistogram {
 
             const output = [];
             const traverse = (details) => {
+                // console.log(details)
                 if (details.array[0] === details.array[1]) {
                     output.push(details);
                     return;
@@ -981,6 +990,7 @@ export class NestedHistogram {
             const stepX = stepY / fX;
 
             const validZ = dfs(stepZ, 0, fZ - 1, offset, layer, set);
+
 
             const result = [];
 
@@ -1025,8 +1035,12 @@ export class NestedHistogram {
                                 //     console.log('DVOJKA')
                                 // }
                                 //child was rendered, return the return value from next layer search
-                                return recursiveSearch(child, layer + 1, childOffset, fullPath, setX)
-                                    .map(res => ({...res, set: setX}));
+                                let r = recursiveSearch(child, layer + 1, childOffset, fullPath, setX);
+
+                                if (setX !== 'content') {
+                                    r = r.map(res => ({...res, set: setX}));
+                                }
+                                return r;
                             });
 
                             //if any child has returned result, its valid
@@ -1045,7 +1059,7 @@ export class NestedHistogram {
                                         index: fullPath,
                                         target: x.target,
                                         distance: x.distance,
-                                        set,
+                                        set: set,
                                         instanceId: this.computeIndexFromPosition(fullPath),
                                         jsrootInstance: this.computeJsRootIndexFromPosition(fullPath),
                                         range: this.getRangeByPosition(fullPath),

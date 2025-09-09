@@ -73,7 +73,7 @@ This section is intended to configure the camera's position. Note: This feature 
 >**Scale**: dimensions in Three.js units.<br>
  
  ```json
-"histogramMatrix": {
+"histogramPads": {
     "position": { "x": 0, "y": 0, "z": 10 },
     "scale":    { "x": 10, "y": 5, "z": 10 }
 }
@@ -86,7 +86,7 @@ This section is intended to configure the camera's position. Note: This feature 
 >**Scale**: in 0–1 percentage, relative scaling factor applied to the whole histogram.<br>
 
  ```json
-"histogramMatrix": {
+"histogramPads": {
     "position": { "x": 0, "y": 0, "z": 10 },
     "scale":    { "x": 10, "y": 5, "z": 10 }
 }
