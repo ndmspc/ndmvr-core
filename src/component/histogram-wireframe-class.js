@@ -40,6 +40,7 @@ export default class HistogramWireframeClass {
         // this.colorArray[0].set(0x000000);
         this.material.uniforms.colorArray = {value: this.colorArray};
         this.instancePositions = new Float32Array(this.totalInstances * 3);
+        // console.log(this.totalInstances * 3);
         this.instanceScales = new Float32Array(this.totalInstances * 3);
         this.instanceColors = new Float32Array(this.totalInstances);
 
@@ -79,11 +80,30 @@ export default class HistogramWireframeClass {
             });
     }
 
+    getColorAt(layer, set) {
+        // console.log(layer, set);
+        if (this.config.color.set[set]) {
+            return this.config.color.set[set];
+        } else if (this.config.color.layer[layer]) {
+            return this.config.color.layer[layer];
+        } else {
+            return this.config.color.default;
+        }
+    }
+
 
     render(matrixCache, startLayer, endLayer, startIndex, endIndex, setIndexes) {
         if (this.config.display.start > startLayer) startLayer = this.config.display.start;
         if ((this.config.display.end < endLayer) && (this.config.display.end <= matrixCache.length)) endLayer = this.config.display.end;
-        let offset = 0;
+
+        // console.log(startLayer, endLayer, startIndex, endIndex, setIndexes);
+
+        let offset = this.maxInstancesPerLayer
+            .slice(0, startLayer)
+            .reduce((acc, value) => {
+                return acc + ((acc === 0 ? 1 : acc) * value);
+            }, 0);
+        // console.log('offset: ', offset);
 
         const setInstance = (index, position, scale) => {
             this.instancePositions.set([position.x, position.y, position.z], index * 3);
@@ -92,6 +112,8 @@ export default class HistogramWireframeClass {
 
         for (let i = startLayer; i < endLayer; i++) {
             if (this.config.layer?.[i] === false) continue;
+            const wireframeOffset = 0.1 * (endLayer - Math.abs(i + startLayer + 1));
+            // console.log(endLayer, i, startLayer, 0.1 * (endLayer - Math.abs(i + startLayer + 1)));
             const stepFor = this.maxInstancesPerLayer
                 .slice(i + 1)
                 .reduce((acc, value) => {
@@ -99,9 +121,34 @@ export default class HistogramWireframeClass {
                 }, 1);
 
             const start = Math.floor(startIndex / stepFor);
-            const n = Math.floor((endIndex - startIndex) / stepFor);
+            const n = Math.ceil((endIndex - startIndex) / stepFor);
+            // console.log(i, wireframeOffset, start, n, stepFor);
+            let result = false;
 
-            if (Array.isArray(matrixCache[i][0])) {
+            if ((i < endLayer - 1) && (matrixCache.length > endLayer + 1)) {
+                // console.log('---------------------')
+                const step = stepFor / (this.maxInstancesPerLayer[i + 1] * this.maxInstancesPerLayer[i + 2]);
+                const s = (Math.floor(startIndex / stepFor) * stepFor) / step;
+                const e = (Math.ceil(endIndex / stepFor) * stepFor) / step;
+                const v1 = startIndex / step;
+                const v2 = endIndex / step;
+                // console.log(step, ', s: ', s, ', e: ', e, ', v1', startIndex/step, ', v2: ', endIndex/step);
+                for (let j = s; j < e; j++) {
+                    if (j >= v1 && j < v2) continue;
+                    // console.log('check: ', i, ', j: ', j, ', v: ', matrixCache[i + 2][j]);
+                    result = result || matrixCache[i + 2][j]?.rendered === true;
+                }
+                // console.log(matrixCache);
+            }
+            // console.log('RESULT: ', result, ', i: ', i);
+
+            if (result === true) {
+                offset += (offset === 0 ? 1 : offset) * this.maxInstancesPerLayer[i];
+                continue;
+            }
+
+
+            if (Array.isArray(matrixCache[i][0]) && this.config.displaySets === true) {
                 const total = this.maxInstancesPerLayer
                     .slice(0, i + 1)
                     .reduce((acc, value) => {
@@ -114,8 +161,12 @@ export default class HistogramWireframeClass {
                     if (this.config.color.set[setIndex])
                         colorIndex = this.config.color.set[setIndex + this.config.color.layer.length + 1];
                     for (let j = start; j < start + n; j++) {
-                        const inst = matrixCache[i][setIndex][j];
-                        setInstance(offset + j + (setIndex * total), inst.position, inst.scale);
+                        const inst = {
+                            scale: matrixCache[i][setIndex][j].scale.clone(),
+                            position: matrixCache[i][setIndex][j].position.clone()
+                        }
+                        // console.log('setting: ', offset + j + (setIndex * total), inst.scale, wireframeOffset);
+                        setInstance(offset + j + (setIndex * total), inst.position, inst.scale.addScalar(wireframeOffset));
                         this.instanceColors[offset + j + (setIndex * total)] = colorIndex
                     }
                 })
@@ -124,13 +175,17 @@ export default class HistogramWireframeClass {
                     ? i + 1
                     : 0
                 for (let j = start; j < start + n; j++) {
-                    const inst = matrixCache[i][j];
-                    setInstance(offset + j, inst.position, inst.scale);
+                    if (!matrixCache[i][j]?.scale) continue;
+                    const inst = {
+                        scale: matrixCache[i][j].scale.clone(),
+                        position: matrixCache[i][j].position.clone()
+                    }
+                    setInstance(offset + j, inst.position, inst.scale.addScalar(wireframeOffset));
+                    // console.log('i: ', i, ', setting: ', offset + j, inst.scale, inst.position);
                     this.instanceColors[offset + j] = colorIndex
-                    // this.instanceColors.set(colorIndex, offset + j);
                 }
             }
-            offset += matrixCache[i].length;
+            offset += (offset === 0 ? 1 : offset) * this.maxInstancesPerLayer[i];
         }
 
         this.instGeom.attributes.instancePosition.needsUpdate = true;
@@ -156,6 +211,7 @@ export default class HistogramWireframeClass {
 
 
     clearSection(matrixCache, startIndex, offset, dimensions, baseLayerIndex) {
+        // console.log(startIndex, offset, dimensions, baseLayerIndex);
         let currentMultiplier = this.maxInstancesPerLayer
             .slice(0, baseLayerIndex + 1)
             .reduce((acc, value) => {
@@ -176,11 +232,16 @@ export default class HistogramWireframeClass {
             }, 1);
 
         for (let i = baseLayerIndex; i < baseLayerIndex + dimensions.length; i++) {
+            if (i === 0) {
+                // console.log(i, (Math.floor(startIndex / mult) + layerOffset),
+                //     (Math.floor((startIndex + offset) / mult) + layerOffset))
+            }
 
-            console.log(i, 'offset: ', layerOffset, ', currentMult:', currentMultiplier, ', mult: ', mult);
+            // console.log(i, 'offset: ', layerOffset, ', currentMult:', currentMultiplier, ', mult: ', mult);
             if (Array.isArray(matrixCache[i][0])) {
                 for (let j = 0; j < this.numOfavailableSets; j++) {
-
+                    // console.log(i, 'start: ', ((Math.floor(startIndex / mult) + layerOffset) + (currentMultiplier * j)),
+                    //     ', end: ', ((Math.floor((startIndex + offset) / mult) + layerOffset) + (currentMultiplier * j)));
                     this.instancePositions.subarray(
                         ((Math.floor(startIndex / mult) + layerOffset) + (currentMultiplier * j)) * 3,
                         ((Math.floor((startIndex + offset) / mult) + layerOffset) + (currentMultiplier * j)) * 3)
@@ -195,8 +256,8 @@ export default class HistogramWireframeClass {
                         .fill(0);
                 }
             } else {
-                console.log(i, 'start: ', (Math.floor(startIndex / mult) + layerOffset),
-                    ', end: ', (Math.floor((startIndex + offset) / mult) + layerOffset));
+                // console.log(i, 'start: ', (Math.floor(startIndex / mult) + layerOffset),
+                //     ', end: ', (Math.floor((startIndex + offset) / mult) + layerOffset));
                 this.instancePositions.subarray(
                     (Math.floor(startIndex / mult) + layerOffset) * 3,
                     (Math.floor((startIndex + offset) / mult) + layerOffset) * 3)
