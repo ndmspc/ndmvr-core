@@ -219,10 +219,14 @@ export class NestedHistogram {
           ? this.config.scale?.[currentLayer]
           : this.config.scale.default;
 
-        const scaleFactor = content === 0
-          ? 0
-          : minFactor + (content / contentMax) * (maxFactor - minFactor);
-        // let scaleFactor = 1;
+        let scaleFactor = 1;
+        if (isTH3) {
+          scaleFactor = content === 0
+            ? 0
+            : minFactor + (content / contentMax) * (maxFactor - minFactor);
+        } else {
+          scaleFactor = content / contentMax;
+        }
         // if (currentLayer === 0) {
         //   scaleFactor = content / contentMax;
         //   // scaleFactor = 0.2 + 0.8 * this.easeOutCubic(content / contentMax);
@@ -310,6 +314,7 @@ export class NestedHistogram {
     this.wireframe.render(this.matrixCache, 0, layer + 1, startIndex, endIndex, selectedSetIndexes);
     // this.BVHTree = createBVHTree(this.matrixCache, this.pointer.origin, 0, null, this.instancedMesh.matrixWorld);
     this.BVHTree = createBVHTreeRecursive(this.matrixCache, this.pointer.origin, 0, this.selectedSet, this.availableSets, this.instancedMesh.matrixWorld, this.maxInstancesPerLayer);
+    console.log(this.BVHTree)
     // this.BVHTree = Array.of(this.BVHTree);
     this.instancedMesh.computeBoundingBox();
   }
@@ -394,7 +399,7 @@ export class NestedHistogram {
     // const res = this.checkIntersection(raycaster.ray);
     const intersection = res[0];
     if (intersection) {
-      // console.log(intersection.index);
+      console.log(intersection.index);
       const triggerSource = raycaster._triggerSource;
       this.mouseEvents
         .filter(mouseEvent => mouseEvent.event === triggerSource)
@@ -1221,10 +1226,11 @@ export class NestedHistogram {
       // }
       const result = [];
       const perInstance = this.maxInstancesPerLayer[layer + 1];
-      const indexOffset = this.maxInstancesPerLayer.slice(1, layer)
-        .reduce((acc, value) => {
-          return acc * value
-        }, this.maxInstancesPerLayer[0])
+      // const indexOffset = this.maxInstancesPerLayer.slice(1, layer + 1)
+      //   .reduce((acc, value) => {
+      //     return acc * value
+      //   }, this.maxInstancesPerLayer[1])
+      const indexOffset = this.maxInstancesPerLayer[layer] * this.maxInstancesPerLayer[layer + 1];
 
       dfs(layer, offset, set).forEach(intersect => {
         // if (layer === 1) {
@@ -1251,7 +1257,7 @@ export class NestedHistogram {
             const child = childX?.[binIndex];
             if (!child) return [];
 
-            const childOffset = (offset * perInstance) +
+            const childOffset = (offset * indexOffset) +
               ((posX + (posY * node.fXaxis.fNbins) + (posZ * (node.fXaxis.fNbins * node.fYaxis.fNbins))) * perInstance);
             const next = setX === 'content'
               ? this.matrixCache?.[layer + 1]?.[childOffset]
@@ -1270,7 +1276,7 @@ export class NestedHistogram {
             // console.log('childREsu: ', childResults)
             result.push(...childResults);
           } else {
-            const childOffset = (offset * indexOffset) +
+            const childOffset = (offset * this.maxInstancesPerLayer[layer]) +
               ((posX + (posY * node.fXaxis.fNbins) + (posZ * (node.fXaxis.fNbins * node.fYaxis.fNbins))));
             const instance = set && set !== 'content'
               ? this.matrixCache[layer]?.[this.availableSets.indexOf(set)]?.[childOffset]
