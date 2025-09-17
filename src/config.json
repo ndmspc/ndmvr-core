@@ -35,7 +35,7 @@
       }, "origin": {
         "x": 0,
         "y": 0,
-        "z": 0
+        "z": -5
       }
     },
     "padding": {
@@ -44,8 +44,14 @@
         "y": 0,
         "z": 0
       },
-      "layer": [
-      ]
+      "layer": []
+    },
+    "scale": {
+      "default": {
+        "min": 0.2,
+        "max": 0.95
+      },
+      "layer": []
     },
     "TH1ZScale": {
       "default": 0.8,
