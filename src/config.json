@@ -24,6 +24,7 @@
     },
     "histogramPads": {
       "type": "grid1x1x1",
+      "prefix": "histogram",
       "scale": {
         "x": 10,
         "y": 5,
@@ -40,11 +41,16 @@
     },
     "padding": {
       "default": {
-        "x": 0,
+        "x": 0.2,
         "y": 0,
         "z": 0
       },
-      "layer": []
+      "layer": [],
+      "sets": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      }
     },
     "scale": {
       "default": {
@@ -53,9 +59,15 @@
       },
       "layer": []
     },
+    "sets": {
+      "scale": {
+        "maximum": "relative"
+      }
+    },
     "TH1ZScale": {
       "default": 0.8,
-      "layer": [0.2, 1, 1, 1]
+      "layer": [0.2, 1, 1, 1],
+      "set": 0.01
     },
     "wireframe": {
       "display": {

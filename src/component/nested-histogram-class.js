@@ -121,7 +121,15 @@ export class NestedHistogram {
       }, 1);
 
     this.setupInstancedMesh();
-    this.wireframe = new HistogramWireframeClass(this.maxInstancesPerLayer, this.matrixCache);
+    if(this.wireframe && this.wireframe.wireframe.parent) {
+      const parent = this.wireframe.wireframe.parent;
+      console.log(parent);
+      parent.remove(this.wireframe);
+      this.wireframe = new HistogramWireframeClass(this.maxInstancesPerLayer, this.matrixCache);
+      parent.add(this.wireframe.wireframe);
+    } else {
+      this.wireframe = new HistogramWireframeClass(this.maxInstancesPerLayer, this.matrixCache);
+    }
   }
 
   /**
@@ -169,9 +177,20 @@ export class NestedHistogram {
 
       const counter = new RadixCounter([fXbins, fYbins, fZbins]);
       // const contentMax = Math.max(...this.filterOutsideContent(obj));
-      const contentMax = this.maxContentPerLayer[currentLayer].content ?
-        this.maxContentPerLayer[currentLayer].content :
-        this.maxContentPerLayer[currentLayer][set];
+      let contentMax;
+      if (set) {
+        if (this.config.sets.scale.maximum === "layer") {
+          contentMax = this.maxContentPerLayer[currentLayer].content ?
+            this.maxContentPerLayer[currentLayer].content :
+            this.maxContentPerLayer[currentLayer][set];
+        } else if (this.config.sets.scale.maximum === "relative") {
+          contentMax = Math.max(...this.filterOutsideContent(obj));
+        }
+      } else {
+        contentMax = this.maxContentPerLayer[currentLayer].content ?
+          this.maxContentPerLayer[currentLayer].content :
+          this.maxContentPerLayer[currentLayer][set];
+      }
       const isTH3 = obj._typename.substring(0, 3) === 'TH3';
       const isTH2 = obj._typename.substring(0, 3) === 'TH2';
       const isTH1 = obj._typename.substring(0, 3) === 'TH1';
@@ -186,9 +205,17 @@ export class NestedHistogram {
       const sourcePadding = this.config.padding.layer[currentLayer]
         ?? this.config.padding.default;
 
-      const padding = (!this.config.padding.layer[currentLayer] && isTH1)
-        ? {x: 0, y: sourcePadding.y, z: sourcePadding.z}
+      let padding = (!this.config.padding.layer[currentLayer] && isTH1)
+        ? {x: sourcePadding.x, y: sourcePadding.y, z: sourcePadding.z}
         : {...sourcePadding};
+
+      if (set && this.config.padding.sets && isTH1) {
+        padding = {x: this.config.padding.sets.x, y: 0, z: 0}
+      }
+
+      // const padding = (!this.config.padding.layer[currentLayer] && isTH1)
+      //   ? {x: 0, y: sourcePadding.y, z: sourcePadding.z}
+      //   : {...sourcePadding};
 
 
       for (let i = startIndex; i < endIndex; i += stepFor) {
@@ -225,7 +252,9 @@ export class NestedHistogram {
             ? 0
             : minFactor + (content / contentMax) * (maxFactor - minFactor);
         } else {
-          scaleFactor = content / contentMax;
+          scaleFactor = content === 0
+            ? 0
+            : scaleFactor = content / contentMax;
         }
         // if (currentLayer === 0) {
         //   scaleFactor = content / contentMax;
@@ -250,7 +279,8 @@ export class NestedHistogram {
           binSizePos.y.pos -= (binSizePos.y.size - t) / 2;
           binSizePos.y.size = t
           if (set) {
-            binSizePos.z.size = 0.1;
+            const scale = this.config.TH1ZScale.set;
+            binSizePos.z.size = scale ? scale : 0.01;
           } else {
             this.config.TH1ZScale?.layer?.[currentLayer]
               ? binSizePos.z.size = limits.scale.z * this.config.TH1ZScale.layer[currentLayer]
@@ -314,7 +344,6 @@ export class NestedHistogram {
     this.wireframe.render(this.matrixCache, 0, layer + 1, startIndex, endIndex, selectedSetIndexes);
     // this.BVHTree = createBVHTree(this.matrixCache, this.pointer.origin, 0, null, this.instancedMesh.matrixWorld);
     this.BVHTree = createBVHTreeRecursive(this.matrixCache, this.pointer.origin, 0, this.selectedSet, this.availableSets, this.instancedMesh.matrixWorld, this.maxInstancesPerLayer);
-    console.log(this.BVHTree)
     // this.BVHTree = Array.of(this.BVHTree);
     this.instancedMesh.computeBoundingBox();
   }
@@ -879,7 +908,9 @@ export class NestedHistogram {
     const regex = /^(?:Digit|Numpad)(\d+)$/;
     const match = event.code.match(regex);
 
+
     if (match) {
+      if(parseInt(match[1]) - 1 > this.matrixCache.length) return;
       const dummy = new THREE.Object3D();
       dummy.scale.set(0, 0, 0);
       dummy.updateMatrix();
