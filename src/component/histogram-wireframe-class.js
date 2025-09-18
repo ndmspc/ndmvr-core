@@ -18,6 +18,7 @@ export default class HistogramWireframeClass {
     stateSub = undefined;
     config = undefined;
     numOfavailableSets = undefined;
+    visibility = true;
 
     constructor(maxInstancesPerLayer, matrixCache) {
         this.maxInstancesPerLayer = maxInstancesPerLayer;
@@ -91,6 +92,14 @@ export default class HistogramWireframeClass {
         }
     }
 
+    toggleVisibility(matrixCache, startLayer, endLayer, startIndex, endIndex, setIndexes){
+      this.visibility = !this.visibility;
+      if (!this.visibility) {
+        this.clearWireframe();
+      } else {
+        this.render(matrixCache, startLayer, endLayer, startIndex, endIndex, setIndexes)
+      }
+    }
 
     render(matrixCache, startLayer, endLayer, startIndex, endIndex, setIndexes) {
         if (this.config.display.start > startLayer) startLayer = this.config.display.start;
