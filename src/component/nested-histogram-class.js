@@ -907,10 +907,7 @@ export class NestedHistogram {
     // console.log(this.keydownEvents);
     const regex = /^(?:Digit|Numpad)(\d+)$/;
     const match = event.code.match(regex);
-
-
     if (match) {
-      console.log(parseInt(match[1]) - 1, this.matrixCache.length);
       if(parseInt(match[1]) > this.matrixCache.length) return;
       const dummy = new THREE.Object3D();
       dummy.scale.set(0, 0, 0);
@@ -932,6 +929,9 @@ export class NestedHistogram {
       this.wireframe.clearWireframe();
 
       this.renderHistogram(0, this.totalInstances, parseInt(match[1]) - 1);
+    } else if (event.key === 'h') {
+      const selectedSetIndexes = this.selectedSet.map(item => this.availableSets.indexOf(item));
+      this.wireframe.toggleVisibility(this.matrixCache, 0, this.matrixCache.length - 1, 0, this.totalInstances, selectedSetIndexes);
     }
   }
 
