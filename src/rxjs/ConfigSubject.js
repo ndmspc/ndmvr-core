@@ -43,9 +43,14 @@ class ConfigSubject {
           },
           layer: []
         },
+        sets: {
+          scale: {
+            maximum: "relative"
+          }
+        },
         TH1ZScale: {
           default: 0.8,
-          layer: [0.2, 1, 1, 1]
+          layer: [0.01, 1, 1, 1]
         },
         wireframe: {
           display: {
@@ -111,6 +116,9 @@ class ConfigSubject {
 
       // If object with "type" → expand into array
       if (pads && typeof pads === "object" && "type" in pads) {
+        const prefix = pads.prefix
+          ? pads.prefix
+          : 'histogram';
         const match = pads.type.match(/grid(\d+)x(\d+)x(\d+)/);
         if (!match) return [pads]; // fallback
 
@@ -129,7 +137,7 @@ class ConfigSubject {
           for (let iy = 0; iy < ny; iy++) {
             for (let iz = 0; iz < nz; iz++) {
               result.push({
-                id: `histogram${counter++}`,
+                id: `${prefix}${counter++}`,
                 position: {
                   x: origin.x + ((ix - (nx - 1) / 2) * (scale.x + padding.x)),
                   y: origin.y + ((iy - (ny - 1) / 2) * (scale.y + padding.y)),
@@ -140,7 +148,6 @@ class ConfigSubject {
             }
           }
         }
-
         return result;
       }
 
