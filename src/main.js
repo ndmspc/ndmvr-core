@@ -8,9 +8,9 @@
  * --------------------NOTE--------------------
  * */
 
-import {generate_AFrame_blank_scene_html} from "./utils/htmlGenerators.js";
-import {functionSubjectGet} from "./rxjs/FunctionSubject.js";
-import {initNdmvrAframe} from "./core/ndmvr-aframe-core.js";
+import { generate_AFrame_blank_scene_html } from "./utils/htmlGenerators.js";
+import { functionSubjectGet } from "./rxjs/FunctionSubject.js";
+import { initNdmvrAframe } from "./core/ndmvr-aframe-core.js";
 import histogramRecursive from "../public/histograms/THrecursive.json";
 
 import config from "./config.json";
@@ -22,37 +22,39 @@ import histo1_2_5 from "../public/histograms/nested/test_1_2_5.json";
 import histo5_2_1 from "../public/histograms/nested/test_5_2_1.json";
 import h3scat from "../public/histograms/h3scat.json";
 
+import test55x57x56 from "../public/histograms/TH3variableBinning55x57x56.json";
+
 import histogram2x2x3 from "../public/histograms/TH3variableBinning2x2x3OnlyInsideContent.json";
 import histo2x2x3 from "../public/histograms/TH3variableBinning2x2x3WOutsideContent.json";
 import histo6x2x1 from "../public/histograms/TH3variable6x2x1wOutsideContent.json";
 import test3D from "../public/histograms/test3D.json";
-import {histogramSubjectGet} from "./rxjs/HistogramSubject.js";
-import histoSparse2 from "../public/histograms/THnSparse3.json"
-import nestedHisto from "../public/histograms/hist3D.axis1-pt_axis2-ce_axis5-eta.json"
-import nestedHisto2 from "../public/histograms/hist2D.axis1-pt_axis2-ce.json"
-import nestedHisto3 from "../public/histograms/hist1D.axis1-pt.json"
-import nestedHisto4 from "../public/histograms/test3D.axis1-pt_axis2-ce_axis5-eta (1).json"
+import { histogramSubjectGet } from "./rxjs/HistogramSubject.js";
+import histoSparse2 from "../public/histograms/THnSparse3.json";
+import nestedHisto from "../public/histograms/hist3D.axis1-pt_axis2-ce_axis5-eta.json";
+import nestedHisto2 from "../public/histograms/hist2D.axis1-pt_axis2-ce.json";
+import nestedHisto3 from "../public/histograms/hist1D.axis1-pt.json";
+import nestedHisto4 from "../public/histograms/test3D.axis1-pt_axis2-ce_axis5-eta (1).json";
 // import histoSparse5 from "../public/histograms/test3D.axis1-pt_axis2-ce_axis5-eta.root"
-import {parse, redraw, makeSVG, openFile, makeImage} from "jsroot";
-import {stateSubjectGet} from "./rxjs/StateSubject.js";
-import {filter} from "rxjs";
-import {NestedHistogram} from "./component/nested-histogram-class.js";
-import {canvasSubjectGet} from "./rxjs/CanvasSubject.js";
-import {configSubjectGet} from "./rxjs/ConfigSubject.js";
-import {binInfoSubjectGet} from "./rxjs/BinInfoSubject.js";
+import { parse, redraw, makeSVG, openFile, makeImage } from "jsroot";
+import { stateSubjectGet } from "./rxjs/StateSubject.js";
+import { filter } from "rxjs";
+import { NestedHistogram } from "./component/nested-histogram-class.js";
+import { canvasSubjectGet } from "./rxjs/CanvasSubject.js";
+import { configSubjectGet } from "./rxjs/ConfigSubject.js";
+import { binInfoSubjectGet } from "./rxjs/BinInfoSubject.js";
 
 initNdmvrAframe();
 
 const sceneElm = generate_AFrame_blank_scene_html();
 
-
 document.querySelector("#app").appendChild(sceneElm);
 
 // const geom = new THREE.BoxGeometry(10, 5, 10);
-// const mate = new THREE.MeshNormalMaterial();
+// const mate = new THREE.MeshNormalMaterial({wireframe: true});
 // const cube = new THREE.Mesh(geom, mate);
-// cube.position.set(2, 0, 0);
-// sceneElm.object3D.add(cube)
+// cube.position.set(0, 0, -5);
+// sceneElm.object3D.add(cube);
+
 //
 // const geom = new THREE.BoxGeometry(10, 2.666666666666, 10);
 // const mate = new THREE.MeshNormalMaterial();
@@ -66,12 +68,11 @@ document.querySelector("#app").appendChild(sceneElm);
 // cube2.position.set(2, 1.3333333333, 0);
 // sceneElm.object3D.add(cube2)
 
-
-const imageContainer = document.createElement('a-entity');
+const imageContainer = document.createElement("a-entity");
 imageContainer.id = "histogram1-cinema";
-imageContainer.setAttribute('canvas-component', '');
+imageContainer.setAttribute("canvas-component", "");
 // imageContainer.setAttribute('position', "0 4 -6");
-imageContainer.setAttribute('scale', "10 10 10");
+imageContainer.setAttribute("scale", "10 10 10");
 
 sceneElm.appendChild(imageContainer);
 
@@ -81,31 +82,32 @@ sceneElm.appendChild(imageContainer);
 // jsrootHistogramContainer.setAttribute('position', "0 0 0");
 // sceneElm.appendChild(jsrootHistogramContainer);
 //
-const histogramContainer = document.createElement('a-entity');
+const histogramContainer = document.createElement("a-entity");
 histogramContainer.id = "histogram1";
-histogramContainer.setAttribute('histogram', '');
-histogramContainer.setAttribute('position', "0 0 0");
+histogramContainer.setAttribute("histogram", "");
+histogramContainer.setAttribute("position", "0 0 0");
 sceneElm.appendChild(histogramContainer);
 
-const histogramContainer2 = document.createElement('a-entity');
+const histogramContainer2 = document.createElement("a-entity");
 histogramContainer2.id = "histogram2";
-histogramContainer2.setAttribute('histogram', '');
-histogramContainer2.setAttribute('position', "0 0 0");
+histogramContainer2.setAttribute("histogram", "");
+histogramContainer2.setAttribute("position", "0 0 0");
 sceneElm.appendChild(histogramContainer2);
 
-const histogramContainer3 = document.createElement('a-entity');
+const histogramContainer3 = document.createElement("a-entity");
 histogramContainer3.id = "histogram3";
-histogramContainer3.setAttribute('histogram', '');
-histogramContainer3.setAttribute('position', "0 0 0");
+histogramContainer3.setAttribute("histogram", "");
+histogramContainer3.setAttribute("position", "0 0 0");
 sceneElm.appendChild(histogramContainer3);
 
-const histogramContainer4 = document.createElement('a-entity');
+const histogramContainer4 = document.createElement("a-entity");
 histogramContainer4.id = "histogram4";
-histogramContainer4.setAttribute('histogram', '');
-histogramContainer4.setAttribute('position', "0 0 0");
+histogramContainer4.setAttribute("histogram", "");
+histogramContainer4.setAttribute("position", "0 0 0");
 sceneElm.appendChild(histogramContainer4);
 
 const options = new Map();
+options.set("h3scat", h3scat);
 options.set("test6x2x1", histo6x2x1);
 options.set("histo125", histo125);
 options.set("histo12_5", histo12_5);
@@ -113,10 +115,11 @@ options.set("histo1_25", histo1_25);
 options.set("histo1_2_5", histo1_2_5);
 options.set("histo5_2_1", histo5_2_1);
 
-const selectDiv = document.createElement('div');
+const selectDiv = document.createElement("div");
 selectDiv.innerHTML = `
   <div style="position: absolute; top: 50px; right: 50px;">
     <select name="histograms" id="histogram-select">
+      <option value="h3scat">h3scat</option>
       <option value="test6x2x1">text6x2x1</option>
       <option value="histo125">histo125</option>
       <option value="histo12_5">histo12_5</option>
@@ -125,32 +128,35 @@ selectDiv.innerHTML = `
       <option value="histo5_2_1">histo5_2_1</option>
       <option value="custom">Set to URL</option>
     </select>
-    <input type="text" id="custom-url-input" placeholder="Enter custom URL" style="display: none; margin-top: 5px; width: 200px;" />
+    <input type="text" id="custom-url-input" value="https://eos.ndmspc.io/eos/ndmspc/scratch/test/test.json" placeholder="Enter custom URL" style="display: none; margin-top: 5px; width: 200px;" />
     <button id="load-custom-url" style="display: none; margin-top: 5px;">Load</button>
   </div>
 `;
 
 document.querySelector("#app").appendChild(selectDiv);
 
-const histogramSelect = document.getElementById('histogram-select');
-const urlInput = document.getElementById('custom-url-input');
-const loadButton = document.getElementById('load-custom-url');
+const histogramSelect = document.getElementById("histogram-select");
+const urlInput = document.getElementById("custom-url-input");
+const loadButton = document.getElementById("load-custom-url");
 
-histogramSelect.addEventListener('change', (event) => {
-    const selectedValue = event.target.value;
-    if (selectedValue === "custom") {
-        urlInput.style.display = "inline-block";
-        loadButton.style.display = "inline-block";
-    } else {
-        urlInput.style.display = "none";
-        loadButton.style.display = "none";
-        histogramSubjectGet().next({id: 'histogram1', histogram: options.get(selectedValue)});
-    }
+histogramSelect.addEventListener("change", (event) => {
+  const selectedValue = event.target.value;
+  if (selectedValue === "custom") {
+    urlInput.style.display = "inline-block";
+    loadButton.style.display = "inline-block";
+  } else {
+    urlInput.style.display = "none";
+    loadButton.style.display = "none";
+    histogramSubjectGet().next({
+      id: "histogram1",
+      histogram: options.get(selectedValue),
+    });
+  }
 });
 
-const setDiv = document.createElement('div');
+const setDiv = document.createElement("div");
 setDiv.innerHTML = `
-  <div style="position: absolute; top: 80px; right: 50px;">
+  <div style="position: absolute; top: 110px; right: 50px;">
     <div id="set-checkboxes"></div>
   </div>
 `;
@@ -158,72 +164,113 @@ document.querySelector("#app").appendChild(setDiv);
 
 const checkboxContainer = document.getElementById("set-checkboxes");
 
-stateSubjectGet().getObservable().subscribe(state => {
+const arrayDiv = document.createElement("div");
+arrayDiv.innerHTML = `
+<div style="position: absolute; top: 80px; right: 50px;">
+  <select id="arraySelect" aria-label="Dynamic options">
+    <option value="content">content</option>
+  </select>
+</div>
+`;
+document.querySelector("#app").appendChild(arrayDiv);
+const arraySelect = document.getElementById("arraySelect");
+
+stateSubjectGet()
+  .getObservable()
+  .subscribe((state) => {
+    console.log("state", state);
     const newOptions = state.sets || [];
 
     // Clear previous checkboxes
     checkboxContainer.innerHTML = "";
 
-    newOptions.forEach(value => {
-        const label = document.createElement("label");
-        label.style.display = "block"; // stack them vertically
+    newOptions.forEach((value) => {
+      const label = document.createElement("label");
+      label.style.display = "block"; // stack them vertically
 
-        const checkbox = document.createElement("input");
-        checkbox.type = "checkbox";
-        checkbox.value = value;
+      const checkbox = document.createElement("input");
+      checkbox.type = "checkbox";
+      checkbox.value = value;
 
-        // Check if this one should be selected
-        if (Array.isArray(state.selectedSet)) {
-            // If selectedSet is multiple
-            checkbox.checked = state.selectedSet.includes(value);
-        } else {
-            // If selectedSet is single
-            checkbox.checked = state.selectedSet === value;
-        }
+      // Check if this one should be selected
+      if (Array.isArray(state.selectedSet)) {
+        // If selectedSet is multiple
+        checkbox.checked = state.selectedSet.includes(value);
+      } else {
+        // If selectedSet is single
+        checkbox.checked = state.selectedSet === value;
+      }
 
-        label.appendChild(checkbox);
-        label.appendChild(document.createTextNode(" " + value));
-        checkboxContainer.appendChild(label);
+      label.appendChild(checkbox);
+      label.appendChild(document.createTextNode(" " + value));
+      checkboxContainer.appendChild(label);
     });
+
+    const arrayOptions = state.arrays || [];
+    arraySelect.innerHTML = "";
+
+    arrayOptions.forEach((value) => {
+      const ph = document.createElement("option");
+      ph.value = "";
+      ph.textContent = value;
+      ph.value = value;
+      if (value === state.selectedArray) ph.selected = true;
+      // ph.selected = selectedValue === null; // selected if no selectedValue provided
+      arraySelect.appendChild(ph);
+    });
+  });
+
+arraySelect.addEventListener("change", (event) => {
+  // console.log(event);
+  console.log(arraySelect.value);
+  const currentValue = stateSubjectGet().getValue();
+  currentValue.selectedArray = arraySelect.value;
+  stateSubjectGet().next(currentValue);
 });
 
 checkboxContainer.addEventListener("change", (event) => {
-    if (event.target.type === "checkbox") {
-        const currentValue = stateSubjectGet().getValue();
+  if (event.target.type === "checkbox") {
+    const currentValue = stateSubjectGet().getValue();
 
-        // Collect all checked values
-        const checkedValues = Array.from(
-            checkboxContainer.querySelectorAll("input[type='checkbox']:checked")
-        ).map(cb => cb.value);
+    // Collect all checked values
+    const checkedValues = Array.from(
+      checkboxContainer.querySelectorAll("input[type='checkbox']:checked"),
+    ).map((cb) => cb.value);
 
-        // Only update if something changed
-        if (JSON.stringify(currentValue.selectedSet) !== JSON.stringify(checkedValues)) {
-            currentValue.selectedSet = checkedValues;
-            stateSubjectGet().next(currentValue);
-        }
+    // Only update if something changed
+    if (
+      JSON.stringify(currentValue.selectedSet) !== JSON.stringify(checkedValues)
+    ) {
+      currentValue.selectedSet = checkedValues;
+      stateSubjectGet().next(currentValue);
     }
+  }
 });
 
-loadButton.addEventListener('click', async () => {
-    const url = urlInput.value.trim();
-    if (!url) {
-        alert("Please enter a valid URL.");
-        return;
-    }
+loadButton.addEventListener("click", async () => {
+  const url = urlInput.value.trim();
+  if (!url) {
+    alert("Please enter a valid URL.");
+    return;
+  }
 
-    try {
-        const response = await fetch(url);
-        const data = await response.json()
-        console.log(data);
-        // if (!response.ok) throw new Error("Network response was not ok");
+  try {
+    const response = await fetch(url);
+    const data = await response.json();
+    console.log(data);
+    // if (!response.ok) throw new Error("Network response was not ok");
+    // delete data.children;
 
-        histogramSubjectGet().next({id: 'histogram1', histogram: data});
-    } catch (error) {
-        console.error("Failed to load histogram from URL:", error);
-        alert("Failed to load histogram from the specified URL.");
-    }
+    histogramSubjectGet().next({
+      id: "histogram1",
+      opts: { render: "ndmvr" },
+      histogram: data,
+    });
+  } catch (error) {
+    console.error("Failed to load histogram from URL:", error);
+    alert("Failed to load histogram from the specified URL.");
+  }
 });
-
 
 // histogramSubjectGet().next({id: 'histogram1', histogram: parse(histoSparse)});
 
@@ -234,7 +281,7 @@ loadButton.addEventListener('click', async () => {
 
 // histogramSubjectGet().next({id: 'histogram1', histogram: test3D});
 // histogramSubjectGet().next({id: 'histogram1', histogram: histo1_2_5});
-histogramSubjectGet().next({id: 'histogram1', histogram: h3scat});
+// histogramSubjectGet().next({id: 'histogram1', histogram: test55x57x56});
 
 // const commands = [
 //   () => histogramSubjectGet().next({ id: 'histogram1', histogram: h3scat }),
@@ -252,11 +299,14 @@ histogramSubjectGet().next({id: 'histogram1', histogram: h3scat});
 //   index = (index + 1) % commands.length; // move to next (loop back to start)
 // }, interval);
 
-
 // histogramSubjectGet().next({id: 'histogram1-jsroot', histogram: histo2x2x3});
 
 // histogramSubjectGet().next({id: 'histogram1', opts: {render: "jsroot"}, histogram: h3scat});
-// histogramSubjectGet().next({id: 'histogram2', opts: {render: "nested"}, histogram: h3scat});
+histogramSubjectGet().next({
+  id: "histogram1",
+  opts: { render: "ndmvr" },
+  histogram: h3scat,
+});
 // histogramSubjectGet().next({id: 'histogram3', opts: {render: "jsroot"}, histogram: h3scat});
 // histogramSubjectGet().next({id: 'histogram4', opts: {render: "nested"}, histogram: h3scat});
 
@@ -281,9 +331,11 @@ histogramSubjectGet().next({id: 'histogram1', histogram: h3scat});
 
 configSubjectGet().next(config);
 
-binInfoSubjectGet().getObservable().subscribe((event) => {
-    // console.log(event);
-})
+binInfoSubjectGet()
+  .getObservable()
+  .subscribe((event) => {
+    console.log(event);
+  });
 
 // const functions = [
 //     {

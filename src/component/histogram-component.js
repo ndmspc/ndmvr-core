@@ -39,6 +39,7 @@ const registerHistogramComponent = () => {
                           this.el.object3D.add(this.jsrootHistogram.getHistogramMesh());
                       }
                   } else {
+                    console.log(histo)
                       if (this.jsrootHistogram) {
                           this.jsrootHistogram.remove();
                           this.jsrootHistogram = undefined;

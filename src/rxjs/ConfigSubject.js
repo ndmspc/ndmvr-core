@@ -1,69 +1,71 @@
-import {BehaviorSubject} from "rxjs";
+import { BehaviorSubject } from "rxjs";
 
 let configSubject;
 
 class ConfigSubject {
-
   #subject;
 
   constructor() {
     this.#subject = new BehaviorSubject({
       target: {
-        entity: 'nested-histogram',
-        id: '*'
+        entity: "nested-histogram",
+        id: "*",
       },
       config: {
-        histogramPads:
-          [{
+        histogramPads: [
+          {
             id: "histo1",
             position: new THREE.Vector3(0, 0, 0),
             scale: new THREE.Vector3(10, 5, 10),
-          }, {
+          },
+          {
             id: "histo2",
             position: new THREE.Vector3(0, 0, 0),
             scale: new THREE.Vector3(10, 5, 10),
-          }],
+          },
+        ],
         canvas: {
-          position: {x: 0, y: 5, z: -15},
-          rotation: {x: 10, y: 0, z: 0},
-          scale: {x: 10, y: 10, z: 0}
+          position: { x: 0, y: 5, z: -15 },
+          rotation: { x: 10, y: 0, z: 0 },
+          scale: { x: 10, y: 10, z: 0 },
         },
         padding: {
           default: {
-            x: 0.1, y: 0.1, z: 0.1
+            x: 0.1,
+            y: 0.1,
+            z: 0.1,
           },
-          layer: [
-            {x: 0.1, y: 0.1, z: 0.1},
-          ]
+          layer: [{ x: 0.1, y: 0.1, z: 0.1 }],
         },
         scale: {
           default: {
-            min: 0.4,
-            max: 0.9
+            min: 0.5,
+            max: 1.0,
           },
-          layer: []
+          layer: [],
         },
         sets: {
           scale: {
-            maximum: "relative"
-          }
+            maximum: "relative",
+          },
         },
         TH1ZScale: {
           default: 0.8,
-          layer: [0.01, 1, 1, 1]
+          layer: [0.2, 1, 1, 1],
+          set: 0.01,
         },
         wireframe: {
           display: {
             start: 0,
-            end: 5
+            end: 5,
           },
           displaySets: false,
           layer: [],
           color: {
             default: "0x000000",
             layer: [],
-            set: []
-          }
+            set: [],
+          },
         },
         color: {
           default: {
@@ -87,11 +89,11 @@ class ConfigSubject {
             {
               min: new THREE.Color(0x0000ff),
               max: new THREE.Color(0xff0000),
-            }
-          ]
-        }
-      }
-    })
+            },
+          ],
+        },
+      },
+    });
   }
 
   getObservable() {
@@ -116,9 +118,7 @@ class ConfigSubject {
 
       // If object with "type" → expand into array
       if (pads && typeof pads === "object" && "type" in pads) {
-        const prefix = pads.prefix
-          ? pads.prefix
-          : 'histogram';
+        const prefix = pads.prefix ? pads.prefix : "histogram";
         const match = pads.type.match(/grid(\d+)x(\d+)x(\d+)/);
         if (!match) return [pads]; // fallback
 
@@ -126,9 +126,9 @@ class ConfigSubject {
         const ny = parseInt(match[2], 10);
         const nz = parseInt(match[3], 10);
 
-        const scale = pads.scale || {x: 1, y: 1, z: 1};
-        const padding = pads.padding || {x: 0, y: 0, z: 0};
-        const origin = pads.origin || {x: 0, y: 0, z: 0};
+        const scale = pads.scale || { x: 1, y: 1, z: 1 };
+        const padding = pads.padding || { x: 0, y: 0, z: 0 };
+        const origin = pads.origin || { x: 0, y: 0, z: 0 };
 
         const result = [];
         let counter = 1;
@@ -139,11 +139,11 @@ class ConfigSubject {
               result.push({
                 id: `${prefix}${counter++}`,
                 position: {
-                  x: origin.x + ((ix - (nx - 1) / 2) * (scale.x + padding.x)),
-                  y: origin.y + ((iy - (ny - 1) / 2) * (scale.y + padding.y)),
-                  z: origin.z + ((iz - (nz - 1) / 2) * (scale.z + padding.z))
+                  x: origin.x + (ix - (nx - 1) / 2) * (scale.x + padding.x),
+                  y: origin.y + (iy - (ny - 1) / 2) * (scale.y + padding.y),
+                  z: origin.z + (iz - (nz - 1) / 2) * (scale.z + padding.z),
                 },
-                scale: {...scale}
+                scale: { ...scale },
               });
             }
           }
@@ -157,15 +157,20 @@ class ConfigSubject {
 
     function transform(obj, key = null) {
       if (Array.isArray(obj)) {
-        return obj.map(o => transform(o, key));
+        return obj.map((o) => transform(o, key));
       } else if (obj && typeof obj === "object") {
         // Special case for histogramPads
         if (key === "histogramPads") {
-          return expandHistogramPads(obj).map(pad => transform(pad));
+          return expandHistogramPads(obj).map((pad) => transform(pad));
         }
 
         // Check for {x,y,z}
-        if ("x" in obj && "y" in obj && "z" in obj && Object.keys(obj).length === 3) {
+        if (
+          "x" in obj &&
+          "y" in obj &&
+          "z" in obj &&
+          Object.keys(obj).length === 3
+        ) {
           return new THREE.Vector3(obj.x, obj.y, obj.z);
         }
 
@@ -176,7 +181,7 @@ class ConfigSubject {
 
         // inject default target if missing
         if (!("target" in result)) {
-          result.target = {entity: "*", id: "*"};
+          result.target = { entity: "*", id: "*" };
         }
 
         return result;
@@ -189,11 +194,10 @@ class ConfigSubject {
 
     return transform(data);
   }
-
-
 }
 
 export const configSubjectGet = () => {
   if (!configSubject) configSubject = new ConfigSubject();
   return configSubject;
-}
+};
+
