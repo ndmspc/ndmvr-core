@@ -2,30 +2,32 @@ import {BehaviorSubject} from "rxjs";
 
 let inputDeviceSubject;
 
-class SetSubject {
-   #subject;
+class StateSubject {
+  #subject;
 
-   constructor() {
-      this.#subject = new BehaviorSubject({
-         sets: [],
-         selectedSet: undefined
-      });
-   }
+  constructor() {
+    this.#subject = new BehaviorSubject({
+      sets: [],
+      selectedSet: undefined,
+      arrays: ['content'],
+      selectedArray: 'content'
+    });
+  }
 
-   getObservable() {
-      return this.#subject.asObservable();
-   }
+  getObservable() {
+    return this.#subject.asObservable();
+  }
 
-   getValue() {
-      return this.#subject.getValue();
-   }
+  getValue() {
+    return this.#subject.getValue();
+  }
 
-   next(e) {
-      this.#subject.next(e);
-   }
+  next(e) {
+    this.#subject.next(e);
+  }
 }
 
 export const stateSubjectGet = () => {
-   if (!inputDeviceSubject) inputDeviceSubject = new SetSubject();
-   return inputDeviceSubject;
+  if (!inputDeviceSubject) inputDeviceSubject = new StateSubject();
+  return inputDeviceSubject;
 }
