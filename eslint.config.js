@@ -6,11 +6,15 @@ export default defineConfig([
   {
     files: ["**/*.{js,mjs,cjs}"],
     plugins: { js },
-    extends: ["js/recommended"],
+    extends: [
+      "js/recommended",
+    ],
     languageOptions: { globals: globals.browser },
     rules: {
       "no-undef": "warn",
       "no-unused-vars": "warn",
+      semi: ["warn", "always"],
+      quotes: ["warn", "double"],
     },
   },
 ]);

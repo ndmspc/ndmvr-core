@@ -70,7 +70,12 @@
     },
     "TH1ZScale": {
       "default": 0.8,
-      "layer": [0.2, 1, 1, 1],
+      "layer": [
+        0.2,
+        1,
+        1,
+        1
+      ],
       "set": 0.01
     },
     "wireframe": {
@@ -82,7 +87,12 @@
       "layer": [],
       "color": {
         "default": "0x00FF00",
-        "layer": ["0x000000", "0x0000FF", "0x00FF00", "0x00FFFF"],
+        "layer": [
+          "0x000000",
+          "0x0000FF",
+          "0x00FF00",
+          "0x00FFFF"
+        ],
         "set": []
       }
     },

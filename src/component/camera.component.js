@@ -1,47 +1,47 @@
-import { inputDeviceSubjectGet } from '../rxjs/InputDeviceSubject.js'
+import { inputDeviceSubjectGet } from "../rxjs/InputDeviceSubject.js";
 
-let camera
+let camera;
 
 class CameraComponent {
-  #camera
-  #oculusController
+  #camera;
+  #oculusController;
 
   constructor () {
-    this.#camera = document.createElement('a-entity')
-    this.#camera.id = 'cameraRig'
-    this.#camera.setAttribute('position', '0 1.6 0')
+    this.#camera = document.createElement("a-entity");
+    this.#camera.id = "cameraRig";
+    this.#camera.setAttribute("position", "0 1.6 0");
     this.#camera.innerHTML = `
          <a-camera id="camera" wasd-controls-custom="acceleration: 10" wasd-controls="acceleration: 50">
          </a-camera>
-      `
-    this.#oculusController = document.createElement('a-entity')
-    this.#oculusController.id = 'oculus-controller'
-    this.#oculusController.setAttribute('oculus-controller', '')
+      `;
+    this.#oculusController = document.createElement("a-entity");
+    this.#oculusController.id = "oculus-controller";
+    this.#oculusController.setAttribute("oculus-controller", "");
     inputDeviceSubjectGet()
       .getObservable()
       .subscribe(
         this.handleStateChange.bind(this)
-      )
+      );
   }
 
   handleStateChange (state) {
-    const cameraRig = document.getElementById('cameraRig')
+    const cameraRig = document.getElementById("cameraRig");
     // console.log(cameraRig);
-    if (state.inputDevice === 'oculus') {
-      if (!cameraRig || cameraRig.contains(this.#oculusController)) return
-      cameraRig.appendChild(this.#oculusController)
+    if (state.inputDevice === "oculus") {
+      if (!cameraRig || cameraRig.contains(this.#oculusController)) return;
+      cameraRig.appendChild(this.#oculusController);
     } else {
-      if (!cameraRig || !cameraRig.contains(this.#oculusController)) return
-      cameraRig.removeChild(this.#oculusController)
+      if (!cameraRig || !cameraRig.contains(this.#oculusController)) return;
+      cameraRig.removeChild(this.#oculusController);
     }
   }
 
   getCamera () {
-    return this.#camera
+    return this.#camera;
   }
 }
 
 export const getCameraComponent = () => {
-  if (!camera) camera = new CameraComponent()
-  return camera.getCamera()
-}
+  if (!camera) camera = new CameraComponent();
+  return camera.getCamera();
+};

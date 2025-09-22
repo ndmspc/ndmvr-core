@@ -1,15 +1,15 @@
-import { Broker } from '../core/broker'
-import { ReplaySubject } from 'rxjs'
+import { Broker } from "../core/broker";
+import { ReplaySubject } from "rxjs";
 
-let brokerManager
+let brokerManager;
 
 class BrokerManager {
-  #subject
-  #gBrokers
+  #subject;
+  #gBrokers;
 
   constructor () {
-    this.#subject = new ReplaySubject(1)
-    this.#gBrokers = new Map()
+    this.#subject = new ReplaySubject(1);
+    this.#gBrokers = new Map();
   }
 
   /**
@@ -19,38 +19,38 @@ class BrokerManager {
    * otherwise connectWs(url) must be called.
    * */
   createWsFromParams = (searchParams) => {
-    const autoConnect = searchParams.get('autoConnect') === 'true'
-    const timeout = Number(searchParams.get('timeout'))
-    searchParams.getAll('ws').forEach((url) => {
-      this.createWs(url, autoConnect, timeout)
-    })
-  }
+    const autoConnect = searchParams.get("autoConnect") === "true";
+    const timeout = Number(searchParams.get("timeout"));
+    searchParams.getAll("ws").forEach((url) => {
+      this.createWs(url, autoConnect, timeout);
+    });
+  };
 
   createWs = (url, autoConnect, timeout) => {
-    if (this.#gBrokers.has(url)) this.#gBrokers.delete(url)
-    const b = new Broker(url, autoConnect, this.#subject, timeout)
-    this.#gBrokers.set(url, b)
-  }
+    if (this.#gBrokers.has(url)) this.#gBrokers.delete(url);
+    const b = new Broker(url, autoConnect, this.#subject, timeout);
+    this.#gBrokers.set(url, b);
+  };
 
   getBrokerByUrl = (url, autoConnect) => {
-    let broker = this.#gBrokers.get(url)
+    let broker = this.#gBrokers.get(url);
     if (!broker) {
-      broker = new Broker(url, autoConnect, this.#subject)
-      this.#gBrokers.set(url, broker)
+      broker = new Broker(url, autoConnect, this.#subject);
+      this.#gBrokers.set(url, broker);
     }
-    if (autoConnect) broker.connect()
-    return broker
-  }
+    if (autoConnect) broker.connect();
+    return broker;
+  };
 
   connectWsByUrl = (url) => {
-    let broker = this.#gBrokers.get(url)
+    let broker = this.#gBrokers.get(url);
     if (!broker) {
-      broker = new Broker(url, true, this.#subject)
-      this.#gBrokers.set(url, broker)
+      broker = new Broker(url, true, this.#subject);
+      this.#gBrokers.set(url, broker);
     }
-    broker.connect()
-    return broker
-  }
+    broker.connect();
+    return broker;
+  };
 
   /**
    * Function that disconnects ws,
@@ -58,20 +58,20 @@ class BrokerManager {
    * */
   disconnectWsByUrl = (url) => {
     if (url) {
-      this.#gBrokers.get(url).disconnect()
+      this.#gBrokers.get(url).disconnect();
     } else {
       this.#gBrokers.forEach((b) => {
-        b.disconnect()
-      })
+        b.disconnect();
+      });
     }
-  }
+  };
 
   getSubject = () => {
-    return this.#subject
-  }
+    return this.#subject;
+  };
 }
 
 export const brokerManagerGet = () => {
-  if (!brokerManager) brokerManager = new BrokerManager()
-  return brokerManager
-}
+  if (!brokerManager) brokerManager = new BrokerManager();
+  return brokerManager;
+};

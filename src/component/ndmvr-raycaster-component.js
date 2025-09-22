@@ -1,12 +1,12 @@
-import 'aframe'
-import { NdmvrRaycaster } from '../core/ndmvr-raycaster-class.js'
+import "aframe";
+import { NdmvrRaycaster } from "../core/ndmvr-raycaster-class.js";
 
 const registerNdmvrRaycasterComponent = () => {
-  AFRAME.registerComponent('ndmvr-raycaster', {
+  AFRAME.registerComponent("ndmvr-raycaster", {
     schema: {},
 
     init: function () {
-      this.raycaster = new NdmvrRaycaster(this.el.object3D)
+      this.raycaster = new NdmvrRaycaster(this.el.object3D);
     }
     // this.raycaster = new THREE.Raycaster();
     // this.mouse = new THREE.Vector2();
@@ -107,8 +107,8 @@ const registerNdmvrRaycasterComponent = () => {
     //       // console.log(`pos: x: ${x}, y: ${y}, z: ${z}`);
     //       return (position)
     //    },
-  })
+  });
 
-}
+};
 
-export default registerNdmvrRaycasterComponent
+export default registerNdmvrRaycasterComponent;
