@@ -1,20 +1,21 @@
-import histogram55x57x34 from "../../public/histograms/TH3variableBinning55x57x34.json";
-import histogramTHX from "../../public/histograms/THXvariableBinning.json";
-import histogramArray from "../../public/histograms/THArray.json";
-import histogram2x2x3 from "../../public/histograms/TH3variableBinning2x2x3OnlyInsideContent.json"
-import histogram2x2x3Negative from "../../public/histograms/TH3variableBinning2x2x3Negative.json"
-import histogramRecursive from "../../public/histograms/THrecursive.json"
-import {parse} from "jsroot";
-import {histogramSubjectGet} from "../rxjs/HistogramSubject.js";
-import MobileController from "../controllers/mobile/mobileController.js";
-import arrow from "../assets/mobileControls/arrow.png";
-import joystickBase from "../assets/mobileControls/joystick-base.png";
-import joystickBlue from "../assets/mobileControls/joystick-blue.png";
+import histogram55x57x34 from '../../public/histograms/TH3variableBinning55x57x34.json'
+import histogramTHX from '../../public/histograms/THXvariableBinning.json'
+import histogramArray from '../../public/histograms/THArray.json'
+import histogram2x2x3 from '../../public/histograms/TH3variableBinning2x2x3OnlyInsideContent.json'
+import histogram2x2x3Negative from '../../public/histograms/TH3variableBinning2x2x3Negative.json'
+import histogramRecursive from '../../public/histograms/THrecursive.json'
+import { parse } from 'jsroot'
+import { histogramSubjectGet } from '../rxjs/HistogramSubject.js'
+import MobileController from '../controllers/mobile/mobileController.js'
+import arrow from '../assets/mobileControls/arrow.png'
+import joystickBase from '../assets/mobileControls/joystick-base.png'
+import joystickBlue from '../assets/mobileControls/joystick-blue.png'
 import '../controllers/mobile/mobileController.css'
-import {getCameraComponent} from "../component/camera.component.js";
-export function generate_AFrame_min_scene_html(){
-  const scene = document.createElement('a-scene');
-  scene.id = "a-min-scene";
+import { getCameraComponent } from '../component/camera.component.js'
+
+export function generate_AFrame_min_scene_html () {
+  const scene = document.createElement('a-scene')
+  scene.id = 'a-min-scene'
   scene.innerHTML = `
       <a-box position="-1 0.5 -3" rotation="0 45 0" color="#4CC3D9"></a-box>
       <a-sphere position="0 1.25 -5" radius="1.25" color="#EF2D5E"></a-sphere>
@@ -32,67 +33,66 @@ export function generate_AFrame_min_scene_html(){
         color="#7BC8A4"
       ></a-plane>
       <a-sky color="#ECECEC"></a-sky>
-    `;
-  return scene;
+    `
+  return scene
 }
 
-export function generate_AFrame_rand_hist_scene_html(){
-  const container = document.createElement('div');
-  container.id = 'container';
-  new MobileController();
-  container.appendChild(generateScene());
-  return container;
+export function generate_AFrame_rand_hist_scene_html () {
+  const container = document.createElement('div')
+  container.id = 'container'
+  new MobileController()
+  container.appendChild(generateScene())
+  return container
 
 }
 
-export function generate_AFrame_blank_scene_html(){
-  const container = document.createElement('div');
-  container.id = 'container';
+export function generate_AFrame_blank_scene_html () {
+  const container = document.createElement('div')
+  container.id = 'container'
   // new MobileController();
-  const scene = generateBlankScene();
-  container.appendChild(scene);
-  return scene;
+  const scene = generateBlankScene()
+  container.appendChild(scene)
+  return scene
 
 }
 
-function generateBlankScene() {
-  const scene = document.createElement('a-scene');
-  scene.id = "a-min-scene";
-  scene.setAttribute('stats', '');
+function generateBlankScene () {
+  const scene = document.createElement('a-scene')
+  scene.id = 'a-min-scene'
+  scene.setAttribute('stats', '')
   // scene.setAttribute('device-detector', '');
   // scene.setAttribute('screen-controls', '');
-  scene.setAttribute('ndmvr-raycaster', '');
-  scene.style.cssText= "position: absolute; height: 100%; width: 100%;";
+  scene.setAttribute('ndmvr-raycaster', '')
+  scene.style.cssText = 'position: absolute; height: 100%; width: 100%;'
 
-  const sky = document.createElement('a-sky');
+  const sky = document.createElement('a-sky')
   sky.setAttribute('color', '#ffffff')
 
-  const camera = getCameraComponent();
-  scene.appendChild(camera);
-  scene.appendChild(sky);
+  const camera = getCameraComponent()
+  scene.appendChild(camera)
+  scene.appendChild(sky)
 
-  return scene;
+  return scene
 }
 
-function generateScene() {
-  const scene = document.createElement('a-scene');
-  scene.id = "a-min-scene";
-  scene.setAttribute('stats', '');
-  scene.setAttribute('device-detector', '');
-  scene.setAttribute('screen-controls', '');
-  scene.setAttribute('ndmvr-raycaster', '');
-  scene.style.cssText= "position: absolute; height: 100%; width: 100%;";
+function generateScene () {
+  const scene = document.createElement('a-scene')
+  scene.id = 'a-min-scene'
+  scene.setAttribute('stats', '')
+  scene.setAttribute('device-detector', '')
+  scene.setAttribute('screen-controls', '')
+  scene.setAttribute('ndmvr-raycaster', '')
+  scene.style.cssText = 'position: absolute; height: 100%; width: 100%;'
 
-  const camera = getCameraComponent();
-  scene.appendChild(camera);
+  const camera = getCameraComponent()
+  scene.appendChild(camera)
   // console.log(parse(histogram55x57x34));
-
 
   // histogramSubjectGet().next({id: 'histogram18bins', histogram: parse(histogram55x57x34)});
   // histogramSubjectGet().next({id: 'histogram18bins', histogram: parse(histogram55x57x34)});
   // histogramSubjectGet().next({id: 'histogram18bins', histogram: parse(histogram2x2x3Negative)});
   // histogramSubjectGet().next({id: 'histogram18bins', histogram: parse(histogramTHX)});
-  histogramSubjectGet().next({id: 'histogram18bins', histogram: parse(histogramRecursive)});
+  histogramSubjectGet().next({ id: 'histogram18bins', histogram: parse(histogramRecursive) })
   // histogramSubjectGet().next({id: 'histogram19bins', histogram: parse(histogram2x2x3)});
 
   // console.log(parse(histogramTHX));
@@ -139,6 +139,6 @@ function generateScene() {
 <!--      <a-entity id="histogram18bins" position="-140 0 140"-->
 <!--        histogram>-->
 <!--      </a-entity>-->
-    `;
-  return scene;
+    `
+  return scene
 }

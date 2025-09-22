@@ -1,7 +1,7 @@
-import {registerComponents} from "./registerComponents.js";
-import {brokerManagerGet} from "../service/brokerManager.js";
+import { registerComponents } from './registerComponents.js'
+import { brokerManagerGet } from '../service/brokerManager.js'
 
 export const initNdmvrAframe = () => {
-   brokerManagerGet().createWsFromParams(new URL(window.location.href).searchParams);
-   registerComponents();
+  brokerManagerGet().createWsFromParams(new URL(window.location.href).searchParams)
+  registerComponents()
 }

@@ -1,33 +1,33 @@
-import {BehaviorSubject} from "rxjs";
+import { BehaviorSubject } from 'rxjs'
 
-let inputDeviceSubject;
+let inputDeviceSubject
 
 class StateSubject {
-  #subject;
+  #subject
 
-  constructor() {
+  constructor () {
     this.#subject = new BehaviorSubject({
       sets: [],
       selectedSet: undefined,
       arrays: ['content'],
       selectedArray: 'content'
-    });
+    })
   }
 
-  getObservable() {
-    return this.#subject.asObservable();
+  getObservable () {
+    return this.#subject.asObservable()
   }
 
-  getValue() {
-    return this.#subject.getValue();
+  getValue () {
+    return this.#subject.getValue()
   }
 
-  next(e) {
-    this.#subject.next(e);
+  next (e) {
+    this.#subject.next(e)
   }
 }
 
 export const stateSubjectGet = () => {
-  if (!inputDeviceSubject) inputDeviceSubject = new StateSubject();
-  return inputDeviceSubject;
+  if (!inputDeviceSubject) inputDeviceSubject = new StateSubject()
+  return inputDeviceSubject
 }

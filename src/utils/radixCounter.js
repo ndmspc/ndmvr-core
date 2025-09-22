@@ -1,69 +1,69 @@
 export default class RadixCounter {
 
-   constructor(limits) {
-      this.limits = limits;
-      this.values = new Array(limits.length).fill(0);
-      this.listeners = new Array(limits.length).fill(null);
-   }
+  constructor (limits) {
+    this.limits = limits
+    this.values = new Array(limits.length).fill(0)
+    this.listeners = new Array(limits.length).fill(null)
+  }
 
-   onIncrement(index, callback) {
-      if (index >= 0 && index < this.limits.length) {
-         this.listeners[index] = callback;
-      }
-   }
+  onIncrement (index, callback) {
+    if (index >= 0 && index < this.limits.length) {
+      this.listeners[index] = callback
+    }
+  }
 
-   increment(index = 0) {
-      if (index >= this.values.length) return false;
+  increment (index = 0) {
+    if (index >= this.values.length) return false
 
-      this.values[index]++;
+    this.values[index]++
+
+    if (this.listeners[index]) {
+      this.listeners[index](this.values[index], index, [...this.values])
+    }
+
+    if (this.values[index] >= this.limits[index]) {
+      this.values[index] = 0
 
       if (this.listeners[index]) {
-         this.listeners[index](this.values[index], index, [...this.values]);
+        this.listeners[index](this.values[index], index, [...this.values])
       }
 
-      if (this.values[index] >= this.limits[index]) {
-         this.values[index] = 0;
+      return this.increment(index + 1)
+    }
 
-         if (this.listeners[index]) {
-            this.listeners[index](this.values[index], index, [...this.values]);
-         }
+    return true
+  }
 
-         return this.increment(index + 1);
-      }
+  getIndex () {
+    let index = 0
+    let multiplier = 1
 
-      return true;
-   }
+    for (let i = 0; i < this.values.length; i++) {
+      index += this.values[i] * multiplier
+      multiplier *= this.limits[i]
+    }
 
-   getIndex() {
-      let index = 0;
-      let multiplier = 1;
+    return index
+  }
 
-      for (let i = 0; i < this.values.length; i++) {
-         index += this.values[i] * multiplier;
-         multiplier *= this.limits[i];
-      }
+  setFromNumber (number) {
+    const values = new Array(this.limits.length)
+    for (let i = 0; i < this.limits.length; i++) {
+      values[i] = Math.floor(number % this.limits[i])
+      number = Math.floor(number / this.limits[i])
+    }
+    this.values = values
+  }
 
-      return index;
-   }
+  getValueAt (index) {
+    return this.values[index]
+  }
 
-   setFromNumber(number) {
-      const values = new Array(this.limits.length);
-      for (let i = 0; i < this.limits.length; i++) {
-         values[i] = Math.floor(number % this.limits[i]);
-         number = Math.floor(number / this.limits[i]);
-      }
-      this.values = values;
-   }
+  getValues () {
+    return [...this.values]
+  }
 
-   getValueAt(index) {
-      return this.values[index];
-   }
-
-   getValues() {
-      return [...this.values];
-   }
-
-   reset() {
-      this.values.fill(0);
-   }
+  reset () {
+    this.values.fill(0)
+  }
 }
