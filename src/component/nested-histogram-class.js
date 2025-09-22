@@ -205,7 +205,7 @@ export class NestedHistogram {
       let contentMax;
       let contentMinOut;
       let contentMaxOut;
-      console.log(this.maxContentPerLayer);
+      console.log(this.maxContentPerLayer, set);
 
       const outside = obj.fArrays?.[this.selectedArray]?.outside ?? false;
       if (this.config.sets.scale.maximum === "relative") {
@@ -635,11 +635,10 @@ export class NestedHistogram {
       // val.push({...coords[i]})
     }
     val.push({ color: this.wireframe.getColorAt(layer, event.set) });
-    // console.log(val)
+    // console.log("val", val);
     event.range[layer] = val;
     if (node.children && event.index.length > 0) {
-      // console.log(node.children)
-      // console.log(event.set)
+      // console.log("AAAAAAAAAAAA", node.children, event.set);
       // const child = node.children[event.set][event.jsrootInstance[layer]];
       const child =
         node.children?.content || event.set === "content"
@@ -1329,7 +1328,7 @@ export class NestedHistogram {
   }
 
   getBinContent(obj, posX, posY, posZ, selectedArray) {
-    if (selectedArray === "content") {
+    if (selectedArray === "content" || !obj.fArrays) {
       return obj.getBinContent(posX + 1, posY + 1, posZ + 1);
     } else {
       const index = obj.getBin(posX + 1, posY + 1, posZ + 1);
@@ -1568,6 +1567,7 @@ export class NestedHistogram {
                       xIndex + 1,
                       yIndex + 1,
                       zIndex + 1,
+                      this.selectedArray,
                     ),
                     error: node.getBinError(xIndex + 1, yIndex + 1, zIndex + 1),
                   });
@@ -1583,7 +1583,12 @@ export class NestedHistogram {
                 range: this.getRangeByPosition(fullPath),
                 origin: this,
                 jsrootObj: node,
-                content: node.getBinContent(xIndex + 1, yIndex + 1, zIndex + 1),
+                content: node.getBinContent(
+                  xIndex + 1,
+                  yIndex + 1,
+                  zIndex + 1,
+                  this.selectedArray,
+                ),
                 error: node.getBinError(xIndex + 1, yIndex + 1, zIndex + 1),
               });
             }
