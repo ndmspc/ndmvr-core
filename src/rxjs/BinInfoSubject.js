@@ -1,28 +1,28 @@
-import { Subject } from 'rxjs'
+import { Subject } from "rxjs";
 
-let binInfoSubject
+let binInfoSubject;
 
 class BinInfoSubject {
-  #subject
+  #subject;
 
   constructor () {
-    this.#subject = new Subject()
+    this.#subject = new Subject();
   };
 
   getObservable () {
-    return this.#subject.asObservable()
+    return this.#subject.asObservable();
   }
 
   getValue () {
-    return this.#subject.getValue()
+    return this.#subject.getValue();
   }
 
   next (e) {
-    this.#subject.next(e)
+    this.#subject.next(e);
   }
 }
 
 export const binInfoSubjectGet = () => {
-  if (!binInfoSubject) binInfoSubject = new BinInfoSubject()
-  return binInfoSubject
-}
+  if (!binInfoSubject) binInfoSubject = new BinInfoSubject();
+  return binInfoSubject;
+};

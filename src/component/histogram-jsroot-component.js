@@ -1,10 +1,10 @@
-import { HistogramJsrootClass } from './histogram-jsroot-class.js'
-import { histogramSubjectGet } from '../rxjs/HistogramSubject.js'
-import { filter } from 'rxjs'
-import { NestedHistogram } from './nested-histogram-class.js'
+import { HistogramJsrootClass } from "./histogram-jsroot-class.js";
+import { histogramSubjectGet } from "../rxjs/HistogramSubject.js";
+import { filter } from "rxjs";
+import { NestedHistogram } from "./nested-histogram-class.js";
 
 const registerHistogramJsrootComponent = () => {
-  AFRAME.registerComponent('jsroot-histogram', {
+  AFRAME.registerComponent("jsroot-histogram", {
 
     jsrootHistogram: undefined,
     histoSub: undefined,
@@ -17,20 +17,20 @@ const registerHistogramJsrootComponent = () => {
         )
         .subscribe((histo) => {
           if (this.jsrootHistogram) {
-            this.jsrootHistogram.updateHistogram(histo.histogram)
+            this.jsrootHistogram.updateHistogram(histo.histogram);
           } else {
-            this.jsrootHistogram = new HistogramJsrootClass(this.el.id, histo.histogram)
-            this.jsrootHistogram.render()
-            this.el.object3D.add(this.jsrootHistogram.getHistogramMesh())
+            this.jsrootHistogram = new HistogramJsrootClass(this.el.id, histo.histogram);
+            this.jsrootHistogram.render();
+            this.el.object3D.add(this.jsrootHistogram.getHistogramMesh());
           }
-        })
+        });
     },
 
     remove () {
-      this.jsrootHistogram.remove()
+      this.jsrootHistogram.remove();
     }
 
-  })
-}
+  });
+};
 
-export default registerHistogramJsrootComponent
+export default registerHistogramJsrootComponent;
