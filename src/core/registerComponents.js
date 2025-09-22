@@ -1,47 +1,47 @@
-import registerVRModeDetector from "../component/device-detector-component.js";
+import registerVRModeDetector from '../component/device-detector-component.js'
 
-import {inputDeviceSubjectGet} from "../rxjs/InputDeviceSubject.js";
-import registerPseudoHistogramComponent from "../component/pseudo-histogram-component.js";
-import registerScreenControlsComponent from "../component/screen-controls-component.js";
-import registerOculusController from "../controllers/oculus/oculusController.js";
-import registerLeftControllerLogging from "../controllers/oculus/leftOculusController.js";
-import registerRightControllerLogging from "../controllers/oculus/rightOculusController.js";
-import registerThumbstickOculusController from "../controllers/oculus/thumbstickOculusController.js";
-import registerNdmvrRaycasterComponent from "../component/ndmvr-raycaster-component.js";
-import registerDesktopController from "../controllers/desktop/wasdControlsCustom.js";
-import registerHistogramComponent from "../component/histogram-component.js";
-import registerHistogramBorderComponent from "../component/histogram-border-component.js";
-import registerNestedHistogramComponent from "../component/nested-histogram-component.js";
-import registerCanvasComponent from "../component/canvas-component.js";
-import registerHistogramJsrootComponent from "../component/histogram-jsroot-component.js";
+import { inputDeviceSubjectGet } from '../rxjs/InputDeviceSubject.js'
+import registerPseudoHistogramComponent from '../component/pseudo-histogram-component.js'
+import registerScreenControlsComponent from '../component/screen-controls-component.js'
+import registerOculusController from '../controllers/oculus/oculusController.js'
+import registerLeftControllerLogging from '../controllers/oculus/leftOculusController.js'
+import registerRightControllerLogging from '../controllers/oculus/rightOculusController.js'
+import registerThumbstickOculusController from '../controllers/oculus/thumbstickOculusController.js'
+import registerNdmvrRaycasterComponent from '../component/ndmvr-raycaster-component.js'
+import registerDesktopController from '../controllers/desktop/wasdControlsCustom.js'
+import registerHistogramComponent from '../component/histogram-component.js'
+import registerHistogramBorderComponent from '../component/histogram-border-component.js'
+import registerNestedHistogramComponent from '../component/nested-histogram-component.js'
+import registerCanvasComponent from '../component/canvas-component.js'
+import registerHistogramJsrootComponent from '../component/histogram-jsroot-component.js'
 
 export const registerComponents = () => {
-   //by D.Chovanec:
-   registerHistogramComponent();
-   registerScreenControlsComponent();
-   registerVRModeDetector(inputDeviceSubjectGet().next.bind(inputDeviceSubjectGet()));
-   registerOculusController();
-   registerLeftControllerLogging();
-   registerRightControllerLogging();
-   registerThumbstickOculusController();
-   registerNdmvrRaycasterComponent();
-   registerDesktopController();
-   registerHistogramBorderComponent();
-   registerNestedHistogramComponent();
-   registerCanvasComponent();
-   registerHistogramJsrootComponent();
-   //by S.Korecko:
-   registerPseudoHistogramComponent();
+  //by D.Chovanec:
+  registerHistogramComponent()
+  registerScreenControlsComponent()
+  registerVRModeDetector(inputDeviceSubjectGet().next.bind(inputDeviceSubjectGet()))
+  registerOculusController()
+  registerLeftControllerLogging()
+  registerRightControllerLogging()
+  registerThumbstickOculusController()
+  registerNdmvrRaycasterComponent()
+  registerDesktopController()
+  registerHistogramBorderComponent()
+  registerNestedHistogramComponent()
+  registerCanvasComponent()
+  registerHistogramJsrootComponent()
+  //by S.Korecko:
+  registerPseudoHistogramComponent()
 }
 
 export const fullAframeScene = () => {
-   const scene = document.createElement('a-scene');
-   scene.id = "a-scene";
-   scene.setAttribute('cursor', 'rayOrigin: mouse');
-   scene.setAttribute('device-detector', null);
-   scene.innerHTML = `
+  const scene = document.createElement('a-scene')
+  scene.id = 'a-scene'
+  scene.setAttribute('cursor', 'rayOrigin: mouse')
+  scene.setAttribute('device-detector', null)
+  scene.innerHTML = `
         <a-entity histogram></a-entity>
         <a-sky color="#ECECEC"></a-sky>
-    `;
-   return scene;
+    `
+  return scene
 }

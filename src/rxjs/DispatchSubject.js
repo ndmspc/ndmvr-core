@@ -1,24 +1,24 @@
-import {Subject} from "rxjs";
+import { Subject } from 'rxjs'
 
-let dispatchSubject;
+let dispatchSubject
 
 class DispatchSubject {
-   #subject;
+  #subject
 
-   constructor() {
-      this.#subject = new Subject();
-   }
+  constructor () {
+    this.#subject = new Subject()
+  }
 
-   getStream() {
-      return this.#subject.asObservable();
-   }
+  getStream () {
+    return this.#subject.asObservable()
+  }
 
-   dispatch(e) {
-      this.#subject.next(e);
-   }
+  dispatch (e) {
+    this.#subject.next(e)
+  }
 }
 
 export const dispatchSubjectGet = () => {
-   if (!dispatchSubject) dispatchSubject = new DispatchSubject();
-   return dispatchSubject;
+  if (!dispatchSubject) dispatchSubject = new DispatchSubject()
+  return dispatchSubject
 }

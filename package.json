@@ -26,7 +26,11 @@
     "prepack": "npmignore --auto"
   },
   "devDependencies": {
-    "npmignore": "^0.3.1"
+    "@eslint/js": "^9.36.0",
+    "eslint": "^9.36.0",
+    "globals": "^16.4.0",
+    "npmignore": "^0.3.1",
+    "standard": "^17.1.2"
   },
   "dependencies": {
     "aframe": "^1.7.0",
