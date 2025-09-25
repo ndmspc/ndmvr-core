@@ -20,7 +20,7 @@ export default class HistogramWireframeClass {
   numOfavailableSets = undefined;
   visibility = true;
 
-  constructor (maxInstancesPerLayer, matrixCache) {
+  constructor (maxInstancesPerLayer, matrixCache, config) {
     this.maxInstancesPerLayer = maxInstancesPerLayer;
     this.totalInstances = this.computeTotalInstances(maxInstancesPerLayer, matrixCache);
     const baseBox = new THREE.BoxGeometry(1, 1, 1);
@@ -61,24 +61,21 @@ export default class HistogramWireframeClass {
     this.wireframe = new THREE.LineSegments(this.instGeom, this.material);
     this.wireframe.frustumCulled = false;
 
+    this.config = config;
+
+    new THREE.Color(this.config.color.default).toArray(this.colorArray, 0);
+    this.config.color.layer
+      .map(c => new THREE.Color(c))
+      .forEach((color, i) => color.toArray(this.colorArray, (i + 1) * 3));
+    this.config.color.set
+      .map(c => new THREE.Color(c))
+      .forEach((color, i) => color.toArray(this.colorArray, (this.config.color.layer.length + 1 + i) * 3));
+    this.material.uniforms.colorArray = { value: this.colorArray };
+    this.wireframe.material.uniformsNeedUpdate = true;
+
     this.stateSub = stateSubjectGet().getObservable().subscribe(v => {
       this.numOfavailableSets = v.sets.length;
     });
-
-    this.configSub = configSubjectGet().getObservable()
-      .subscribe((v) => {
-        this.config = v.config.wireframe;
-
-        new THREE.Color(this.config.color.default).toArray(this.colorArray, 0);
-        this.config.color.layer
-          .map(c => new THREE.Color(c))
-          .forEach((color, i) => color.toArray(this.colorArray, (i + 1) * 3));
-        this.config.color.set
-          .map(c => new THREE.Color(c))
-          .forEach((color, i) => color.toArray(this.colorArray, (this.config.color.layer.length + 1 + i) * 3));
-        this.material.uniforms.colorArray = { value: this.colorArray };
-        this.wireframe.material.uniformsNeedUpdate = true;
-      });
   }
 
   getColorAt (layer, set) {

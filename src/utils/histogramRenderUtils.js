@@ -266,7 +266,7 @@ function unionBounds (a, b) {
 
   // Compute min/max corners of first object
   // Since scale is full size, half of it extends in each direction
-  if (!a?.position) {
+  if (!a?.position || !b?.position) {
     console.log("neprejde");
   }
   const aMin = new THREE.Vector3().subVectors(
@@ -311,89 +311,6 @@ function unionBounds (a, b) {
   return { position, scale };
 }
 
-// export function createBVHTree(matrixCache, node, layer, set, matrixWorld, totalOffset) {
-//     const fX = node.fXaxis.fNbins;
-//     const fY = node.fYaxis.fNbins;
-//     const fZ = node.fZaxis.fNbins;
-//
-//     let globalIndex = 0;
-//     let BVH = [];
-//
-//     // Helper function to build a binary tree from an array of elements
-//     function buildBinaryTree(elements) {
-//         if (elements.length <= 1) return elements;
-//
-//         const tree = [...elements]; // Work with a copy
-//         const treeNodes = [];
-//
-//         while (tree.length > 1) {
-//             const pairCount = Math.floor(tree.length / 2);
-//
-//             // Process pairs in reverse to avoid index shifting issues
-//             for (let i = pairCount - 1; i >= 0; i--) {
-//                 const leftIdx = i * 2;
-//                 const rightIdx = leftIdx + 1;
-//
-//                 const left = tree[leftIdx];
-//                 const right = tree[rightIdx];
-//                 const union = unionBounds(left, right);
-//
-//                 applyWorldMatrix(union, matrixWorld);
-//                 union.left = left.index;
-//                 union.right = right.index;
-//                 union.index = globalIndex++;
-//
-//                 treeNodes.push(union);
-//                 tree.splice(leftIdx, 2, union);
-//             }
-//         }
-//
-//         return treeNodes;
-//     }
-//
-//     // Build X-axis trees for each Y-Z slice
-//     let offset = 0;
-//     const ySlices = [];
-//
-//     for (let k = 0; k < fY; k++) {
-//         const zSlices = [];
-//
-//         for (let j = 0; j < fZ; j++) {
-//             // Create X-axis elements with negative indices to distinguish from internal nodes
-//             const xElements = matrixCache[layer]
-//                 .slice(offset + totalOffset, offset + fX + totalOffset)
-//                 .map((v, i) => ({...v, index: -(i + offset + totalOffset)}));
-//             console.log('xElements: ', xElements, 'slice opts, offset: ', offset, ', totalOffset: ', totalOffset, ', fX: ', fX);
-//
-//             const xTree = buildBinaryTree(xElements);
-//             console.log('xTree: ', xTree);
-//             zSlices.push(xTree);
-//             offset += fX;
-//         }
-//
-//         // Build Z-axis tree from the last nodes of each Z slice
-//         const zRootElements = zSlices.map(slice => slice[slice.length - 1]);
-//         const zTree = buildBinaryTree(zRootElements);
-//
-//         // Collect all nodes from this Y slice
-//         const ySliceNodes = [...zSlices.flat(), ...zTree];
-//         ySlices.push(ySliceNodes);
-//     }
-//
-//     // Build Y-axis tree from the last nodes of each Y slice
-//     const yRootElements = ySlices.map(slice => slice[slice.length - 1]);
-//     const yTree = buildBinaryTree(yRootElements);
-//
-//     // Combine all nodes
-//     BVH = [...ySlices.flat(), ...yTree];
-//
-//     // Clean up temporary index property
-//     BVH.forEach(node => delete node.index);
-//
-//     console.log(BVH);
-//     return BVH;
-// }
-
 export function createBVHTree (matrixCache, node, layer, set, availableSets, matrixWorld, totalOffset) {
   const fX = node.fXaxis.fNbins;
   const fY = node.fYaxis.fNbins;
@@ -427,6 +344,9 @@ export function createBVHTree (matrixCache, node, layer, set, availableSets, mat
         for (let i = 0; i < n; i++) {
           const el1 = tree[xPos];
           const el2 = tree[xPos + 1];
+          if (!el1 ||!el2) {
+            console.log("zle");
+          }
           const union = unionBounds(el1, el2);
           tree.splice(xPos, 2, union);
           applyWorldMatrix(union, matrixWorld);
@@ -454,6 +374,14 @@ export function createBVHTree (matrixCache, node, layer, set, availableSets, mat
         const el1 = tree2[xPos];
         const el2 = tree2[xPos + 1];
         const union = unionBounds(el1, el2);
+        // let union;
+        // if (el1 && el2) {
+        //   union = unionBounds(el1, el2);
+        // } else if (el1) {
+        //   union = el1;
+        // } else if(el2) {
+        //   union = el2;
+        // }
         tree2.splice(xPos, 2, union);
         applyWorldMatrix(union, matrixWorld);
         union.left = el1.index;

@@ -6,6 +6,8 @@ import { filter } from "rxjs";
 import { functionSubjectGet } from "../rxjs/FunctionSubject.js";
 import { HistogramJsrootClass } from "./histogram-jsroot-class.js";
 import { NestedHistogram } from "./nested-histogram-class.js";
+import { parseConfig } from "../utils/baseUtil.js";
+import { configSubjectGet } from "../rxjs/ConfigSubject.js";
 
 const registerHistogramComponent = () => {
 
@@ -22,6 +24,8 @@ const registerHistogramComponent = () => {
     init: function () {
       this.histoSub = histogramSubjectGet().getStream(this.el.id)
         .subscribe((histo) => {
+          // histo.opts = histo.opts || {};
+          // histo.opts.config = parseConfig(histo.opts.config);
           // console.log('prislo: ', histo.id, ',k: ', this.el.id, ', h: ', histo)
           // histo.opts ??= {};
           // histo.opts.render = 'nested';
@@ -39,20 +43,19 @@ const registerHistogramComponent = () => {
               this.el.object3D.add(this.jsrootHistogram.getHistogramMesh());
             }
           } else {
-            console.log(histo);
             if (this.jsrootHistogram) {
               this.jsrootHistogram.remove();
               this.jsrootHistogram = undefined;
             }
 
             if (this.nestedHistogram) {
-              this.nestedHistogram.updateHistogram(histo);
+              this.nestedHistogram.updateHistogram(histo, histo?.opts);
             } else {
               this.nestedHistogram = new NestedHistogram(
                 this.data.bin_padding_x,
                 this.data.bin_padding_y,
                 this.data.bin_padding_z,
-                histo, this.el.id);
+                histo, this.el.id, histo?.opts);
               this.el.object3D.add(this.nestedHistogram.instancedMesh);
               this.el.object3D.add(this.nestedHistogram.wireframe.wireframe);
             }
@@ -61,7 +64,7 @@ const registerHistogramComponent = () => {
     },
 
     remove: function () {
-
+      if (this.nestedHistogram) this.nestedHistogram.remove();
     },
 
   });

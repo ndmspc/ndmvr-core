@@ -14,6 +14,7 @@ import { canvasSubjectGet } from "../rxjs/CanvasSubject.js";
 import { configSubjectGet } from "../rxjs/ConfigSubject.js";
 import { binInfoSubjectGet } from "../rxjs/BinInfoSubject.js";
 import HistogramWireframeClass from "./histogram-wireframe-class.js";
+import { dispatchSubjectGet } from "../rxjs/DispatchSubject.js";
 
 export class NestedHistogram {
   bin_padding_x;
@@ -23,6 +24,7 @@ export class NestedHistogram {
   sub = undefined;
   stateSub = undefined;
   configSub = undefined;
+  dispatchSub = undefined;
   rootObj = undefined;
   pointer = undefined;
   instancedMesh = undefined;
@@ -33,7 +35,7 @@ export class NestedHistogram {
   totalInstances = undefined;
   color = new THREE.Color();
   matrixCache = undefined;
-  selectedSet = ["unlikepm"];
+  selectedSet = [];
   selectedArray = "content";
   availableSets = [];
   renderHistory = [];
@@ -41,17 +43,23 @@ export class NestedHistogram {
   keydownEvents = [];
   keyupEvents = [];
   dirtyInstance = [];
+  limits = {
+    position: new THREE.Vector3(0, 0, 0),
+    scale: new THREE.Vector3(10, 10, 10)
+  };
+  opts = undefined;
 
   // clickEvents = [];
   // mousemoveEvents = [];
 
-  constructor (bin_padding_x, bin_padding_y, bin_padding_z, histo, id) {
+  constructor (bin_padding_x, bin_padding_y, bin_padding_z, histo, id, opts) {
     this.bin_padding_x = bin_padding_x;
     this.bin_padding_y = bin_padding_y;
     this.bin_padding_z = bin_padding_z;
     this.rootObj = histo.histogram;
     this.pointer = new HistogramPointerClass(this.rootObj);
     this.id = id;
+    this.opts = opts;
     // console.log(this.pointer.origin);
     this.setAvailableSets(this.pointer.origin);
     this.setAvailableArrays(this.pointer.origin);
@@ -81,10 +89,39 @@ export class NestedHistogram {
         ),
       )
       .subscribe((v) => {
-        this.config = { ...v.config };
-        this.config.histogramPads = this.config.histogramPads.find(
-          (el) => el.id === this.id,
-        );
+        // this.config = { ...v.config.histogram };
+        this.config = configSubjectGet().mergeHistogramConfig(this.opts.config);
+        this.limits = {
+          ...v.config.environment.histogramPads.find(
+            (el) => el.id === this.id,
+          )
+        };
+      });
+
+    this.dispatchSub = dispatchSubjectGet().getObservable()
+      .pipe(
+        filter((event) =>
+          (event.target.name === "nested-histogram")
+          && (event.target.id === "*" || event.target.id === this.id)))
+      .subscribe((event) => {
+        console.log("dispatch: ", event);
+        const pos = event.event.index.map(v => {
+          return { x: v.x - 1, y: v.y - 1, z: v.z - 1 };
+        });
+
+        const node = this.pointer.getChildByPosition(
+          this.computeJsRootIndexFromPosition([...pos]).slice(0, -1), event.event.set);
+        const expandedEvent = {
+          index: pos,
+          set: event.event.set,
+          jsrootInstance: this.computeJsRootIndexFromPosition(pos),
+          range: this.getRangeByPosition(pos),
+          origin: this,
+          jsrootObj: node,
+          content: this.getBinContent(node, pos[0].x + 1, pos[0].y + 1, pos[0].z + 1, this.selectedArray),
+          error: node.getBinError(pos[0].x + 1, pos[0].y + 1, pos[0].z + 1)
+        };
+        this.intersectionHandler(expandedEvent, event.event.source);
       });
 
     this.handleStateChange = this.handleStateChange.bind(this);
@@ -103,14 +140,22 @@ export class NestedHistogram {
   }
 
   updateHistogram (histo) {
+    const parent = this.instancedMesh.parent;
+
+    this.matrixCache = [];
+    this.instancedMesh.dispose();
+    this.wireframe.dispose();
+    parent.remove(this.instancedMesh);
+
     this.rootObj = histo.histogram;
     this.pointer = new HistogramPointerClass(this.rootObj);
+    this.opts = histo.opts;
+    this.config = configSubjectGet().mergeHistogramConfig(this.opts.config);
     this.setAvailableSets(this.pointer.origin);
     this.setAvailableArrays(this.pointer.origin);
-    const parent = this.wireframe.wireframe.parent;
-    this.wireframe.dispose();
     this.init();
     this.renderHistogram(0, this.totalInstances, 0);
+    parent.add(this.instancedMesh);
     parent.add(this.wireframe.wireframe);
   }
 
@@ -133,28 +178,17 @@ export class NestedHistogram {
     this.maxInstancesPerLayer = this.computeMaxInstancesPerLayer();
     this.maxContentPerLayer = this.computeMaxContentPerLayer();
     this.minContentPerLayer = this.computeMinContentPerLayer();
-    console.log(this.maxContentPerLayer);
-    console.log(this.minContentPerLayer);
     this.totalInstances = this.maxInstancesPerLayer.reduce((acc, value) => {
       return acc * value;
     }, 1);
 
     this.setupInstancedMesh();
-    if (this.wireframe && this.wireframe.wireframe.parent) {
-      const parent = this.wireframe.wireframe.parent;
-      // console.log(parent);
-      parent.remove(this.wireframe);
-      this.wireframe = new HistogramWireframeClass(
-        this.maxInstancesPerLayer,
-        this.matrixCache,
-      );
-      parent.add(this.wireframe.wireframe);
-    } else {
-      this.wireframe = new HistogramWireframeClass(
-        this.maxInstancesPerLayer,
-        this.matrixCache,
-      );
-    }
+
+    this.wireframe = new HistogramWireframeClass(
+      this.maxInstancesPerLayer,
+      this.matrixCache,
+      this.config.wireframe
+    );
   }
 
   /**
@@ -169,7 +203,7 @@ export class NestedHistogram {
   renderHistogram (startIndex, endIndex, layer) {
     if (!this.pointer || layer >= this.maxInstancesPerLayer.length - 1) return;
     this.currentLayer = layer;
-    // this.logRender(startIndex, endIndex, layer, 'render');
+    // this.logRender(startIndex, endIndex, layer, "render");
     this.logRender({
       procedure: "render",
       value: {
@@ -186,7 +220,7 @@ export class NestedHistogram {
       // if (currentLayer === 1 && startIndex === 0) {
       //    console.log('start: ', startIndex, ', end: ', endIndex, ', limits: ', limits);
       // }
-      // console.log(startIndex, endIndex, currentLayer, layer)
+      // console.log(startIndex, endIndex, currentLayer, layer, set, limits);
       if (currentLayer > layer) return;
       if (!obj) return;
 
@@ -205,7 +239,6 @@ export class NestedHistogram {
       let contentMax;
       let contentMinOut;
       let contentMaxOut;
-      console.log(this.maxContentPerLayer, set);
 
       const outside = obj.fArrays?.[this.selectedArray]?.outside ?? false;
       if (this.config.sets.scale.maximum === "relative") {
@@ -249,9 +282,9 @@ export class NestedHistogram {
 
       if (contentMin === contentMax) contentMin = contentMax - 1;
 
-      console.log(
-        `min: ${contentMin} max: ${contentMax} minOut: ${contentMinOut} maxOut: ${contentMaxOut}`,
-      );
+      // console.log(
+      //   `min: ${contentMin} max: ${contentMax} minOut: ${contentMinOut} maxOut: ${contentMaxOut}`,
+      // );
       // console.log(contentMax);
       // console.log(contentMin);
 
@@ -278,7 +311,7 @@ export class NestedHistogram {
           return acc * value;
         }, 1);
       counter.setFromNumber(startIndex / stepFor);
-      console.log(startIndex, endIndex, stepFor);
+      // console.log(startIndex, endIndex, stepFor);
 
       const sourcePadding =
         this.config.padding.layer[currentLayer] ?? this.config.padding.default;
@@ -290,6 +323,9 @@ export class NestedHistogram {
 
       if (set && this.config.padding.sets && isTH1) {
         padding = { x: this.config.padding.sets.x, y: 0, z: 0 };
+      }
+      if (this.pointer.isOnSet) {
+        padding = {x: 0, y: 0, z: 0};
       }
 
       const { min: minFactor, max: maxFactor } = this.config.scale?.[currentLayer]
@@ -345,13 +381,7 @@ export class NestedHistogram {
         //TODO ASI TREBA FlipLocalZAxis (zatial netreba ak je len 1D)
 
         //-------------ODTADIAL---------
-        const content = this.getBinContent(
-          obj,
-          relPos.x,
-          relPos.y,
-          relPos.z,
-          this.selectedArray,
-        );
+        const content = this.getBinContent(obj, relPos.x, relPos.y, relPos.z, this.selectedArray);
         // const content = obj.getBinContent(relPos.x + 1, relPos.y + 1, relPos.z + 1);
 
         // console.log('min: ', minFactor, ', max: ', maxFactor);
@@ -378,55 +408,7 @@ export class NestedHistogram {
           scaleFactor = 0;
         }
 
-        // let norm = 0;
-        // if (contentMax !== contentMin) {
-        //   norm = (content - contentMin) / (contentMax - contentMin);
-        //   norm = Math.max(0, Math.min(1, norm));
-        // } else {
-        //   norm = 1;
-        // }
-        //
-        // if (isTH3) {
-        //   scaleFactor = norm === 0
-        //     ? 0
-        //     : minFactor + norm * (maxFactor - minFactor);
-        // } else {
-        //   scaleFactor = norm === 0 ? 0 : norm;
-        // }
-        //
-        // if (currentLayer === 0) {
-        //   scaleFactor = norm;
-        //   // scaleFactor = 0.2 + 0.8 * this.easeOutCubic(norm);
-        // } else {
-        //   scaleFactor = norm;
-        // }
-
-        // let scaleFactor = 1;
-        // if (isTH3) {
-        //   scaleFactor = content === 0
-        //     ? 0
-        //     : minFactor + (content / contentMax) * (maxFactor - minFactor);
-        // } else {
-        //   scaleFactor = content === 0
-        //     ? 0
-        //     : scaleFactor = content / contentMax;
-        // }
-        // if (currentLayer === 0) {
-        //   scaleFactor = content / contentMax;
-        //   // scaleFactor = 0.2 + 0.8 * this.easeOutCubic(content / contentMax);
-        // } else {
-        //   scaleFactor = content / contentMax;
-        // }
-
-        // console.log(scaleFactor)
-
-        this.color = this.getGradientColor(
-          content,
-          0,
-          contentMax,
-          set,
-          currentLayer,
-        );
+        this.color = this.getGradientColor(content, 0, contentMax, set, currentLayer);
 
         const t = binSizePos.y.size * scaleFactor;
 
@@ -454,49 +436,23 @@ export class NestedHistogram {
 
         if (!set) {
           this.matrixCache[currentLayer][i / stepFor] = {
-            position: new THREE.Vector3(
-              binSizePos.x.pos,
-              binSizePos.y.pos,
-              binSizePos.z.pos,
-            ),
-            scale: new THREE.Vector3(
-              binSizePos.x.size,
-              binSizePos.y.size,
-              binSizePos.z.size,
-            ),
+            position: new THREE.Vector3(binSizePos.x.pos, binSizePos.y.pos, binSizePos.z.pos),
+            scale: new THREE.Vector3(binSizePos.x.size, binSizePos.y.size, binSizePos.z.size),
             rendered: currentLayer === layer,
           };
         } else {
           binSizePos.z.size = 0.01;
           const index = this.selectedSet.indexOf(set);
-          binSizePos.z.pos += index * 0.01;
-          this.matrixCache[currentLayer][this.availableSets.indexOf(set)][
-          i / stepFor
-            ] = {
-            position: new THREE.Vector3(
-              binSizePos.x.pos,
-              binSizePos.y.pos,
-              binSizePos.z.pos,
-            ),
-            scale: new THREE.Vector3(
-              binSizePos.x.size,
-              binSizePos.y.size,
-              binSizePos.z.size,
-            ),
+          binSizePos.z.pos += index * 0.15;
+          this.matrixCache[currentLayer][this.availableSets.indexOf(set)][i / stepFor] = {
+            position: new THREE.Vector3(binSizePos.x.pos, binSizePos.y.pos, binSizePos.z.pos),
+            scale: new THREE.Vector3(binSizePos.x.size, binSizePos.y.size, binSizePos.z.size),
             rendered: currentLayer === layer,
           };
         }
+        dummy.position.set(binSizePos.x.pos, binSizePos.y.pos, binSizePos.z.pos);
 
-        dummy.position.set(
-          binSizePos.x.pos,
-          binSizePos.y.pos,
-          binSizePos.z.pos,
-        );
-        dummy.scale.set(
-          binSizePos.x.size,
-          binSizePos.y.size,
-          binSizePos.z.size,
-        );
+        dummy.scale.set(binSizePos.x.size, binSizePos.y.size, binSizePos.z.size);
         dummy.updateMatrix();
 
         if (currentLayer === layer) {
@@ -511,24 +467,11 @@ export class NestedHistogram {
           let child = undefined;
           if (obj.children.content) {
             child = obj.children.content[index];
-            render(
-              i,
-              endIndex,
-              currentLayer + 1,
-              child,
-              this.matrixCache[currentLayer][i / stepFor],
-            );
+            render(i, endIndex, currentLayer + 1, child, this.matrixCache[currentLayer][i / stepFor]);
           } else {
             this.selectedSet.forEach((set) => {
               child = obj.children[set][index];
-              render(
-                i,
-                endIndex,
-                currentLayer + 1,
-                child,
-                this.matrixCache[currentLayer][i / stepFor],
-                set,
-              );
+              render(i, endIndex, currentLayer + 1, child, this.matrixCache[currentLayer][i / stepFor], set);
             });
           }
         }
@@ -539,27 +482,14 @@ export class NestedHistogram {
       this.instancedMesh.instanceMatrix.needsUpdate = true;
       this.instancedMesh.instanceColor.needsUpdate = true;
     };
-    // console.log(this.config.histogramPads)
 
-    render(
-      startIndex,
-      endIndex,
-      0,
-      this.pointer.origin,
-      this.config.histogramPads,
-    );
+    render(startIndex, endIndex, 0, this.pointer.origin, this.limits);
     const selectedSetIndexes = this.selectedSet.map((item) =>
       this.availableSets.indexOf(item),
     );
-    this.wireframe.render(
-      this.matrixCache,
-      0,
-      layer + 1,
-      startIndex,
-      endIndex,
-      selectedSetIndexes,
-    );
-    // this.BVHTree = createBVHTree(this.matrixCache, this.pointer.origin, 0, null, this.instancedMesh.matrixWorld);
+    if (!this.pointer.isOnSet) {
+      this.wireframe.render(this.matrixCache, 0, layer + 1, startIndex, endIndex, selectedSetIndexes);
+    }
     this.BVHTree = createBVHTreeRecursive(
       this.matrixCache,
       this.pointer.origin,
@@ -578,12 +508,6 @@ export class NestedHistogram {
    * Precisely, geometry, material, count and ray-cast interaction are being set.
    * */
   setupInstancedMesh () {
-    let parent = undefined;
-    if (this.instancedMesh) {
-      parent = this.instancedMesh.parent;
-      this.instancedMesh.parent.remove(this.instancedMesh);
-      this.instancedMesh.dispose();
-    }
 
     this.matrixCache = new Array(this.maxInstancesPerLayer.length - 1)
       .fill()
@@ -614,9 +538,6 @@ export class NestedHistogram {
     this.instancedMesh.instanceMatrix.needsUpdate = true;
     this.instancedMesh.raycast = this.raycastHandler;
 
-    if (parent) {
-      parent.add(this.instancedMesh);
-    }
   }
 
   mergeInfo (event, node = this.pointer.origin, layer = 0) {
@@ -648,119 +569,86 @@ export class NestedHistogram {
     }
   }
 
-  raycastHandler (raycaster, intersects) {
+  intersectionHandler (intersection, triggerSource) {
+    this.mouseEvents
+      .filter((mouseEvent) => mouseEvent.event === triggerSource)
+      .forEach((mouseEvent) => mouseEvent.function(intersection, this));
+
+    const areIndexesEqual = (index1, index2) => {
+      if (index1.length !== index2.length) return false;
+      for (let i = 0; i < index1.length; i++) {
+        const a = index1[i],
+          b = index2[i];
+        if (a.x !== b.x || a.y !== b.y || a.z !== b.z) return false;
+      }
+      return true;
+    };
+
+    const eventWithSource = { ...intersection, triggerSource };
+    if (!(triggerSource === "mousemove" &&
+      areIndexesEqual(intersection.index, this.dirtyInstance))) {
+      const merged = this.mergeInfo({
+        ...eventWithSource,
+        index: [...eventWithSource.index],
+      });
+      const { range: coords, content, error, set, triggerSource } = merged;
+      const minimizedEvent = { coords, content, error, set, triggerSource };
+      binInfoSubjectGet().next(minimizedEvent);
+    }
+
+    switch (triggerSource) {
+      case "mouseclick":
+        this.showChildHistogram(intersection.index);
+        canvasSubjectGet().next({
+          id: this.id + "-cinema",
+          obj: intersection.jsrootObj,
+        });
+        break;
+      case "shiftmouseclick":
+        this.hideChildHistogram(intersection.index);
+        break;
+      case "mousedbclick":
+        setTimeout(() => {
+          intersection.set
+            ? this.setPointerToChild(
+              this.computeJsRootIndexFromPosition(intersection.index),
+              intersection.set,
+            )
+            : this.setPointerToChild(
+              this.computeJsRootIndexFromPosition(intersection.index),
+              this.selectedSet[0],
+            );
+        }, 0);
+        break;
+      case "shiftmousedbclick":
+        this.setPointerToParent();
+        break;
+      case "mousemove":
+        break;
+    }
+    this.dirtyInstance = intersection.index;
+  }
+
+  raycastHandler (raycaster) {
     const res = this.checkIntersectionBVH(raycaster.ray);
-    // if (res2[0]) {
-    //     console.log(res2[0].index);
-    // }
-    //
-    // const res = this.checkIntersection(raycaster.ray);
+
     const intersection = res[0];
     if (intersection) {
       const triggerSource = raycaster._triggerSource;
-      this.mouseEvents
-        .filter((mouseEvent) => mouseEvent.event === triggerSource)
-        .forEach((mouseEvent) => mouseEvent.function(intersection, this));
-
-      const areIndexesEqual = (index1, index2) => {
-        if (index1.length !== index2.length) return false;
-        for (let i = 0; i < index1.length; i++) {
-          const a = index1[i],
-            b = index2[i];
-          if (a.x !== b.x || a.y !== b.y || a.z !== b.z) return false;
-        }
-        return true;
-      };
-
-      const eventWithSource = { ...intersection, triggerSource };
-      // // console.log(eventWithSource)
-      if (
-        !(
-          triggerSource === "mousemove" &&
-          areIndexesEqual(intersection.index, this.dirtyInstance)
-        )
-      ) {
-        const merged = this.mergeInfo({
-          ...eventWithSource,
-          index: [...eventWithSource.index],
-        });
-        const { range: coords, content, error, set, triggerSource } = merged;
-        const minimizedEvent = { coords, content, error, set, triggerSource };
-        binInfoSubjectGet().next(minimizedEvent);
-      }
-
-      switch (triggerSource) {
-        case "mouseclick":
-          this.showChildHistogram(intersection.index);
-          canvasSubjectGet().next({
-            id: this.id + "-cinema",
-            obj: intersection.jsrootObj,
-          });
-          break;
-        case "shiftmouseclick":
-          this.hideChildHistogram(intersection.index);
-          break;
-        case "mousedbclick":
-          setTimeout(() => {
-            intersection.set
-              ? this.setPointerToChild(
-                this.computeJsRootIndexFromPosition(intersection.index),
-                intersection.set,
-              )
-              : this.setPointerToChild(
-                this.computeJsRootIndexFromPosition(intersection.index),
-                this.selectedSet[0],
-              );
-          }, 0);
-          break;
-        case "shiftmousedbclick":
-          this.setPointerToParent();
-          break;
-        case "mousemove":
-          break;
-      }
-      this.dirtyInstance = intersection.index;
-
-      {
-        const arr = Array.isArray(intersection.instanceId)
-          ? intersection.instanceId
-          : [intersection.instanceId];
-        let linearInstanceId = arr[arr.length - 1] ?? 0;
-        if (intersection.set && intersection.set !== "content") {
-          linearInstanceId +=
-            this.totalInstances * this.selectedSet.indexOf(intersection.set);
-        }
-        intersects.push({
-          distance: intersection.distance,
-          point: intersection.target,
-          object: this.instancedMesh,
-          instanceId: linearInstanceId,
-        });
-      }
+      this.intersectionHandler(intersection, triggerSource);
     }
   }
 
   handleStateChange (state) {
-    let changed = false;
-    if (
-      state.selectedSet &&
-      !this.areArraysEqual(state.selectedSet, this.selectedSet)
-    ) {
+    if (this.areArraysEqual(state.sets, this.availableSets)
+      && !this.areArraysEqual(state.selectedSet, this.selectedSet)) {
       this.selectedSet = state.selectedSet;
-      changed = true;
-
+      const parent = this.instancedMesh.parent;
+      this.instancedMesh.dispose();
+      parent.remove(this.instancedMesh);
       this.setupInstancedMesh();
-      console.log(state);
-    }
-    if (state.sets && state.sets !== this.availableSets) {
-      this.availableSets = state.sets;
-    }
-    if (state.selectedArray && this.selectedArray !== state.selectedArray) {
-      this.selectedArray = state.selectedArray;
-      changed = true;
-    }
+      parent.add(this.instancedMesh);
 
-    if (changed) {
       const renderHistoryCopy = this.renderHistory;
       this.renderHistory = [];
 
@@ -775,7 +663,46 @@ export class NestedHistogram {
           this.hideChildHistogram(call.value);
         }
       });
+    } else {
+      this.availableSets = state.sets;
+      this.selectedSet = state.selectedSet;
     }
+
+    // let changed = false;
+    // if (
+    //   state.selectedSet &&
+    //   !this.areArraysEqual(state.selectedSet, this.selectedSet)
+    // ) {
+    //   this.selectedSet = state.selectedSet;
+    //   changed = true;
+    //
+    //   this.setupInstancedMesh();
+    //   console.log(state);
+    // }
+    // if (state.sets && state.sets !== this.availableSets) {
+    //   this.availableSets = state.sets;
+    // }
+    // if (state.selectedArray && this.selectedArray !== state.selectedArray) {
+    //   this.selectedArray = state.selectedArray;
+    //   changed = true;
+    // }
+    //
+    // if (changed) {
+    //   const renderHistoryCopy = this.renderHistory;
+    //   this.renderHistory = [];
+    //
+    //   renderHistoryCopy.forEach((call) => {
+    //     if (call.procedure === "render") {
+    //       this.renderHistogram(
+    //         call.value.startIndex,
+    //         call.value.endIndex,
+    //         call.value.layer,
+    //       );
+    //     } else if (call.procedure === "hide") {
+    //       this.hideChildHistogram(call.value);
+    //     }
+    //   });
+    // }
   }
 
   /**
@@ -910,24 +837,41 @@ export class NestedHistogram {
    * If children contains sets, parameter need to be specified.
    * */
   setPointerToChild (position, set) {
-    this.wireframe.clearWireframe();
+    // this.wireframe.clearWireframe();
+    const parent = this.instancedMesh.parent;
+
+    this.matrixCache = [];
+    this.instancedMesh.dispose();
+    this.wireframe.dispose();
+    parent.remove(this.instancedMesh);
+
     this.pointer.setOriginToChild(position, set);
     this.init();
     console.log("path: ", this.pointer.path);
     console.log("title: ", this.pointer.title);
     this.renderHistogram(0, this.totalInstances, 0);
+    parent.add(this.instancedMesh);
+    parent.add(this.wireframe.wireframe);
   }
 
   /**
    * @desc Method to set pointers origin to its parent.
    * * */
   setPointerToParent () {
-    this.wireframe.clearWireframe();
+    const parent = this.instancedMesh.parent;
+
+    this.matrixCache = [];
+    this.instancedMesh.dispose();
+    this.wireframe.dispose();
+    parent.remove(this.instancedMesh);
+
     this.pointer.setOriginToParent(1);
     console.log("path: ", this.pointer.path);
     console.log("title: ", this.pointer.title);
     this.init();
     this.renderHistogram(0, this.totalInstances, 0);
+    parent.add(this.instancedMesh);
+    parent.add(this.wireframe.wireframe);
   }
 
   /**
@@ -1223,6 +1167,12 @@ export class NestedHistogram {
       const currentValue = stateSubjectGet().getValue();
       // delete origin.children.content;
       currentValue.sets = Object.keys(origin.children);
+      if (currentValue.selectedSet.length === 0) {
+        this.selectedSet.push(currentValue.sets[0]);
+        currentValue.selectedSet.push(currentValue.sets[0]);
+      } else if (!this.selectedSet.every(set => currentValue.sets.find(s => s === set))) {
+        currentValue.selectedSet = [currentValue.sets[0]];
+      }
       stateSubjectGet().next(currentValue);
     }
   }
@@ -1346,260 +1296,6 @@ export class NestedHistogram {
       this.instancedMesh.setMatrixAt(i, hiddenMatrix);
     }
     this.instancedMesh.instanceMatrix.needsUpdate = true;
-  }
-
-  /**
-   * @desc Method to check bins intersection against ray.
-   * Can be used to define instanced mesh intersection behaviour
-   * and override basic (traverse all instances) behaviour.
-   * Performs much better especially if number of instances are enormous.
-   * @param ray Instance of Three.Ray part of Three.Raycaster.
-   * @return Array of intersected bins,
-   * including their position, instanceId, Jsroot index and other infos.
-   * */
-  checkIntersection (ray) {
-    // console.log('inter');
-    const target = new THREE.Vector3();
-
-    const createBox3 = (layer, index, set) => {
-      const t =
-        set && set !== "content"
-          ? this.matrixCache[layer]?.[this.availableSets.indexOf(set)]?.[index]
-          : this.matrixCache[layer]?.[index];
-
-      // console.log(t ? new THREE.Box3().setFromCenterAndSize(t.position, t.scale) : undefined)
-      return t
-        ? new THREE.Box3().setFromCenterAndSize(t.position, t.scale)
-        : undefined;
-    };
-
-    const checkAxis = (step, startIndex, endIndex, offset, layer, set) => {
-      const half = Math.floor((startIndex + endIndex) / 2);
-      const pointMin = createBox3(layer, startIndex * step + offset, set);
-      const pointHalfBelow = createBox3(
-        layer,
-        (half + 1) * step - 1 + offset,
-        set,
-      );
-      const pointHalfUpper = createBox3(layer, (half + 1) * step + offset, set);
-      const pointMax = createBox3(
-        layer,
-        (endIndex + 1) * step - 1 + offset,
-        set,
-      );
-
-      pointMin.applyMatrix4(this.instancedMesh.matrixWorld);
-      pointHalfBelow.applyMatrix4(this.instancedMesh.matrixWorld);
-      pointHalfUpper.applyMatrix4(this.instancedMesh.matrixWorld);
-      pointMax.applyMatrix4(this.instancedMesh.matrixWorld);
-
-      const boundaryFirstHalf = new THREE.Box3()
-        .copy(pointMin)
-        .union(pointHalfBelow);
-      const boundarySecondHalf = new THREE.Box3()
-        .copy(pointHalfUpper)
-        .union(pointMax);
-
-      // if (layer === 0) {      DEBUG
-      //    const helper = new THREE.Box3Helper(boundaryFirstHalf, new THREE.Color(0, 1, 0));
-      //    helper.raycast = () => {};
-      //    this.el.object3D.add(helper);
-      // }
-
-      // console.log('prvy', startIndex, ', half: ', half, ', ')
-      // console.log('druhy', half + 1, ', end: ', endIndex)
-
-      const resultList = [];
-      if (ray.intersectBox(boundaryFirstHalf, target)) {
-        resultList.push({
-          array: [startIndex, half],
-          target: target.clone(),
-          distance: ray.origin.distanceTo(target),
-        });
-      } else {
-        resultList.push(null);
-      }
-      if (ray.intersectBox(boundarySecondHalf, target)) {
-        resultList.push({
-          array: [half + 1, endIndex],
-          target: target.clone(),
-          distance: ray.origin.distanceTo(target),
-        });
-      } else {
-        resultList.push(null);
-      }
-      return resultList;
-    };
-
-    const dfs = (step, start, end, offset, layer, set) => {
-      const output = [];
-      const traverse = (details) => {
-        // console.log(details)
-        if (details.array[0] === details.array[1]) {
-          output.push(details);
-          return;
-        }
-        const [firstHalf, secondHalf] = checkAxis(
-          step,
-          details.array[0],
-          details.array[1],
-          offset,
-          layer,
-          set,
-        );
-        if (firstHalf) traverse(firstHalf);
-        if (secondHalf) traverse(secondHalf);
-      };
-      traverse({ array: [start, end], target: null, distance: null });
-      if (output[output.length - 1] === end + 1) output.pop(); // edge fix
-      return output;
-    };
-
-    const recursiveSearch = (
-      node,
-      layer,
-      offset = 0,
-      path = [],
-      set = undefined,
-    ) => {
-      // console.log(layer, node, offset)
-
-      const fX = node.fXaxis.fNbins;
-      const fY = node.fYaxis.fNbins;
-      const fZ = node.fZaxis.fNbins;
-      const perInstance = this.maxInstancesPerLayer[layer + 1];
-
-      const stepZ = fX * fY;
-      const stepY = stepZ / fY;
-      const stepX = stepY / fX;
-
-      const validZ = dfs(stepZ, 0, fZ - 1, offset, layer, set);
-
-      const result = [];
-
-      validZ.forEach((z) => {
-        const zIndex = z.array[0];
-        const offsetZ = offset + zIndex * stepZ;
-        const validY = dfs(stepY, 0, fY - 1, offsetZ, layer, set);
-        validY.forEach((y) => {
-          const yIndex = y.array[0];
-          const offsetY = offsetZ + yIndex * stepY;
-
-          const validX = dfs(stepX, 0, fX - 1, offsetY, layer, set);
-
-          validX.forEach((x) => {
-            const xIndex = x.array[0];
-            const fullPath = [...path, { x: xIndex, y: yIndex, z: zIndex }];
-            const binIndex = node.getBin(xIndex + 1, yIndex + 1, zIndex + 1);
-
-            //if node has children
-            if (node.children) {
-              const children = Object.entries(node.children);
-
-              //loop through children, store result for each
-              const childResults = children.flatMap(([setX, childX]) => {
-                //get child jsroot node
-                const child = childX?.[binIndex];
-                if (!child) return [];
-
-                //calculate child index of instance in matrixCache
-                const childOffset =
-                  offset * perInstance +
-                  (xIndex + yIndex * fX + zIndex * (fX * fY)) * perInstance;
-
-                //get instance from matrixCache with actually looping set
-                const next =
-                  setX === "content"
-                    ? this.matrixCache?.[layer + 1]?.[childOffset]
-                    : this.matrixCache[layer + 1][
-                      this.availableSets.indexOf(setX)
-                      ][childOffset];
-
-                //!next return, child was not yet rendered
-                if (!next) return [];
-                // if (layer === 1) {
-                //     console.log('DVOJKA')
-                // }
-                //child was rendered, return the return value from next layer search
-                let r = recursiveSearch(
-                  child,
-                  layer + 1,
-                  childOffset,
-                  fullPath,
-                  setX,
-                );
-
-                if (setX !== "content") {
-                  r = r.map((res) => ({ ...res, set: setX }));
-                }
-                return r;
-              });
-
-              //if any child has returned result, its valid
-              if (childResults.length > 0) {
-                result.push(...childResults);
-              } else {
-                //no child returned result, if flag rendered is true, it is the last layer rendered
-                //thus valid intersection
-                const childOffset =
-                  offset + (xIndex + yIndex * fX + zIndex * (fX * fY));
-                const instance =
-                  set && set !== "content"
-                    ? this.matrixCache[layer]?.[
-                      this.availableSets.indexOf(set)
-                      ]?.[childOffset]
-                    : this.matrixCache[layer]?.[childOffset];
-                if (instance.rendered)
-                  result.push({
-                    index: fullPath,
-                    target: x.target.clone(),
-                    distance: x.distance,
-                    set: set,
-                    instanceId: this.computeIndexFromPosition(fullPath),
-                    jsrootInstance:
-                      this.computeJsRootIndexFromPosition(fullPath),
-                    range: this.getRangeByPosition(fullPath),
-                    origin: this,
-                    jsrootObj: node,
-                    content: node.getBinContent(
-                      xIndex + 1,
-                      yIndex + 1,
-                      zIndex + 1,
-                      this.selectedArray,
-                    ),
-                    error: node.getBinError(xIndex + 1, yIndex + 1, zIndex + 1),
-                  });
-              }
-            } else {
-              result.push({
-                index: fullPath,
-                target: x.target.clone(),
-                distance: x.distance,
-                set: undefined,
-                instanceId: this.computeIndexFromPosition(fullPath),
-                jsrootInstance: this.computeJsRootIndexFromPosition(fullPath),
-                range: this.getRangeByPosition(fullPath),
-                origin: this,
-                jsrootObj: node,
-                content: node.getBinContent(
-                  xIndex + 1,
-                  yIndex + 1,
-                  zIndex + 1,
-                  this.selectedArray,
-                ),
-                error: node.getBinError(xIndex + 1, yIndex + 1, zIndex + 1),
-              });
-            }
-          });
-        });
-      });
-
-      return result.sort((a, b) => {
-        return a.distance - b.distance;
-      });
-    };
-
-    return recursiveSearch(this.pointer.origin, 0);
   }
 
   checkIntersectionBVH (ray) {

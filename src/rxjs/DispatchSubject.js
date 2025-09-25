@@ -9,11 +9,11 @@ class DispatchSubject {
     this.#subject = new Subject();
   }
 
-  getStream () {
+  getObservable () {
     return this.#subject.asObservable();
   }
 
-  dispatch (e) {
+  next (e) {
     this.#subject.next(e);
   }
 }
