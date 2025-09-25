@@ -325,7 +325,7 @@ export class NestedHistogram {
         padding = { x: this.config.padding.sets.x, y: 0, z: 0 };
       }
       if (this.pointer.isOnSet) {
-        padding = {x: 0, y: 0, z: 0};
+        padding = { x: 0, y: 0, z: 0 };
       }
 
       const { min: minFactor, max: maxFactor } = this.config.scale?.[currentLayer]
@@ -412,25 +412,31 @@ export class NestedHistogram {
 
         const t = binSizePos.y.size * scaleFactor;
 
-        if (isTH3) {
-          binSizePos.x.size *= scaleFactor;
-          binSizePos.z.size *= scaleFactor;
-          binSizePos.y.size = t;
-        } else if (isTH2) {
-          binSizePos.y.pos -= (binSizePos.y.size - t) / 2;
-          binSizePos.y.size = t;
+        if (scaleFactor === 0) {
+          binSizePos.x.size = 0;
+          binSizePos.z.size = 0;
+          binSizePos.y.size = 0;
         } else {
-          binSizePos.y.pos -= (binSizePos.y.size - t) / 2;
-          binSizePos.y.size = t;
-          if (set) {
-            const scale = this.config.TH1ZScale.set;
-            binSizePos.z.size = scale ? scale : 0.01;
+          if (isTH3) {
+            binSizePos.x.size *= scaleFactor;
+            binSizePos.z.size *= scaleFactor;
+            binSizePos.y.size = t;
+          } else if (isTH2) {
+            binSizePos.y.pos -= (binSizePos.y.size - t) / 2;
+            binSizePos.y.size = t;
           } else {
-            this.config.TH1ZScale?.layer?.[currentLayer]
-              ? (binSizePos.z.size =
-                limits.scale.z * this.config.TH1ZScale.layer[currentLayer])
-              : (binSizePos.z.size =
-                limits.scale.z * this.config.TH1ZScale.default);
+            binSizePos.y.pos -= (binSizePos.y.size - t) / 2;
+            binSizePos.y.size = t;
+            if (set) {
+              const scale = this.config.TH1ZScale.set;
+              binSizePos.z.size = scale ? scale : 0.01;
+            } else {
+              this.config.TH1ZScale?.layer?.[currentLayer]
+                ? (binSizePos.z.size =
+                  limits.scale.z * this.config.TH1ZScale.layer[currentLayer])
+                : (binSizePos.z.size =
+                  limits.scale.z * this.config.TH1ZScale.default);
+            }
           }
         }
 
@@ -1178,7 +1184,6 @@ export class NestedHistogram {
   }
 
   setAvailableArrays (origin) {
-    console.log("origin", origin);
     // if (origin.children?.content) {
     //   const firstChild = origin.children.content.find((child) => {
     //     return child

@@ -57,12 +57,12 @@ document.querySelector("#app").appendChild(sceneElm);
 // sceneElm.object3D.add(cube);
 
 //
-// const geom = new THREE.BoxGeometry(10, 2.666666666666, 10);
+// const geom = new THREE.BoxGeometry(10, 0, 10);
 // const mate = new THREE.MeshNormalMaterial();
 // const cube = new THREE.Mesh(geom, mate);
 // cube.position.set(2, -1.166666, 0);
-// sceneElm.object3D.add(cube)
-//
+// sceneElm.object3D.add(cube);
+
 // const geom2 = new THREE.BoxGeometry(10, 2.333333333, 10);
 // const mate2 = new THREE.MeshPhongMaterial();
 // const cube2 = new THREE.Mesh(geom2, mate2);

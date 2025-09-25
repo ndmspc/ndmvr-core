@@ -1,3 +1,5 @@
+import { configSubjectGet } from "../rxjs/ConfigSubject.js";
+
 /**
  * This class sets up and periodically updates raycaster.
  * On event (either mouse move or mouse click) all child elements of scene are checked for intersection (recursively).
@@ -12,9 +14,12 @@ export class NdmvrRaycaster {
   cameraElement;
   sceneElement;
   singleClickTimer;
+  dbClickTimeout;
+  configSub;
 
   constructor (scene) {
     this.singleClickTimer = null;
+    this.dbClickTimeout = 190;
     this.raycaster = new THREE.Raycaster();
     this.mouse = new THREE.Vector2();
     this.sceneElement = scene;
@@ -24,6 +29,9 @@ export class NdmvrRaycaster {
       }
     });
     this.setupRaycasting();
+    this.configSub = configSubjectGet().getObservable().subscribe(c => {
+      this.dbClickTimeout = c.config.environment.dbClickTimeout ?? 190;
+    });
   }
 
   setupRaycasting () {
@@ -43,31 +51,9 @@ export class NdmvrRaycaster {
       this.mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
       this.raycaster.setFromCamera(this.mouse, this.cameraElement);
 
-      // // --- draw line from camera to ray direction ---
-      // if (!this.rayLine) {
-      //     const geometry = new THREE.BufferGeometry().setFromPoints([
-      //         new THREE.Vector3(),
-      //         new THREE.Vector3()
-      //     ]);
-      //     const material = new THREE.LineBasicMaterial({ color: 0xff0000 });
-      //     this.rayLine = new THREE.Line(geometry, material);
-      //     this.sceneElement.add(this.rayLine);
-      // }
-      //
-      // // start point: camera position
-      // const start = new THREE.Vector3();
-      // this.cameraElement.getWorldPosition(start);
-      //
-      // // end point: along ray direction, extend it out some distance
-      // const end = new THREE.Vector3();
-      // this.raycaster.ray.at(100, end); // extend ray 100 units into scene
-      //
-      // // update line geometry
-      // this.rayLine.geometry.setFromPoints([start, end]);
-
       const currentTime = Date.now();
       const timeSinceLastClick = this.lastClick ? currentTime - this.lastClick : Infinity;
-      const isDoubleClick = timeSinceLastClick < 190;
+      const isDoubleClick = timeSinceLastClick < this.dbClickTimeout;
 
       if (this.singleClickTimer) {
         clearTimeout(this.singleClickTimer);
@@ -86,7 +72,7 @@ export class NdmvrRaycaster {
             : "mouseclick";
           this.handleRaycast();
           this.singleClickTimer = null;
-        }, 190);
+        }, this.dbClickTimeout);
       }
 
       this.lastClick = currentTime;
