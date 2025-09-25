@@ -1,4 +1,5 @@
 import { BehaviorSubject } from "rxjs";
+import { parseConfig } from "../utils/baseUtil.js";
 
 let configSubject;
 
@@ -12,85 +13,89 @@ class ConfigSubject {
         id: "*",
       },
       config: {
-        histogramPads: [
-          {
-            id: "histo1",
-            position: new THREE.Vector3(0, 0, 0),
-            scale: new THREE.Vector3(10, 5, 10),
+        environment: {
+          histogramPads: [
+            {
+              id: "histo1",
+              position: new THREE.Vector3(0, 0, 0),
+              scale: new THREE.Vector3(10, 5, 10),
+            },
+            {
+              id: "histo2",
+              position: new THREE.Vector3(0, 0, 0),
+              scale: new THREE.Vector3(10, 5, 10),
+            },
+          ],
+          canvas: {
+            position: { x: 0, y: 5, z: -15 },
+            rotation: { x: 10, y: 0, z: 0 },
+            scale: { x: 10, y: 10, z: 0 },
           },
-          {
-            id: "histo2",
-            position: new THREE.Vector3(0, 0, 0),
-            scale: new THREE.Vector3(10, 5, 10),
-          },
-        ],
-        canvas: {
-          position: { x: 0, y: 5, z: -15 },
-          rotation: { x: 10, y: 0, z: 0 },
-          scale: { x: 10, y: 10, z: 0 },
         },
-        padding: {
-          default: {
-            x: 0.1,
-            y: 0.1,
-            z: 0.1,
+        histogram: {
+          padding: {
+            default: {
+              x: 0.1,
+              y: 0.1,
+              z: 0.1,
+            },
+            layer: [{ x: 0.1, y: 0.1, z: 0.1 }],
           },
-          layer: [{ x: 0.1, y: 0.1, z: 0.1 }],
-        },
-        scale: {
-          default: {
-            min: 0.5,
-            max: 1.0,
-          },
-          layer: [],
-        },
-        sets: {
           scale: {
-            maximum: "relative",
-          },
-        },
-        TH1ZScale: {
-          default: 0.8,
-          layer: [0.2, 1, 1, 1],
-          set: 0.01,
-        },
-        wireframe: {
-          display: {
-            start: 0,
-            end: 5,
-          },
-          displaySets: false,
-          layer: [],
-          color: {
-            default: "0x000000",
+            default: {
+              min: 0.5,
+              max: 1.0,
+            },
             layer: [],
-            set: [],
           },
-        },
-        color: {
-          default: {
-            min: new THREE.Color(0x0000ff),
-            max: new THREE.Color(0xff0000),
+          sets: {
+            scale: {
+              maximum: "relative",
+            },
           },
-          layer: [],
-          set: [
-            {
-              min: new THREE.Color(0x222222),
-              max: new THREE.Color(0xffaa00),
+          TH1ZScale: {
+            default: 0.8,
+            layer: [0.2, 1, 1, 1],
+            set: 0.01,
+          },
+          wireframe: {
+            display: {
+              start: 0,
+              end: 5,
             },
-            {
-              min: new THREE.Color(0x00ffff),
-              max: new THREE.Color(0xff7f00),
+            displaySets: false,
+            layer: [],
+            color: {
+              default: "0x000000",
+              layer: [],
+              set: [],
             },
-            {
-              min: new THREE.Color(0x00ff00),
-              max: new THREE.Color(0x800080),
-            },
-            {
+          },
+          color: {
+            default: {
               min: new THREE.Color(0x0000ff),
               max: new THREE.Color(0xff0000),
             },
-          ],
+            layer: [],
+            set: [
+              {
+                min: new THREE.Color(0x222222),
+                max: new THREE.Color(0xffaa00),
+              },
+              {
+                min: new THREE.Color(0x00ffff),
+                max: new THREE.Color(0xff7f00),
+              },
+              {
+                min: new THREE.Color(0x00ff00),
+                max: new THREE.Color(0x800080),
+              },
+              {
+                min: new THREE.Color(0x0000ff),
+                max: new THREE.Color(0xff0000),
+              },
+            ],
+          },
         },
       },
     });
@@ -106,93 +111,72 @@ class ConfigSubject {
 
   next (e) {
     // console.log(this.parseConfig(e));
-    this.#subject.next(this.parseConfig(e));
+    this.#subject.next(parseConfig(e));
   }
 
-  parseConfig (json) {
-    const data = typeof json === "string" ? JSON.parse(json) : json;
 
-    function expandHistogramPads (pads) {
-      // If already array → return transformed version
-      if (Array.isArray(pads)) return pads;
 
-      // If object with "type" → expand into array
-      if (pads && typeof pads === "object" && "type" in pads) {
-        const prefix = pads.prefix ? pads.prefix : "histogram";
-        const match = pads.type.match(/grid(\d+)x(\d+)x(\d+)/);
-        if (!match) return [pads]; // fallback
+  mergeHistogramConfig(partialConfig, defaultConfig = this.#subject.value.config.histogram) {
+    // If partialConfig is undefined/null, return defaultConfig
+    if (partialConfig === undefined || partialConfig === null) {
+      return defaultConfig;
+    }
 
-        const nx = parseInt(match[1], 10);
-        const ny = parseInt(match[2], 10);
-        const nz = parseInt(match[3], 10);
+    // If defaultConfig is not an object, return partialConfig
+    if (typeof defaultConfig !== "object" || defaultConfig === null) {
+      return partialConfig;
+    }
 
-        const scale = pads.scale || { x: 1, y: 1, z: 1 };
-        const padding = pads.padding || { x: 0, y: 0, z: 0 };
-        const origin = pads.origin || { x: 0, y: 0, z: 0 };
+    // If partialConfig is not an object, return it as-is
+    if (typeof partialConfig !== "object" || partialConfig === null) {
+      return partialConfig;
+    }
 
-        const result = [];
-        let counter = 1;
+    // Helper function to check if object should be treated as a value (not merged)
+    const isValueObject = (obj) => {
+      return (
+        Array.isArray(obj) ||
+        obj instanceof THREE.Color ||
+        obj instanceof THREE.Vector3 ||
+        (obj && obj.isColor === true) || // Handle converted THREE.Color objects
+        (obj && obj.isVector3 === true)  // Handle converted THREE.Vector3 objects
+      );
+    };
 
-        for (let ix = 0; ix < nx; ix++) {
-          for (let iy = 0; iy < ny; iy++) {
-            for (let iz = 0; iz < nz; iz++) {
-              result.push({
-                id: `${prefix}${counter++}`,
-                position: {
-                  x: origin.x + (ix - (nx - 1) / 2) * (scale.x + padding.x),
-                  y: origin.y + (iy - (ny - 1) / 2) * (scale.y + padding.y),
-                  z: origin.z + (iz - (nz - 1) / 2) * (scale.z + padding.z),
-                },
-                scale: { ...scale },
-              });
-            }
+    // Handle arrays and special objects - replace entirely
+    if (isValueObject(defaultConfig)) {
+      return isValueObject(partialConfig) ? partialConfig : defaultConfig;
+    }
+
+    // Handle objects - deep merge
+    const merged = { ...defaultConfig };
+
+    for (const key in partialConfig) {
+      if (partialConfig.hasOwnProperty(key)) {
+        if (partialConfig[key] !== undefined) {
+          // If either value is a "value object", replace entirely
+          if (
+            isValueObject(partialConfig[key]) ||
+            isValueObject(merged[key])
+          ) {
+            merged[key] = partialConfig[key];
+          } else if (
+            // Recursively merge if both are plain objects
+            typeof partialConfig[key] === "object" &&
+            partialConfig[key] !== null &&
+            typeof merged[key] === "object" &&
+            merged[key] !== null
+          ) {
+            merged[key] = this.mergeHistogramConfig(partialConfig[key], merged[key]);
+          } else {
+            // Otherwise, replace the value
+            merged[key] = partialConfig[key];
           }
         }
-        return result;
-      }
-
-      // Otherwise → single object, wrap in array
-      return [pads];
-    }
-
-    function transform (obj, key = null) {
-      if (Array.isArray(obj)) {
-        return obj.map((o) => transform(o, key));
-      } else if (obj && typeof obj === "object") {
-        // Special case for histogramPads
-        if (key === "histogramPads") {
-          return expandHistogramPads(obj).map((pad) => transform(pad));
-        }
-
-        // Check for {x,y,z}
-        if (
-          "x" in obj &&
-          "y" in obj &&
-          "z" in obj &&
-          Object.keys(obj).length === 3
-        ) {
-          return new THREE.Vector3(obj.x, obj.y, obj.z);
-        }
-
-        const result = {};
-        for (const k in obj) {
-          result[k] = transform(obj[k], k);
-        }
-
-        // inject default target if missing
-        if (!("target" in result)) {
-          result.target = { entity: "*", id: "*" };
-        }
-
-        return result;
-      } else if (typeof obj === "string" && obj.startsWith("0x")) {
-        return new THREE.Color(parseInt(obj));
-      } else {
-        return obj;
       }
     }
 
-    return transform(data);
+    return merged;
   }
 }
 

@@ -8,7 +8,7 @@ class StateSubject {
   constructor () {
     this.#subject = new BehaviorSubject({
       sets: [],
-      selectedSet: undefined,
+      selectedSet: [],
       arrays: ["content"],
       selectedArray: "content"
     });

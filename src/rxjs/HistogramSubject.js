@@ -1,6 +1,7 @@
 import { ReplaySubject } from "rxjs";
 import FileHandler from "../service/FileHandler.js";
 import JsonHandler from "../service/JsonHandler.js";
+import { parseConfig } from "../utils/baseUtil.js";
 
 let histogramSubject;
 
@@ -23,6 +24,8 @@ class HistogramSubject {
       e.histogram = await FileHandler.parseFile(e.histogram);
     } else if (typeof e.histogram === "object") {
       e.histogram = await JsonHandler.parseJson(e.histogram);
+      e.opts = e.opts || {};
+      e.opts.config = parseConfig(e.opts.config);
     } else {
       throw new Error("Unsupported data type");
     }

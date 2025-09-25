@@ -6,6 +6,7 @@ export class HistogramPointerClass {
   path = undefined;
   title = undefined;
   range = [];
+  isOnSet = false;
 
   constructor (rootObj) {
     this.rootObj = rootObj;
@@ -28,9 +29,11 @@ export class HistogramPointerClass {
     if (this.origin.children?.content) {
       this.parentPath.push(this.origin);
       this.origin = this.origin.children.content[currentIndex];
+      this.isOnSet = false;
     } else if (Object.keys(this.origin.children).includes(set)) {
       this.parentPath.push(this.origin);
       this.origin = this.origin.children[set][currentIndex];
+      this.isOnSet = true;
     } else {
       console.error("Bad set or index specified.");
       return;
@@ -40,6 +43,23 @@ export class HistogramPointerClass {
     this.path = this.path + "/" + this.origin.fName;
     if (index.length > 0) {
       this.setOriginToChild(index, set);
+    }
+  }
+
+  /**
+   * @note Index have to exclude first index as the pointer is already on this node.
+   * */
+  getChildByPosition (index, set, node = this.origin) {
+    if (!index || index.length === 0) return node;
+    const currentIndex = index.pop();
+    if (!node?.children) return node;
+    if (node.children?.content) {
+      return this.getChildByPosition(index, set, node.children.content[currentIndex]);
+    } else if (Object.keys(node.children).includes(set)) {
+      return this.getChildByPosition(index, set, node.children[set][currentIndex]);
+    } else {
+      console.error("Bad set or index specified.");
+      return null;
     }
   }
 
@@ -57,5 +77,7 @@ export class HistogramPointerClass {
     }
     this.title = this.origin.fTitle;
     this.setOriginToParent(steps - 1);
+    this.isOnSet = false;
   }
+
 }

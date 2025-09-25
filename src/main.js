@@ -35,6 +35,7 @@ import nestedHisto2 from "../public/histograms/hist2D.axis1-pt_axis2-ce.json";
 import nestedHisto3 from "../public/histograms/hist1D.axis1-pt.json";
 import nestedHisto4 from "../public/histograms/test3D.axis1-pt_axis2-ce_axis5-eta (1).json";
 // import histoSparse5 from "../public/histograms/test3D.axis1-pt_axis2-ce_axis5-eta.root"
+import test_mv from "../public/histograms/nested/test_mv.json";
 import { parse, redraw, makeSVG, openFile, makeImage } from "jsroot";
 import { stateSubjectGet } from "./rxjs/StateSubject.js";
 import { filter } from "rxjs";
@@ -42,6 +43,7 @@ import { NestedHistogram } from "./component/nested-histogram-class.js";
 import { canvasSubjectGet } from "./rxjs/CanvasSubject.js";
 import { configSubjectGet } from "./rxjs/ConfigSubject.js";
 import { binInfoSubjectGet } from "./rxjs/BinInfoSubject.js";
+import { dispatchSubjectGet } from "./rxjs/DispatchSubject.js";
 
 initNdmvrAframe();
 
@@ -304,9 +306,31 @@ loadButton.addEventListener("click", async () => {
 // histogramSubjectGet().next({id: 'histogram1', opts: {render: "jsroot"}, histogram: h3scat});
 histogramSubjectGet().next({
   id: "histogram1",
-  opts: { render: "ndmvr" },
-  histogram: h3scat,
+  opts: {
+    render: "ndmvr",
+    config: {
+      TH1ZScale: {
+        default: 0.8,
+        layer: [0.08, 1, 1, 1],
+        set: 0.1,
+      },
+      color: {
+        default: {
+          min: "0x0066ff",
+          max: "0xff6600",
+        },
+      },
+      // wireframe: {
+      //   display: {
+      //     start: 1
+      //   }
+      // }
+    }
+
+  },
+  histogram: histo125,
 });
+
 // histogramSubjectGet().next({id: 'histogram3', opts: {render: "jsroot"}, histogram: h3scat});
 // histogramSubjectGet().next({id: 'histogram4', opts: {render: "nested"}, histogram: h3scat});
 
@@ -316,8 +340,8 @@ histogramSubjectGet().next({
 // histogramSubjectGet().next({id: 'histogram1', opts: {render: "jsroot"}, histogram: h3scat});
 //
 // setTimeout(()=> {
-//     histogramSubjectGet().next({id: 'histogram1', opts: {render: "jsroot"}, histogram: h3scat});
-// }, 2000);
+//     histogramSubjectGet().next({id: "histogram1", opts: {render: "ndmvr"}, histogram: test_mv});
+// }, 3000);
 // setTimeout(()=> {
 //     histogramSubjectGet().next({id: 'histogram1', opts: {render: "jsroot"}, histogram: h3scat});
 // }, 4000);
@@ -334,8 +358,37 @@ configSubjectGet().next(config);
 binInfoSubjectGet()
   .getObservable()
   .subscribe((event) => {
-    console.log(event);
+    // console.log(event);
   });
+
+setTimeout(() => {
+  dispatchSubjectGet().next({
+    target: {
+      name: "nested-histogram",
+      id: "histogram1"
+    },
+    event: {
+      source: "mousedbclick",
+      index: [{ x: 1, y: 1, z: 2 }],
+      set: "unlikepm"
+    }
+  });
+}, 2000);
+//
+setTimeout(() => {
+  dispatchSubjectGet().next({
+    target: {
+      name: "nested-histogram",
+      id: "histogram1"
+    },
+    event: {
+      source: "shiftmousedbclick",
+      // index: [{ x: 1, y: 1, z: 2 }, { x: 23, y: 1, z: 1 }],
+      index: [{ x: 23, y: 1, z: 1 }],
+      set: "unlikepm"
+    }
+  });
+}, 4000);
 
 // const functions = [
 //     {

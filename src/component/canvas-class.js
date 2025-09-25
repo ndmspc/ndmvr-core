@@ -53,9 +53,9 @@ export class CanvasClass {
         ),
       )
       .subscribe((v) => {
-        this.position = v.config.canvas.position;
-        this.rotation = v.config.canvas.rotation;
-        this.scale = v.config.canvas.scale;
+        this.position = v.config.environment.canvas.position;
+        this.rotation = v.config.environment.canvas.rotation;
+        this.scale = v.config.environment.canvas.scale;
         this.updateMesh();
       });
   }
