@@ -35,7 +35,6 @@ import nestedHisto2 from "../public/histograms/hist2D.axis1-pt_axis2-ce.json";
 import nestedHisto3 from "../public/histograms/hist1D.axis1-pt.json";
 import nestedHisto4 from "../public/histograms/test3D.axis1-pt_axis2-ce_axis5-eta (1).json";
 // import histoSparse5 from "../public/histograms/test3D.axis1-pt_axis2-ce_axis5-eta.root"
-import test_mv from "../public/histograms/nested/test_mv.json";
 import { parse, redraw, makeSVG, openFile, makeImage } from "jsroot";
 import { stateSubjectGet } from "./rxjs/StateSubject.js";
 import { filter } from "rxjs";
