@@ -24,6 +24,7 @@ import h3scat from "../public/histograms/h3scat.json";
 
 import test55x57x56 from "../public/histograms/TH3variableBinning55x57x56.json";
 
+
 import histogram2x2x3 from "../public/histograms/TH3variableBinning2x2x3OnlyInsideContent.json";
 import histo2x2x3 from "../public/histograms/TH3variableBinning2x2x3WOutsideContent.json";
 import histo6x2x1 from "../public/histograms/TH3variable6x2x1wOutsideContent.json";
@@ -302,36 +303,36 @@ loadButton.addEventListener("click", async () => {
 
 // histogramSubjectGet().next({id: 'histogram1-jsroot', histogram: histo2x2x3});
 
-// histogramSubjectGet().next({id: 'histogram1', opts: {render: "jsroot"}, histogram: h3scat});
-histogramSubjectGet().next({
-  id: "histogram1",
-  opts: {
-    render: "ndmvr",
-    config: {
-      TH1ZScale: {
-        default: 0.8,
-        layer: [0.08, 1, 1, 1],
-        set: 0.1,
-      },
-      color: {
-        default: {
-          min: "0x0066ff",
-          max: "0xff6600",
-        },
-      },
-      // wireframe: {
-      //   display: {
-      //     start: 1
-      //   }
-      // }
-    }
-
-  },
-  histogram: histo125,
-});
+// histogramSubjectGet().next({id: "histogram1", opts: {render: "jsroot"}, histogram: h3scat});
+// histogramSubjectGet().next({
+//   id: "histogram1",
+//   opts: {
+//     render: "ndmvr",
+//     config: {
+//       TH1ZScale: {
+//         default: 0.8,
+//         layer: [0.08, 1, 1, 1],
+//         set: 0.1,
+//       },
+//       color: {
+//         default: {
+//           min: "0x0066ff",
+//           max: "0xff6600",
+//         },
+//       },
+//       // wireframe: {
+//       //   display: {
+//       //     start: 1
+//       //   }
+//       // }
+//     }
+//
+//   },
+//   histogram: histo125,
+// });
 
 // histogramSubjectGet().next({id: 'histogram3', opts: {render: "jsroot"}, histogram: h3scat});
-// histogramSubjectGet().next({id: 'histogram4', opts: {render: "nested"}, histogram: h3scat});
+histogramSubjectGet().next({ id: "histogram1", opts: { render: "ndmvr" }, histogram: h3scat });
 
 // histogramSubjectGet().next({id: 'histogram2', opts: {render: "nested"}, histogram: h3scat});
 // histogramSubjectGet().next({id: 'histogram3', opts: {render: "nested"}, histogram: h3scat});
@@ -357,37 +358,77 @@ configSubjectGet().next(config);
 binInfoSubjectGet()
   .getObservable()
   .subscribe((event) => {
-    // console.log(event);
+    console.log(event);
   });
 
+// setTimeout(() => {
+//   dispatchSubjectGet().next({
+//     target: {
+//       name: "nested-histogram",
+//       id: "histogram1"
+//     },
+//     event: {
+//       source: "mousedbclick",
+//       index: [{ x: 1, y: 1, z: 2 }],
+//       set: "unlikepm"
+//     }
+//   });
+// }, 2000);
+// //
+// setTimeout(() => {
+//   dispatchSubjectGet().next({
+//     target: {
+//       name: "nested-histogram",
+//       id: "histogram1"
+//     },
+//     event: {
+//       source: "shiftmousedbclick",
+//       // index: [{ x: 1, y: 1, z: 2 }, { x: 23, y: 1, z: 1 }],
+//       index: [{ x: 23, y: 1, z: 1 }],
+//       set: "unlikepm"
+//     }
+//   });
+// }, 4000);
+
 setTimeout(() => {
-  dispatchSubjectGet().next({
+  //REMOVE ALL FUNCTIONS
+  // functionSubjectGet().removeFunctions({
+  //   target: {
+  //     entity: "nested-histogram",
+  //     id: "*"
+  //   }
+  // });
+
+  //REMOVE ALL FUNCTIONS ON EVENT
+  // functionSubjectGet().removeFunctions({
+  //   event: "mouseclick",
+  //   target: {
+  //     entity: "nested-histogram",
+  //     id: "*"
+  //   }
+  // });
+
+  //ADD DEFAULT FUNCTION
+  // functionSubjectGet().addFunctions({
+  //   event: "mouseclick",
+  //   target: {
+  //     entity: "nested-histogram",
+  //     id: "*"
+  //   },
+  // });
+
+  //ADD CUSTOM FUNCTION
+  functionSubjectGet().addFunctions({
+    event: "mouseclick",
     target: {
-      name: "nested-histogram",
-      id: "histogram1"
+      entity: "nested-histogram",
+      id: "*"
     },
-    event: {
-      source: "mousedbclick",
-      index: [{ x: 1, y: 1, z: 2 }],
-      set: "unlikepm"
+    function: function (event, context) {
+      console.log("my-custom-function: ", event);
     }
   });
-}, 2000);
-//
-setTimeout(() => {
-  dispatchSubjectGet().next({
-    target: {
-      name: "nested-histogram",
-      id: "histogram1"
-    },
-    event: {
-      source: "shiftmousedbclick",
-      // index: [{ x: 1, y: 1, z: 2 }, { x: 23, y: 1, z: 1 }],
-      index: [{ x: 23, y: 1, z: 1 }],
-      set: "unlikepm"
-    }
-  });
-}, 4000);
+}, 3000);
 
 // const functions = [
 //     {

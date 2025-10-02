@@ -20,18 +20,19 @@ export class HistogramPointerClass {
    * @param index is an index in child mapping.
    * @param set if children contains sets, parameter need to be specified.
    * */
-  setOriginToChild (index, set) {
+  setOriginToChild (index, set, range) {
     // console.log('vojde', this.origin, ', set: ', set);
     if (!index) return;
     // console.log(index)
     const currentIndex = index.splice(0, 1);
     if (!this.origin?.children) return;
     if (this.origin.children?.content) {
-      this.parentPath.push(this.origin);
+      this.parentPath.push({ origin: this.origin, range: range });
+      console.log(this.parentPath);
       this.origin = this.origin.children.content[currentIndex];
       this.isOnSet = false;
     } else if (Object.keys(this.origin.children).includes(set)) {
-      this.parentPath.push(this.origin);
+      this.parentPath.push({ origin: this.origin, range: range });
       this.origin = this.origin.children[set][currentIndex];
       this.isOnSet = true;
     } else {
@@ -73,7 +74,7 @@ export class HistogramPointerClass {
     this.path = this.path.slice(0, pathIndex);
     const parent = this.parentPath.pop();
     if (parent) {
-      this.origin = parent;
+      this.origin = parent.origin;
     }
     this.title = this.origin.fTitle;
     this.setOriginToParent(steps - 1);

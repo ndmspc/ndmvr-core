@@ -74,10 +74,46 @@ export class NestedHistogram {
         ),
       )
       .subscribe((f) => {
+        console.log(f);
         if (f.flag === "add") {
-          this.addEvent(f.event, f.function);
-        } else if (f.flag === "remove") {
+          if (f.function) {
+            this.addEvent(f.event, f.function);
+          } else {
+            switch (f.event) {
+              case "mousemove":
+                this.addEvent(f.event, this.mousemoveDefault);
+                break;
+              case "mouseclick":
+                this.addEvent(f.event, this.mouseClickDefault);
+                break;
+              case "shiftmouseclick":
+                this.addEvent(f.event, this.shiftMouseClickDefault);
+                break;
+              case "mousedbclick":
+                this.addEvent(f.event, this.mouseDBClickDefault);
+                break;
+              case "shiftmousedbclick":
+                this.addEvent(f.event, this.shiftMouseDBClickDefault);
+                break;
+            }
+          }
+        } else if (f.flag === "remove" && f.function) {
           this.removeEvent(f.event, f.function);
+        } else if (f.flag === "remove") {
+          switch (f?.state) {
+            case "keydown":
+              this.keydownEvents = [];
+              break;
+            case "keyup":
+              this.keyupEvents = [];
+              break;
+            default:
+              this.mouseEvents = this.mouseEvents.filter(ev => ev.event !== f.event);
+          }
+        } else if (f.flag === "removeAll") {
+          this.keydownEvents = [];
+          this.keyupEvents = [];
+          this.mouseEvents = [];
         }
       });
 
@@ -132,6 +168,11 @@ export class NestedHistogram {
     this.keyDownHandler = this.keyDownHandler.bind(this);
     this.keyUpHandler = this.keyUpHandler.bind(this);
     this.raycastHandler = this.raycastHandler.bind(this);
+    this.mouseClickDefault = this.mouseClickDefault.bind(this);
+    this.mousemoveDefault = this.mousemoveDefault.bind(this);
+    this.shiftMouseClickDefault = this.shiftMouseClickDefault.bind(this);
+    this.mouseDBClickDefault = this.mouseDBClickDefault.bind(this);
+    this.shiftMouseDBClickDefault = this.shiftMouseDBClickDefault.bind(this);
     window.addEventListener("keydown", this.keyDownHandler);
     window.addEventListener("keydown", this.keyUpHandler);
 
@@ -175,12 +216,21 @@ export class NestedHistogram {
    * @desc Initializes base values and objects.
    * */
   init () {
+    this.keydownEvents = [];
+    this.keyupEvents = [];
+    this.mouseEvents = [];
+
     this.maxInstancesPerLayer = this.computeMaxInstancesPerLayer();
     this.maxContentPerLayer = this.computeMaxContentPerLayer();
     this.minContentPerLayer = this.computeMinContentPerLayer();
     this.totalInstances = this.maxInstancesPerLayer.reduce((acc, value) => {
       return acc * value;
     }, 1);
+    this.addEvent("mouseclick", this.mouseClickDefault);
+    this.addEvent("mousemove", this.mousemoveDefault);
+    this.addEvent("shiftmouseclick", this.shiftMouseClickDefault);
+    this.addEvent("mousedbclick", this.mouseDBClickDefault);
+    this.addEvent("shiftmousedbclick", this.shiftMouseDBClickDefault);
 
     this.setupInstancedMesh();
 
@@ -546,40 +596,15 @@ export class NestedHistogram {
 
   }
 
-  mergeInfo (event, node = this.pointer.origin, layer = 0) {
-    const ind = event.index.splice(0, 1)[0];
-    if (!ind) return event;
-    const axes = ["x", "y", "z"];
-
-    const numOfDimensions = Number.parseInt(node._typename.substring(2, 3));
-    const val = [];
-    for (let i = 0; i < numOfDimensions; i++) {
-      const axis = event.range[layer][axes[i]];
-      const bin = ind[axes[i]] + 1;
-      val.push({ ...axis, bin });
-      // val.push({...coords[i]})
-    }
-    val.push({ color: this.wireframe.getColorAt(layer, event.set) });
-    // console.log("val", val);
-    event.range[layer] = val;
-    if (node.children && event.index.length > 0) {
-      // console.log("AAAAAAAAAAAA", node.children, event.set);
-      // const child = node.children[event.set][event.jsrootInstance[layer]];
-      const child =
-        node.children?.content || event.set === "content"
-          ? node.children.content[event.jsrootInstance[layer]]
-          : node.children[event.set][event.jsrootInstance[layer]];
-      return this.mergeInfo(event, child, layer + 1);
-    } else {
-      return event;
-    }
+  mouseClickDefault (event) {
+    this.showChildHistogram(event.index);
+    canvasSubjectGet().next({
+      id: this.id + "-cinema",
+      obj: event.jsrootObj,
+    });
   }
 
-  intersectionHandler (intersection, triggerSource) {
-    this.mouseEvents
-      .filter((mouseEvent) => mouseEvent.event === triggerSource)
-      .forEach((mouseEvent) => mouseEvent.function(intersection, this));
-
+  mousemoveDefault (event) {
     const areIndexesEqual = (index1, index2) => {
       if (index1.length !== index2.length) return false;
       for (let i = 0; i < index1.length; i++) {
@@ -590,48 +615,39 @@ export class NestedHistogram {
       return true;
     };
 
-    const eventWithSource = { ...intersection, triggerSource };
-    if (!(triggerSource === "mousemove" &&
-      areIndexesEqual(intersection.index, this.dirtyInstance))) {
-      const merged = this.mergeInfo({
-        ...eventWithSource,
-        index: [...eventWithSource.index],
-      });
-      const { range: coords, content, error, set, triggerSource } = merged;
-      const minimizedEvent = { coords, content, error, set, triggerSource };
-      binInfoSubjectGet().next(minimizedEvent);
-    }
+    if (areIndexesEqual(event.index, this.dirtyInstance)) return;
+    const parentRange = this.pointer.parentPath.map(p => p.range[0]);
+    const merged = {
+      ...event,
+      level: parentRange.length,
+      range: parentRange.concat(event.range)
+    };
+    const { range: coords, level, content, error, set, triggerSource } = merged;
+    const minimizedEvent = { coords, level, content, error, set, triggerSource };
+    binInfoSubjectGet().next(minimizedEvent);
+  }
 
-    switch (triggerSource) {
-      case "mouseclick":
-        this.showChildHistogram(intersection.index);
-        canvasSubjectGet().next({
-          id: this.id + "-cinema",
-          obj: intersection.jsrootObj,
-        });
-        break;
-      case "shiftmouseclick":
-        this.hideChildHistogram(intersection.index);
-        break;
-      case "mousedbclick":
-        setTimeout(() => {
-          intersection.set
-            ? this.setPointerToChild(
-              this.computeJsRootIndexFromPosition(intersection.index),
-              intersection.set,
-            )
-            : this.setPointerToChild(
-              this.computeJsRootIndexFromPosition(intersection.index),
-              this.selectedSet[0],
-            );
-        }, 0);
-        break;
-      case "shiftmousedbclick":
-        this.setPointerToParent();
-        break;
-      case "mousemove":
-        break;
-    }
+  shiftMouseClickDefault (event) {
+    this.hideChildHistogram(event.index);
+  }
+
+  mouseDBClickDefault (event) {
+    setTimeout(() => {
+      event.set
+        ? this.setPointerToChild(event.index, event.set)
+        : this.setPointerToChild(event.index, this.selectedSet[0]);
+    }, 0);
+  }
+
+  shiftMouseDBClickDefault (event) {
+    this.setPointerToParent();
+  }
+
+  intersectionHandler (intersection, triggerSource) {
+    this.mouseEvents
+      .filter((mouseEvent) => mouseEvent.event === triggerSource)
+      .forEach((mouseEvent) => mouseEvent.function(intersection, this));
+
     this.dirtyInstance = intersection.index;
   }
 
@@ -647,7 +663,9 @@ export class NestedHistogram {
 
   handleStateChange (state) {
     if (this.areArraysEqual(state.sets, this.availableSets)
-      && !this.areArraysEqual(state.selectedSet, this.selectedSet)) {
+      && (!this.areArraysEqual(state.selectedSet, this.selectedSet)
+        || this.selectedArray !== state.selectedArray)) {
+      this.selectedArray = state.selectedArray;
       this.selectedSet = state.selectedSet;
       const parent = this.instancedMesh.parent;
       this.instancedMesh.dispose();
@@ -740,7 +758,7 @@ export class NestedHistogram {
   /**
    * @desc Removes function from event listener.
    * @param event Defines from which event should listening be removed.
-   * @func Function has to have same reference to one that was added by addEvent.
+   * @param func has to have same reference to one that was added by addEvent.
    * */
   removeEvent (event, func) {
     const index = this.mouseEvents.find((f) => f === func);
@@ -851,7 +869,11 @@ export class NestedHistogram {
     this.wireframe.dispose();
     parent.remove(this.instancedMesh);
 
-    this.pointer.setOriginToChild(position, set);
+    console.log(position);
+    const range = this.getRangeByPosition(position);
+    console.log(range);
+
+    this.pointer.setOriginToChild(this.computeJsRootIndexFromPosition(position), set, range);
     this.init();
     console.log("path: ", this.pointer.path);
     console.log("title: ", this.pointer.title);
@@ -1008,30 +1030,24 @@ export class NestedHistogram {
    * @default Pointers origin.
    * */
   getRangeByPosition (position, obj = this.pointer.origin) {
-    const range = {
-      x: { min: undefined, max: undefined },
-      y: { min: undefined, max: undefined },
-      z: { min: undefined, max: undefined },
-    };
+    const axisNames = ["x", "y", "z"];
+    const nAxes = Number.parseInt(obj._typename.substring(2, 3), 10);
+
+    const range = {};
+
     if (position[0]) {
-      range.x.min = obj.fXaxis.GetBinLowEdge(position[0].x + 1);
-      range.x.max =
-        obj.fXaxis.GetBinCenter(position[0].x + 1) * 2 -
-        obj.fXaxis.GetBinLowEdge(position[0].x + 1);
-      range.x.name = obj.fXaxis.fName;
-      range.x.title = obj.fXaxis.fTitle;
-      range.y.min = obj.fYaxis.GetBinLowEdge(position[0].y + 1);
-      range.y.max =
-        obj.fYaxis.GetBinCenter(position[0].y + 1) * 2 -
-        obj.fYaxis.GetBinLowEdge(position[0].y + 1);
-      range.y.title = obj.fYaxis.fTitle;
-      range.y.name = obj.fYaxis.fName;
-      range.z.min = obj.fZaxis.GetBinLowEdge(position[0].z + 1);
-      range.z.max =
-        obj.fZaxis.GetBinCenter(position[0].z + 1) * 2 -
-        obj.fZaxis.GetBinLowEdge(position[0].z + 1);
-      range.z.title = obj.fZaxis.fTitle;
-      range.z.name = obj.fZaxis.fName;
+      for (let i = 0; i < nAxes; i++) {
+        const axisKey = axisNames[i]; // "x", "y", or "z"
+        const axisObj = obj[`f${axisKey.toUpperCase()}axis`]; // fXaxis, fYaxis, fZaxis
+        const posVal = position[0][axisKey];
+
+        range[axisKey] = {
+          min: axisObj.GetBinLowEdge(posVal + 1),
+          max: axisObj.GetBinCenter(posVal + 1) * 2 - axisObj.GetBinLowEdge(posVal + 1),
+          name: axisObj.fName,
+          title: axisObj.fTitle
+        };
+      }
     }
     if (position[1]) {
       let child = undefined;
