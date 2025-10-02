@@ -44,6 +44,7 @@ class FunctionSubject {
    * Function that takes array of functions and proposes them to histogram with delete flag.
    * */
   removeFunctions (input) {
+    console.log("vojde do remove");
     if (!input) return;
     let functions;
     if ((input instanceof Array)) {
@@ -52,12 +53,13 @@ class FunctionSubject {
       functions = Array.of(input);
     }
     functions.forEach(func => {
+      console.log(func);
       let id = func.target.id;
       if (!(id instanceof Array)) {
         id = Array.of(id);
       }
       this.#subject.next({
-        flag: "remove",
+        flag: func.event ? "remove" : "removeAll",
         target: {
           entity: func.target.entity,
           id: id
@@ -67,6 +69,7 @@ class FunctionSubject {
       });
     });
   }
+
 
   getObservable () {
     return this.#subject.asObservable();

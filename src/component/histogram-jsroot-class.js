@@ -29,7 +29,7 @@ export class HistogramJsrootClass {
         ((e.target.id.includes("*")) || (e.target.id.includes(this.id)))))
       .subscribe((v) => {
         this.config = { ...v.config };
-        const matrix = this.config.histogramPads.find(el => el.id === this.id);
+        const matrix = this.config.environment.histogramPads.find(el => el.id === this.id);
         const pos = matrix.position;
         // const scale = matrix.scale;
         this.histogramGroup.position.set(pos.x, pos.y, pos.z);
@@ -37,6 +37,7 @@ export class HistogramJsrootClass {
       });
 
     this.render();
+    // this.renderWithBuild3d();
   }
 
   updateHistogram (histo) {
@@ -44,6 +45,13 @@ export class HistogramJsrootClass {
     this.histogramGroup.clear();
     this.render();
   }
+
+  // renderWithBuild3d() {
+  //   build3d(this.rootObj).then(obj3d => {
+  //     this.histogramGroup.add(obj3d);
+  //     console.log(obj3d);
+  //   });
+  // }
 
   render () {
     // console.log('dojde', this.rootObj)
@@ -56,7 +64,7 @@ export class HistogramJsrootClass {
         this.histogramGroup.clear();
 
         if (this.framePainter.scene.children[0]) {
-          const matrixScale = this.config.histogramPads.find(el => el.id === this.id)?.scale;
+          const matrixScale = this.config.environment.histogramPads.find(el => el.id === this.id)?.scale;
           const box = new THREE.Box3().setFromObject(this.framePainter.scene);
           const size = new THREE.Vector3();
           box.getSize(size);
