@@ -19,7 +19,6 @@ const registerBinInfoJsrootComponent = () => {
           backgroundColor: 0x36454F,
           textColor: 0,      // ROOT color index
           titleColor: 0,     // ROOT color index
-          textSize: 10,
         });
 
       // this.el.object3D.add(this.binInfo.getGroup());

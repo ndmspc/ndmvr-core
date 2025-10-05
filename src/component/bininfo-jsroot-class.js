@@ -16,7 +16,7 @@ export class BinInfoVisualizer {
       titleColor: 0, // ROOT color index for title
       padding: 0.002,
       lineHeight: 0.002,
-      textSize: 0.3,
+      textSize: 10,
       width: 0.031,
       ...options
     };
@@ -167,8 +167,8 @@ export class BinInfoVisualizer {
     const dir = new THREE.Vector3()
       .subVectors(worldPos, this.camera.position)
       .normalize();
-    const distance = 0.1;
 
+    const distance = 0.1;
     const pos = new THREE.Vector3()
       .copy(this.camera.position)
       .addScaledVector(dir, distance);
@@ -178,7 +178,6 @@ export class BinInfoVisualizer {
     box.getSize(size);
 
     const halfSize = size.clone().multiplyScalar(0.5);
-
     pos.add(new THREE.Vector3(halfSize.x, halfSize.y, 0));
     this.group.position.copy(pos);
 
