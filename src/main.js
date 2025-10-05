@@ -78,12 +78,15 @@ imageContainer.setAttribute("scale", "10 10 10");
 
 sceneElm.appendChild(imageContainer);
 
-// const jsrootHistogramContainer = document.createElement('a-entity');
-// jsrootHistogramContainer.id = "histogram1-jsroot";
-// jsrootHistogramContainer.setAttribute('jsroot-histogram', '');
-// jsrootHistogramContainer.setAttribute('position', "0 0 0");
-// sceneElm.appendChild(jsrootHistogramContainer);
-//
+const binInfoJsrootContainer = document.createElement("a-entity");
+binInfoJsrootContainer.id = "histogram1-bininfo";
+binInfoJsrootContainer.setAttribute("bininfo-jsroot", "");
+binInfoJsrootContainer.setAttribute("position", "0 4 -6");
+binInfoJsrootContainer.setAttribute("scale", "10 10 10");
+
+sceneElm.appendChild(binInfoJsrootContainer);
+
+
 const histogramContainer = document.createElement("a-entity");
 histogramContainer.id = "histogram1";
 histogramContainer.setAttribute("histogram", "");

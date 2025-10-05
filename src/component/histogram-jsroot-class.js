@@ -138,7 +138,13 @@ export class HistogramJsrootClass {
         return a.distance - b.distance;
       })[0];
 
-    if (!firstIntersect) return;
+    if (!firstIntersect) {
+      this.mouseEvents
+        .filter((mouseEvent) => mouseEvent.event === "mousemove")
+        .forEach((mouseEvent) => mouseEvent.function(
+          {instanceId: undefined, object: this.getInstancedMesh()}, this));
+      return;
+    }
 
     const bin = firstIntersect.object.bins[firstIntersect.instanceId];
     const xBins = this.rootObj.fXaxis.fNbins + 2;
@@ -153,7 +159,7 @@ export class HistogramJsrootClass {
       ...firstIntersect,
       bin: bin,
       index: [index],
-      range: this.getRangeByPosition([index]),
+      coords: Array.of(this.getRangeByPosition([index])),
       content: this.rootObj.getBinContent(index.x, index.y, index.z),
       error: this.rootObj.getBinError(index.x, index.y, index.z),
     };
@@ -217,8 +223,6 @@ export class HistogramJsrootClass {
       return true;
     };
 
-    console.log(event);
-
     if (event.instanceId === this.dirtyInstance) return;
     const mesh = event.object;
     if (this.dirtyInstance !== undefined) {
@@ -239,8 +243,7 @@ export class HistogramJsrootClass {
     mesh.setColorAt(this.dirtyInstance, color);
     mesh.instanceColor.needsUpdate = true;
 
-
-
+    canvasSubjectGet().next(event);
   }
 
   shiftMouseClickDefault (event) {
