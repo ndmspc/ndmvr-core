@@ -115,7 +115,6 @@ export class BinInfoVisualizer {
   async updateVisualization (data) {
     this.currentData = data;
 
-    // Clear existing geometry
     while (this.group.children.length > 0) {
       const child = this.group.children[0];
       if (child.geometry) child.geometry.dispose();
@@ -123,21 +122,17 @@ export class BinInfoVisualizer {
       this.group.remove(child);
     }
 
-    // Parse data into display lines
     const lines = this.parseData(data);
 
     if (lines.length === 0) return;
 
     const { padding, lineHeight, textSize, textColor, titleColor, width } = this.options;
 
-    // Calculate panel height based on number of lines
     const panelHeight = lines.length * lineHeight + padding * 2;
 
-    // Create background panel
     const panel = this.createBackgroundPanel(panelHeight);
     this.group.add(panel);
 
-    // Create text for each line
     const startY = (panelHeight / 2) - padding - (lineHeight / 2);
 
     for (let i = 0; i < lines.length; i++) {
@@ -145,24 +140,21 @@ export class BinInfoVisualizer {
       const y = startY - (i * lineHeight);
 
       try {
-        // Create TLatex object
         const latex = this.create("TLatex");
         latex.fTitle = line.text;
-        latex.fTextAlign = 12; // Left-aligned, vertically centered
+        latex.fTextAlign = 12;
         latex.fTextFont = 2;
         latex.fTitleFont = 2;
         latex.fLabelFont = 2;
         latex.fTextColor = line.isTitle ? titleColor : textColor;
         latex.fTextSize = line.isTitle ? textSize + 2 : textSize;
 
-        // Create 3D representation
         const textGroup = await this.create3d(latex, "p", y * 100, "", "");
         textGroup.scale.set(0.00016, 0.00016, 0.00016);
 
-        // Position text group
         textGroup.position.x = -(width / 2) + padding;
         textGroup.position.y = y;
-        textGroup.position.z = 0.001; // Slightly in front of panel
+        textGroup.position.z = 0.001;
 
         this.group.add(textGroup);
 
