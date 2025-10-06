@@ -334,7 +334,7 @@ loadButton.addEventListener("click", async () => {
 //   histogram: histo125,
 // });
 
-histogramSubjectGet().next({id: "histogram1", opts: {render: "jsroot"}, histogram: h3scat});
+histogramSubjectGet().next({id: "histogram1", opts: {render: "jsroot"}, histogram: histo6x2x1});
 // histogramSubjectGet().next({ id: "histogram1", opts: { render: "ndmvr" }, histogram: h3scat });
 
 // histogramSubjectGet().next({id: 'histogram2', opts: {render: "nested"}, histogram: h3scat});

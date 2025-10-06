@@ -293,8 +293,8 @@ export class HistogramJsrootClass {
         const posVal = position[0][axisKey];
 
         range[axisKey] = {
-          min: axisObj.GetBinLowEdge(posVal + 1),
-          max: axisObj.GetBinCenter(posVal + 1) * 2 - axisObj.GetBinLowEdge(posVal + 1),
+          min: axisObj.GetBinLowEdge(posVal),
+          max: axisObj.GetBinCenter(posVal) * 2 - axisObj.GetBinLowEdge(posVal),
           name: axisObj.fName,
           title: axisObj.fTitle
         };
