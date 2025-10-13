@@ -83,6 +83,10 @@ export class HistogramJsrootClass {
               break;
             default:
               this.mouseEvents = this.mouseEvents.filter(ev => ev.event !== f.event);
+              this.mousemoveDefault({
+                object: this.getInstancedMesh(),
+                instanceId: null
+              });
           }
         } else if (f.flag === "removeAll") {
           this.keydownEvents = [];

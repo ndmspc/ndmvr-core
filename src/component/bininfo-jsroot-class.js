@@ -1,5 +1,6 @@
 import * as THREE from "three";
 import { canvasSubjectGet } from "../rxjs/CanvasSubject.js";
+import { concatMap, from } from "rxjs";
 
 /**
  * Class to visualize bin information as a 3D panel in THREE.js
@@ -34,10 +35,8 @@ export class BinInfoVisualizer {
     // Subscribe to the bin info subject
     this.subscription = canvasSubjectGet()
       .getObservable()
-      .subscribe((event) => {
-        this.updateVisualization(event);
-      });
-
+      .pipe(concatMap(event => from(this.updateVisualization(event))))
+      .subscribe();
   }
 
   /**
@@ -113,6 +112,7 @@ export class BinInfoVisualizer {
    * Update the 3D visualization
    */
   async updateVisualization (data) {
+    if (data === null) this.clear();
     this.currentData = data;
 
     while (this.group.children.length > 0) {
@@ -203,6 +203,18 @@ export class BinInfoVisualizer {
    */
   setRotation (x, y, z) {
     this.group.rotation.set(x, y, z);
+  }
+
+  /**
+   * Clear panel
+   */
+  clear () {
+    while (this.group.children.length > 0) {
+      const child = this.group.children[0];
+      if (child.geometry) child.geometry.dispose();
+      if (child.material) child.material.dispose();
+      this.group.remove(child);
+    }
   }
 
   /**
