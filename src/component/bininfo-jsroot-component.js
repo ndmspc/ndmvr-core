@@ -12,9 +12,6 @@ const registerBinInfoJsrootComponent = () => {
 
       this.binInfo = new BinInfoVisualizer(
         getCameraComponent().object3D.children[0].children[0],
-        canvasSubjectGet(),
-        create,
-        build3d,
         {
           backgroundColor: 0x36454F,
           textColor: 0,      // ROOT color index

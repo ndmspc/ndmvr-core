@@ -34,7 +34,7 @@
   },
   "dependencies": {
     "aframe": "^1.7.0",
-    "jsroot": "^7.8.1",
+    "jsroot": "https://github.com/root-project/jsroot.git#e1a46e0",
     "networked-aframe": "^0.14.0",
     "rxjs": "^7.8.1",
     "three": "^0.173.0",

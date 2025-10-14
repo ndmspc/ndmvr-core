@@ -1,6 +1,7 @@
 import * as THREE from "three";
 import { canvasSubjectGet } from "../rxjs/CanvasSubject.js";
 import { concatMap, from } from "rxjs";
+import {create, create3d} from "jsroot";
 
 /**
  * Class to visualize bin information as a 3D panel in THREE.js
@@ -8,7 +9,7 @@ import { concatMap, from } from "rxjs";
  * Subscribes to RxJS subject for bin data updates
  */
 export class BinInfoVisualizer {
-  constructor (camera ,binInfoSubject, create, create3d, options = {}) {
+  constructor (camera, options = {}) {
     // Configuration
     this.camera = camera;
     this.options = {
@@ -22,21 +23,17 @@ export class BinInfoVisualizer {
       ...options
     };
 
-    // Store create functions
-    this.create = create;
-    this.create3d = create3d;
-
     // THREE.js group to hold the visualization
     this.group = new THREE.Group();
 
     // Current bin data
-    this.currentData = null;
+    // this.currentData = null;
 
     // Subscribe to the bin info subject
-    this.subscription = canvasSubjectGet()
-      .getObservable()
-      .pipe(concatMap(event => from(this.updateVisualization(event))))
-      .subscribe();
+    // this.subscription = canvasSubjectGet()
+    //   .getObservable()
+    //   .pipe(concatMap(event => from(this.updateVisualization(event))))
+    //   .subscribe();
   }
 
   /**
@@ -113,7 +110,7 @@ export class BinInfoVisualizer {
    */
   async updateVisualization (data) {
     if (data === null) this.clear();
-    this.currentData = data;
+    // this.currentData = data;
 
     while (this.group.children.length > 0) {
       const child = this.group.children[0];
@@ -140,7 +137,7 @@ export class BinInfoVisualizer {
       const y = startY - (i * lineHeight);
 
       try {
-        const latex = this.create("TLatex");
+        const latex = create("TLatex");
         latex.fTitle = line.text;
         latex.fTextAlign = 12;
         latex.fTextFont = 2;
@@ -149,7 +146,7 @@ export class BinInfoVisualizer {
         latex.fTextColor = line.isTitle ? titleColor : textColor;
         latex.fTextSize = line.isTitle ? textSize + 2 : textSize;
 
-        const textGroup = await this.create3d(latex, "p", y * 100, "", "");
+        const textGroup = await create3d(latex, "p", y * 100, "", "");
         textGroup.scale.set(0.00016, 0.00016, 0.00016);
 
         textGroup.position.x = -(width / 2) + padding;
@@ -221,9 +218,9 @@ export class BinInfoVisualizer {
    * Clean up resources
    */
   dispose () {
-    if (this.subscription) {
-      this.subscription.unsubscribe();
-    }
+    // if (this.subscription) {
+    //   this.subscription.unsubscribe();
+    // }
 
     while (this.group.children.length > 0) {
       const child = this.group.children[0];

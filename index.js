@@ -20,4 +20,3 @@ export * from "./src/component/nested-histogram-class";
 export * from "./src/core/histogram-pointer-class";
 export * from "./src/component/canvas-class.js";
 export * from "./src/component/histogram-jsroot-class.js";
-export * from "./src/component/bininfo-jsroot-class.js";

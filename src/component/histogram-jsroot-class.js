@@ -4,11 +4,13 @@ import { build3d } from "jsroot";
 import { functionSubjectGet } from "../rxjs/FunctionSubject.js";
 import { canvasSubjectGet } from "../rxjs/CanvasSubject.js";
 import { binInfoSubjectGet } from "../rxjs/BinInfoSubject.js";
+import BinInfoVisualizer from "./bininfo-jsroot-class.js";
+import { getCameraComponent } from "./camera.component.js";
 
 export class HistogramJsrootClass {
 
-  framePainter = undefined;
   histogramGroup = undefined;
+  binInfoComponent = undefined;
   id = undefined;
   configSub = undefined;
   rootObj = undefined;
@@ -23,6 +25,14 @@ export class HistogramJsrootClass {
     this.histogramGroup = new THREE.Group();
     this.dummyEl = document.getElementById("dummyDiv" + id);
     if (this.dummyEl) document.body.removeChild(this.dummyEl);
+
+    this.binInfoComponent = new BinInfoVisualizer(
+      getCameraComponent().object3D.children[0].children[0],
+      {
+        backgroundColor: 0x36454F,
+        textColor: 0,      // ROOT color index
+        titleColor: 0,     // ROOT color index
+      });
 
     this.dummyEl = document.createElement("div");
     this.dummyEl.id = "dummyDiv" + id;
@@ -247,7 +257,8 @@ export class HistogramJsrootClass {
     mesh.setColorAt(this.dirtyInstance, color);
     mesh.instanceColor.needsUpdate = true;
 
-    canvasSubjectGet().next(event);
+    this.binInfoComponent.updateVisualization(event);
+    // canvasSubjectGet().next(event);
   }
 
   shiftMouseClickDefault (event) {
