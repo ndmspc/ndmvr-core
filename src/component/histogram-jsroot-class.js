@@ -2,11 +2,7 @@ import { configSubjectGet } from "../rxjs/ConfigSubject.js";
 import { filter } from "rxjs";
 import { build3d } from "jsroot";
 import { functionSubjectGet } from "../rxjs/FunctionSubject.js";
-import { canvasSubjectGet } from "../rxjs/CanvasSubject.js";
-import { binInfoSubjectGet } from "../rxjs/BinInfoSubject.js";
 import BinInfoVisualizer from "./bininfo-jsroot-class.js";
-import { getCameraComponent } from "./camera.component.js";
-
 export class HistogramJsrootClass {
 
   histogramGroup = undefined;
@@ -19,20 +15,22 @@ export class HistogramJsrootClass {
   defaultRaycastHandler = undefined;
   mouseEvents = [];
 
-  constructor (id, rootObj) {
+  constructor (id, rootObj, camera) {
     this.id = id;
     this.rootObj = rootObj;
+    this.camera = camera;
     this.histogramGroup = new THREE.Group();
     this.dummyEl = document.getElementById("dummyDiv" + id);
     if (this.dummyEl) document.body.removeChild(this.dummyEl);
 
     this.binInfoComponent = new BinInfoVisualizer(
-      getCameraComponent().object3D.children[0].children[0],
+      this.camera,
       {
         backgroundColor: 0x36454F,
         textColor: 0,      // ROOT color index
         titleColor: 0,     // ROOT color index
       });
+    console.log(this.binInfoComponent);
 
     this.dummyEl = document.createElement("div");
     this.dummyEl.id = "dummyDiv" + id;
@@ -106,6 +104,11 @@ export class HistogramJsrootClass {
       });
 
     this.raycastHandler = this.raycastHandler.bind(this);
+    this.mouseClickDefault = this.mouseClickDefault.bind(this);
+    this.mousemoveDefault = this.mousemoveDefault.bind(this);
+    this.shiftMouseClickDefault = this.shiftMouseClickDefault.bind(this);
+    this.mouseDBClickDefault = this.mouseDBClickDefault.bind(this);
+    this.shiftMouseDBClickDefault = this.shiftMouseDBClickDefault.bind(this);
     this.addEvent("mouseclick", this.mouseClickDefault);
     this.addEvent("mousemove", this.mousemoveDefault);
     this.addEvent("shiftmouseclick", this.shiftMouseClickDefault);
@@ -135,6 +138,8 @@ export class HistogramJsrootClass {
 
       obj3d.rotateX(-Math.PI / 2);
       this.histogramGroup.add(obj3d);
+      console.log("obj3d: ", obj3d);
+      console.log(this.histogramGroup);
 
       const mesh = this.getInstancedMesh();
       this.defaultRaycastHandler = mesh.raycast.bind(mesh);
@@ -257,7 +262,7 @@ export class HistogramJsrootClass {
     mesh.setColorAt(this.dirtyInstance, color);
     mesh.instanceColor.needsUpdate = true;
 
-    this.binInfoComponent.updateVisualization(event);
+    this.binInfoComponent.queue.next(event);
     // canvasSubjectGet().next(event);
   }
 
@@ -276,7 +281,7 @@ export class HistogramJsrootClass {
   getInstancedMesh(node = this.histogramGroup) {
     if (!node) return null;
 
-    if (node.isInstancedMesh === true) {
+    if (node.isInstancedMesh === true || node?.geometry?.type === "BufferGeometry") {
       return node;
     }
 

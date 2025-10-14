@@ -36,7 +36,7 @@ export class NdmvrRaycaster {
 
   setupRaycasting () {
     let lastCheck = 0; // Timestamp tracker
-    const checkInterval = 100; // 100ms delay
+    const checkInterval = 1; // 100ms delay
 
     window.addEventListener("mousemove", (event) => {
       const now = performance.now();

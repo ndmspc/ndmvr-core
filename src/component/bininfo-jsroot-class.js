@@ -1,7 +1,9 @@
 import * as THREE from "three";
+import { TextGeometry } from "three/addons/geometries/TextGeometry.js";
+import { FontLoader } from "three/addons/loaders/FontLoader.js";
 import { canvasSubjectGet } from "../rxjs/CanvasSubject.js";
-import { concatMap, from } from "rxjs";
-import {create, create3d} from "jsroot";
+import { concatMap, EMPTY, finalize, from, Subject } from "rxjs";
+import { create, build3d } from "jsroot";
 
 /**
  * Class to visualize bin information as a 3D panel in THREE.js
@@ -22,6 +24,33 @@ export class BinInfoVisualizer {
       width: 0.031,
       ...options
     };
+    this.loader = new FontLoader();
+    this.queue = new Subject();
+    let busy = false;
+    let latest = null;
+
+    this.queueSub = this.queue
+      .pipe(
+        concatMap(event => {
+          if (busy) {
+            // if already processing, remember only the latest event
+            latest = event;
+            return EMPTY;
+          }
+          busy = true;
+          return from(this.updateVisualization(event)).pipe(
+            finalize(() => {
+              busy = false;
+              if (latest) {
+                const next = latest;
+                latest = null;
+                this.queue.next(next);
+              }
+            })
+          );
+        })
+      )
+      .subscribe();
 
     // THREE.js group to hold the visualization
     this.group = new THREE.Group();
@@ -107,6 +136,7 @@ export class BinInfoVisualizer {
 
   /**
    * Update the 3D visualization
+   * @important DO NOT CALL THIS! Should only be called by queue subject!
    */
   async updateVisualization (data) {
     if (data === null) this.clear();
@@ -132,6 +162,26 @@ export class BinInfoVisualizer {
 
     const startY = (panelHeight / 2) - padding - (lineHeight / 2);
 
+    // this.loader.load("fonts/helvetiker_regular.typeface.json", (font) => {
+    //   for (let i = 0; i < lines.length; i++) {
+    //     const geometry = new TextGeometry(lines[i], {
+    //       font: font,
+    //       size: 80,
+    //       depth: 5,
+    //       curveSegments: 12,
+    //       bevelEnabled: true,
+    //       bevelThickness: 10,
+    //       bevelSize: 8,
+    //       bevelOffset: 0,
+    //       bevelSegments: 5
+    //     });
+    //
+    //     const material = new THREE.MeshBasicMaterial({ color: 0xffffff });
+    //     const mesh = new THREE.Mesh(geometry, material);
+    //
+    //     this.group.add(mesh);
+    //   }
+    // });
     for (let i = 0; i < lines.length; i++) {
       const line = lines[i];
       const y = startY - (i * lineHeight);
@@ -146,7 +196,7 @@ export class BinInfoVisualizer {
         latex.fTextColor = line.isTitle ? titleColor : textColor;
         latex.fTextSize = line.isTitle ? textSize + 2 : textSize;
 
-        const textGroup = await create3d(latex, "p", y * 100, "", "");
+        const textGroup = await build3d(latex, "p", y * 100, "", "");
         textGroup.scale.set(0.00016, 0.00016, 0.00016);
 
         textGroup.position.x = -(width / 2) + padding;
@@ -221,6 +271,7 @@ export class BinInfoVisualizer {
     // if (this.subscription) {
     //   this.subscription.unsubscribe();
     // }
+    this.queueSub.unsubscribe();
 
     while (this.group.children.length > 0) {
       const child = this.group.children[0];
