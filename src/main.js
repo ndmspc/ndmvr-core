@@ -146,7 +146,21 @@ histogramSelect.addEventListener("change", (event) => {
     loadButton.style.display = "none";
     histogramSubjectGet().next({
       id: "histogram1",
+      opts: {render: "jsroot"},
       histogram: options.get(selectedValue),
+      config: {
+        TH1ZScale: {
+          default: 0.8,
+          layer: [0.08, 1, 1, 1],
+          set: 0.1,
+        },
+        color: {
+          default: {
+            min: "0x0033ff",
+            max: "0xff3300",
+          },
+        }
+      }
     });
   }
 });
