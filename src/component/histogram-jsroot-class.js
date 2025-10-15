@@ -126,6 +126,7 @@ export class HistogramJsrootClass {
 
   renderWithBuild3d() {
     build3d(this.rootObj).then(obj3d => {
+      console.log("obj3d: ", obj3d);
       const matrixScale = this.config.environment.histogramPads.find(el => el.id === this.id)?.scale;
       const box = new THREE.Box3().setFromObject(obj3d);
       const size = new THREE.Vector3();
@@ -138,8 +139,8 @@ export class HistogramJsrootClass {
 
       obj3d.rotateX(-Math.PI / 2);
       this.histogramGroup.add(obj3d);
-      console.log("obj3d: ", obj3d);
-      console.log(this.histogramGroup);
+      // console.log("obj3d: ", obj3d);
+      // console.log(this.histogramGroup);
 
       const mesh = this.getInstancedMesh();
       this.defaultRaycastHandler = mesh.raycast.bind(mesh);
