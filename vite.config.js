@@ -31,11 +31,12 @@ export default defineConfig(({ mode }) => {
                fileName: (format) => `index.${format}.js`,
             },
             rollupOptions: {
-               external: ["aframe", "rxjs"],  // Don't bundle dependencies
+               external: ["aframe", "rxjs", "three"],  // Don't bundle dependencies
                output: {
                   globals: {
                      aframe: "AFRAME",
                      rxjs: "rxjs",
+                    three: "three"
                   },
                },
             },

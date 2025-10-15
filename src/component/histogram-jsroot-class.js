@@ -151,43 +151,48 @@ export class HistogramJsrootClass {
   raycastHandler(raycaster, intersects) {
     this.defaultRaycastHandler(raycaster, intersects);
 
-    const firstIntersect = intersects
-      .filter(intersect => intersect.instanceId !== undefined)
-      .sort((a, b) => {
-        return a.distance - b.distance;
-      })[0];
+    setTimeout(() =>{
+      const firstIntersect = intersects
+        .filter(intersect => intersect.instanceId !== undefined)
+        .sort((a, b) => {
+          return a.distance - b.distance;
+        })[0];
 
-    if (!firstIntersect) {
+      if (!firstIntersect) {
+        this.mouseEvents
+          .filter((mouseEvent) => mouseEvent.event === "mousemove")
+          .forEach((mouseEvent) => mouseEvent.function(
+            {instanceId: undefined, object: this.getInstancedMesh()}, this));
+        return;
+      }
+
+      const bin = firstIntersect.object.bins[firstIntersect.instanceId];
+      const xBins = this.rootObj.fXaxis.fNbins + 2;
+      const yBins = this.rootObj.fYaxis.fNbins + 2;
+      const index = {
+        x: bin % xBins,
+        y: Math.floor(bin % (xBins * yBins) / xBins),
+        z: Math.floor(bin / (xBins * yBins)),
+      };
+
+      const intersection = {
+        ...firstIntersect,
+        bin: bin,
+        index: [index],
+        coords: Array.of(this.getRangeByPosition([index])),
+        content: this.rootObj.getBinContent(index.x, index.y, index.z),
+        error: this.rootObj.getBinError(index.x, index.y, index.z),
+      };
+
       this.mouseEvents
-        .filter((mouseEvent) => mouseEvent.event === "mousemove")
-        .forEach((mouseEvent) => mouseEvent.function(
-          {instanceId: undefined, object: this.getInstancedMesh()}, this));
-      return;
-    }
+        .filter((mouseEvent) => mouseEvent.event === raycaster._triggerSource)
+        .forEach((mouseEvent) => mouseEvent.function(intersection, this));
 
-    const bin = firstIntersect.object.bins[firstIntersect.instanceId];
-    const xBins = this.rootObj.fXaxis.fNbins + 2;
-    const yBins = this.rootObj.fYaxis.fNbins + 2;
-    const index = {
-      x: bin % xBins,
-      y: Math.floor(bin % (xBins * yBins) / xBins),
-      z: Math.floor(bin / (xBins * yBins)),
-    };
+      this.dirtyInstance = firstIntersect.instanceId;
 
-    const intersection = {
-      ...firstIntersect,
-      bin: bin,
-      index: [index],
-      coords: Array.of(this.getRangeByPosition([index])),
-      content: this.rootObj.getBinContent(index.x, index.y, index.z),
-      error: this.rootObj.getBinError(index.x, index.y, index.z),
-    };
+    }, 0);
 
-    this.mouseEvents
-      .filter((mouseEvent) => mouseEvent.event === raycaster._triggerSource)
-      .forEach((mouseEvent) => mouseEvent.function(intersection, this));
 
-    this.dirtyInstance = firstIntersect.instanceId;
 
   }
 
@@ -281,7 +286,7 @@ export class HistogramJsrootClass {
   getInstancedMesh(node = this.histogramGroup) {
     if (!node) return null;
 
-    if (node.isInstancedMesh === true || node?.geometry?.type === "BufferGeometry") {
+    if (node.isInstancedMesh === true) {
       return node;
     }
 
