@@ -5,8 +5,9 @@ import { functionSubjectGet } from "../rxjs/FunctionSubject.js";
 import BinInfoVisualizer from "./bininfo-jsroot-class.js";
 import { canvasSubjectGet } from "../rxjs/CanvasSubject.js";
 import { binInfoSubjectGet } from "../rxjs/BinInfoSubject.js";
-export class HistogramJsrootClass {
 
+
+export class HistogramJsrootClass {
   histogramGroup = undefined;
   binInfoComponent = undefined;
   id = undefined;
@@ -58,6 +59,7 @@ export class HistogramJsrootClass {
         ),
       )
       .subscribe((f) => {
+        console.log(f);
         if (f.flag === "add") {
           if (f.function) {
             this.addEvent(f.event, f.function);
@@ -336,6 +338,7 @@ export class HistogramJsrootClass {
     this.dummyEl = document.getElementById("dummyDiv" + this.id);
     if (this.dummyEl) document.body.removeChild(this.dummyEl);
     this.configSub.unsubscribe();
+    this.sub.unsubscribe();
   }
 
   getHistogramMesh () {
