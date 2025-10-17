@@ -28,7 +28,6 @@ export class HistogramPointerClass {
     if (!this.origin?.children) return;
     if (this.origin.children?.content) {
       this.parentPath.push({ origin: this.origin, range: range, bin: currentIndex });
-      console.log(this.parentPath);
       this.origin = this.origin.children.content[currentIndex];
       this.isOnSet = false;
     } else if (Object.keys(this.origin.children).includes(set)) {

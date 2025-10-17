@@ -84,7 +84,6 @@ export class NdmvrRaycaster {
     this.mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
     this.raycaster.setFromCamera(this.mouse, this.cameraElement);
 
-    console.log(this.raycaster.intersectObject(obj));
   }
 
   handleRaycast () {

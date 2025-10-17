@@ -32,7 +32,6 @@ export class HistogramJsrootClass {
         textColor: 0,      // ROOT color index
         titleColor: 0,     // ROOT color index
       });
-    console.log(this.binInfoComponent);
 
     this.dummyEl = document.createElement("div");
     this.dummyEl.id = "dummyDiv" + id;
