@@ -3,6 +3,8 @@ import { filter } from "rxjs";
 import { build3d } from "jsroot";
 import { functionSubjectGet } from "../rxjs/FunctionSubject.js";
 import BinInfoVisualizer from "./bininfo-jsroot-class.js";
+import { canvasSubjectGet } from "../rxjs/CanvasSubject.js";
+import { binInfoSubjectGet } from "../rxjs/BinInfoSubject.js";
 export class HistogramJsrootClass {
 
   histogramGroup = undefined;
@@ -175,12 +177,11 @@ export class HistogramJsrootClass {
         y: Math.floor(bin % (xBins * yBins) / xBins),
         z: Math.floor(bin / (xBins * yBins)),
       };
-
+      const range = this.getRangeByPosition([index]);
       const intersection = {
         ...firstIntersect,
-        bin: bin,
         index: [index],
-        coords: Array.of(this.getRangeByPosition([index])),
+        coords: [{...range, bin}],
         content: this.rootObj.getBinContent(index.x, index.y, index.z),
         error: this.rootObj.getBinError(index.x, index.y, index.z),
       };
@@ -269,7 +270,7 @@ export class HistogramJsrootClass {
     mesh.instanceColor.needsUpdate = true;
 
     this.binInfoComponent.queue.next(event);
-    // canvasSubjectGet().next(event);
+    binInfoSubjectGet().next(event);
   }
 
   shiftMouseClickDefault (event) {
@@ -310,7 +311,7 @@ export class HistogramJsrootClass {
     const axisNames = ["x", "y", "z"];
     const nAxes = Number.parseInt(this.rootObj._typename.substring(2, 3), 10);
 
-    const range = {};
+    let range = {};
 
     if (position[0]) {
       for (let i = 0; i < nAxes; i++) {
@@ -325,6 +326,7 @@ export class HistogramJsrootClass {
           title: axisObj.fTitle
         };
       }
+      range = {...range, color: new THREE.Color(0x000000)};
     }
     return range;
   }

@@ -151,7 +151,7 @@ export class NestedHistogram {
           index: pos,
           set: event.event.set,
           jsrootInstance: this.computeJsRootIndexFromPosition(pos),
-          range: this.getRangeByPosition(pos),
+          range: this.getRangeByPosition(pos, event.event.set),
           origin: this,
           jsrootObj: node,
           content: this.getBinContent(node, pos[0].x + 1, pos[0].y + 1, pos[0].z + 1, this.selectedArray),
@@ -616,11 +616,22 @@ export class NestedHistogram {
     };
 
     if (areIndexesEqual(event.index, this.dirtyInstance)) return;
-    const parentRange = this.pointer.parentPath.map(p => p.range[0]);
+    const parentRange = this.pointer.parentPath.map(p => {
+      const range = p.range[0];
+      return {
+        bin: p.bin[0],
+        ...range
+      };
+    });
+    event.range = event.range.map((r, i) => {
+      const instance = event.jsrootInstance[i];
+      return {...r, bin : instance};
+    });
     const merged = {
       ...event,
       level: parentRange.length,
       range: parentRange.concat(event.range)
+      // range: event.range
     };
     const { range: coords, level, content, error, set, triggerSource } = merged;
     const minimizedEvent = { coords, level, content, error, set, triggerSource };
@@ -843,8 +854,12 @@ export class NestedHistogram {
         position[i].y + 1,
         position[i].z + 1,
       );
-      if (t.children?.content) {
-        t = t.children.content[ind[i]];
+      if (t.children) {
+        if (t.children?.content){
+          t = t.children.content[ind[i]];
+        } else {
+          t = t.children[this.selectedSet[0]][ind[i]];
+        }
       } else {
         return ind;
       }
@@ -869,9 +884,7 @@ export class NestedHistogram {
     this.wireframe.dispose();
     parent.remove(this.instancedMesh);
 
-    console.log(position);
-    const range = this.getRangeByPosition(position);
-    console.log(range);
+    const range = this.getRangeByPosition(position, set);
 
     this.pointer.setOriginToChild(this.computeJsRootIndexFromPosition(position), set, range);
     this.init();
@@ -1029,11 +1042,11 @@ export class NestedHistogram {
    * @param obj Jsroot object from which histogram is computed range of bin.
    * @default Pointers origin.
    * */
-  getRangeByPosition (position, obj = this.pointer.origin) {
+  getRangeByPosition (position, set, obj = this.pointer.origin, layer = 0) {
     const axisNames = ["x", "y", "z"];
     const nAxes = Number.parseInt(obj._typename.substring(2, 3), 10);
 
-    const range = {};
+    let range = {};
 
     if (position[0]) {
       for (let i = 0; i < nAxes; i++) {
@@ -1048,6 +1061,7 @@ export class NestedHistogram {
           title: axisObj.fTitle
         };
       }
+      range = {...range, color: this.wireframe.getColorAt(layer, set)};
     }
     if (position[1]) {
       let child = undefined;
@@ -1062,7 +1076,7 @@ export class NestedHistogram {
             obj.getBin(position[0].x + 1, position[0].y + 1, position[0].z + 1)
             ];
       }
-      return [range, ...this.getRangeByPosition(position.slice(1), child)];
+      return [range, ...this.getRangeByPosition(position.slice(1), set, child, layer + 1)];
     } else {
       return [range];
     }
@@ -1519,7 +1533,7 @@ export class NestedHistogram {
                 set: set,
                 instanceId: this.computeIndexFromPosition(fullPath),
                 jsrootInstance: this.computeJsRootIndexFromPosition(fullPath),
-                range: this.getRangeByPosition(fullPath),
+                range: this.getRangeByPosition(fullPath, set),
                 origin: this,
                 jsrootObj: node,
                 content: this.getBinContent(node, posX, posY, posZ, this.selectedArray),
@@ -1534,7 +1548,7 @@ export class NestedHistogram {
             set: set,
             instanceId: this.computeIndexFromPosition(fullPath),
             jsrootInstance: this.computeJsRootIndexFromPosition(fullPath),
-            range: this.getRangeByPosition(fullPath),
+            range: this.getRangeByPosition(fullPath, set),
             origin: this,
             jsrootObj: node,
             content: this.getBinContent(node, posX, posY, posZ, this.selectedArray),

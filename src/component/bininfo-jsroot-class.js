@@ -79,12 +79,13 @@ export class BinInfoVisualizer {
     // Parse coordinates
     if (data.coords && Array.isArray(data.coords)) {
       data.coords.forEach(coord => {
-        Object.entries(coord).forEach(([key, value]) => {
-          if (value && typeof value === "object") {
-            const rangeText = `${key} = [${value.min.toFixed(2)}, ${value.max.toFixed(2)})`;
-            lines.push({ text: rangeText, isTitle: false });
-          }
-        });
+        Object.entries(coord)
+          .forEach(([key, value]) => {
+            if (value && typeof value === "object" && !("isColor" in value)) {
+              const rangeText = `${key} = [${value.min.toFixed(2)}, ${value.max.toFixed(2)})`;
+              lines.push({ text: rangeText, isTitle: false });
+            }
+          });
       });
     }
 

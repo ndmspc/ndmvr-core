@@ -146,7 +146,7 @@ histogramSelect.addEventListener("change", (event) => {
     loadButton.style.display = "none";
     histogramSubjectGet().next({
       id: "histogram1",
-      opts: {render: "jsroot"},
+      opts: {render: "nested"},
       histogram: options.get(selectedValue),
       config: {
         TH1ZScale: {

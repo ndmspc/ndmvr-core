@@ -27,12 +27,12 @@ export class HistogramPointerClass {
     const currentIndex = index.splice(0, 1);
     if (!this.origin?.children) return;
     if (this.origin.children?.content) {
-      this.parentPath.push({ origin: this.origin, range: range });
+      this.parentPath.push({ origin: this.origin, range: range, bin: currentIndex });
       console.log(this.parentPath);
       this.origin = this.origin.children.content[currentIndex];
       this.isOnSet = false;
     } else if (Object.keys(this.origin.children).includes(set)) {
-      this.parentPath.push({ origin: this.origin, range: range });
+      this.parentPath.push({ origin: this.origin, range: range, bin: currentIndex });
       this.origin = this.origin.children[set][currentIndex];
       this.isOnSet = true;
     } else {
