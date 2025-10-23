@@ -53,6 +53,7 @@ export class NestedHistogram {
   // mousemoveEvents = [];
 
   constructor (bin_padding_x, bin_padding_y, bin_padding_z, histo, id, opts) {
+    console.log(histo);
     this.bin_padding_x = bin_padding_x;
     this.bin_padding_y = bin_padding_y;
     this.bin_padding_z = bin_padding_z;
@@ -1061,7 +1062,7 @@ export class NestedHistogram {
           title: axisObj.fTitle
         };
       }
-      range = {...range, color: this.wireframe.getColorAt(layer, set)};
+      range = {...range, color: this.wireframe.getColorAt(layer, set), name: obj.fName};
     }
     if (position[1]) {
       let child = undefined;

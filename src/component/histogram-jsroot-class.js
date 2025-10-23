@@ -166,7 +166,10 @@ export class HistogramJsrootClass {
         this.mouseEvents
           .filter((mouseEvent) => mouseEvent.event === "mousemove")
           .forEach((mouseEvent) => mouseEvent.function(
-            {instanceId: undefined, object: this.getInstancedMesh()}, this));
+            {
+              instanceId: undefined,
+              object: this.getInstancedMesh()
+            }, this));
         return;
       }
 
@@ -179,10 +182,11 @@ export class HistogramJsrootClass {
         z: Math.floor(bin / (xBins * yBins)),
       };
       const range = this.getRangeByPosition([index]);
+      const name = this.rootObj.fName;
       const intersection = {
         ...firstIntersect,
         index: [index],
-        coords: [{...range, bin}],
+        coords: [{...range, bin, name}],
         content: this.rootObj.getBinContent(index.x, index.y, index.z),
         error: this.rootObj.getBinError(index.x, index.y, index.z),
       };
