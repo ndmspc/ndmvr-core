@@ -8,6 +8,7 @@ import { HistogramJsrootClass } from "./histogram-jsroot-class.js";
 import { NestedHistogram } from "./nested-histogram-class.js";
 import { parseConfig } from "../utils/baseUtil.js";
 import { configSubjectGet } from "../rxjs/ConfigSubject.js";
+import { getCameraComponent } from "./camera.component.js";
 
 const registerHistogramComponent = () => {
 
@@ -39,7 +40,11 @@ const registerHistogramComponent = () => {
             if (this.jsrootHistogram) {
               this.jsrootHistogram.updateHistogram(histo.histogram);
             } else {
-              this.jsrootHistogram = new HistogramJsrootClass(this.el.id, histo.histogram);
+              this.jsrootHistogram = new HistogramJsrootClass(
+                this.el.id,
+                histo.histogram,
+                getCameraComponent().object3D.children[0].children[0],
+              );
               this.el.object3D.add(this.jsrootHistogram.getHistogramMesh());
             }
           } else {

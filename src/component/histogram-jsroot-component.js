@@ -2,6 +2,7 @@ import { HistogramJsrootClass } from "./histogram-jsroot-class.js";
 import { histogramSubjectGet } from "../rxjs/HistogramSubject.js";
 import { filter } from "rxjs";
 import { NestedHistogram } from "./nested-histogram-class.js";
+import { getCameraComponent } from "./camera.component.js";
 
 const registerHistogramJsrootComponent = () => {
   AFRAME.registerComponent("jsroot-histogram", {
@@ -19,7 +20,11 @@ const registerHistogramJsrootComponent = () => {
           if (this.jsrootHistogram) {
             this.jsrootHistogram.updateHistogram(histo.histogram);
           } else {
-            this.jsrootHistogram = new HistogramJsrootClass(this.el.id, histo.histogram);
+            this.jsrootHistogram = new HistogramJsrootClass(
+              this.el.id,
+              histo.histogram,
+              getCameraComponent().object3D.children[0].children[0],
+            );
             this.jsrootHistogram.render();
             this.el.object3D.add(this.jsrootHistogram.getHistogramMesh());
           }
