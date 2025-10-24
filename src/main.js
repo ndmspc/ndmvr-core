@@ -78,12 +78,7 @@ imageContainer.setAttribute("scale", "10 10 10");
 
 sceneElm.appendChild(imageContainer);
 
-// const jsrootHistogramContainer = document.createElement('a-entity');
-// jsrootHistogramContainer.id = "histogram1-jsroot";
-// jsrootHistogramContainer.setAttribute('jsroot-histogram', '');
-// jsrootHistogramContainer.setAttribute('position', "0 0 0");
-// sceneElm.appendChild(jsrootHistogramContainer);
-//
+
 const histogramContainer = document.createElement("a-entity");
 histogramContainer.id = "histogram1";
 histogramContainer.setAttribute("histogram", "");
@@ -151,7 +146,21 @@ histogramSelect.addEventListener("change", (event) => {
     loadButton.style.display = "none";
     histogramSubjectGet().next({
       id: "histogram1",
+      opts: {render: "nested"},
       histogram: options.get(selectedValue),
+      config: {
+        TH1ZScale: {
+          default: 0.8,
+          layer: [0.08, 1, 1, 1],
+          set: 0.1,
+        },
+        color: {
+          default: {
+            min: "0x0033ff",
+            max: "0xff3300",
+          },
+        }
+      }
     });
   }
 });
@@ -331,8 +340,8 @@ loadButton.addEventListener("click", async () => {
 //   histogram: histo125,
 // });
 
-// histogramSubjectGet().next({id: 'histogram3', opts: {render: "jsroot"}, histogram: h3scat});
-histogramSubjectGet().next({ id: "histogram1", opts: { render: "ndmvr" }, histogram: h3scat });
+histogramSubjectGet().next({id: "histogram1", opts: {render: "jsroot"}, histogram: h3scat});
+// histogramSubjectGet().next({ id: "histogram1", opts: { render: "ndmvr" }, histogram: h3scat });
 
 // histogramSubjectGet().next({id: 'histogram2', opts: {render: "nested"}, histogram: h3scat});
 // histogramSubjectGet().next({id: 'histogram3', opts: {render: "nested"}, histogram: h3scat});
@@ -399,9 +408,9 @@ setTimeout(() => {
   //   }
   // });
 
-  //REMOVE ALL FUNCTIONS ON EVENT
+  // REMOVE ALL FUNCTIONS ON EVENT
   // functionSubjectGet().removeFunctions({
-  //   event: "mouseclick",
+  //   event: "mousemove",
   //   target: {
   //     entity: "nested-histogram",
   //     id: "*"
@@ -410,7 +419,7 @@ setTimeout(() => {
 
   //ADD DEFAULT FUNCTION
   // functionSubjectGet().addFunctions({
-  //   event: "mouseclick",
+  //   event: "mousemove",
   //   target: {
   //     entity: "nested-histogram",
   //     id: "*"
