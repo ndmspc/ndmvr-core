@@ -887,7 +887,6 @@ export function createBVHTreeRecursive (matrixCache, node, layer, selectedSet, a
     }
   };
   traverse(node, 1, 0);
-  console.log(finalTree);
   return finalTree;
 }
 
