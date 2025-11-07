@@ -114,9 +114,7 @@ class ConfigSubject {
     this.#subject.next(parseConfig(e));
   }
 
-
-
-  mergeHistogramConfig(partialConfig, defaultConfig = this.#subject.value.config.histogram) {
+  mergeHistogramConfig (partialConfig, defaultConfig = this.#subject.value.config.histogram) {
     // If partialConfig is undefined/null, return defaultConfig
     if (partialConfig === undefined || partialConfig === null) {
       return defaultConfig;

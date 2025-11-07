@@ -30,7 +30,6 @@ import histo2x2x3 from "../public/histograms/TH3variableBinning2x2x3WOutsideCont
 import histo6x2x1 from "../public/histograms/TH3variable6x2x1wOutsideContent.json";
 import test3D from "../public/histograms/test3D.json";
 import { histogramSubjectGet } from "./rxjs/HistogramSubject.js";
-import histoSparse2 from "../public/histograms/THnSparse3.json";
 import nestedHisto from "../public/histograms/hist3D.axis1-pt_axis2-ce_axis5-eta.json";
 import nestedHisto2 from "../public/histograms/hist2D.axis1-pt_axis2-ce.json";
 import nestedHisto3 from "../public/histograms/hist1D.axis1-pt.json";
@@ -38,12 +37,8 @@ import nestedHisto4 from "../public/histograms/test3D.axis1-pt_axis2-ce_axis5-et
 // import histoSparse5 from "../public/histograms/test3D.axis1-pt_axis2-ce_axis5-eta.root"
 import { parse, redraw, makeSVG, openFile, makeImage } from "jsroot";
 import { stateSubjectGet } from "./rxjs/StateSubject.js";
-import { filter } from "rxjs";
-import { NestedHistogram } from "./component/nested-histogram-class.js";
-import { canvasSubjectGet } from "./rxjs/CanvasSubject.js";
 import { configSubjectGet } from "./rxjs/ConfigSubject.js";
 import { binInfoSubjectGet } from "./rxjs/BinInfoSubject.js";
-import { dispatchSubjectGet } from "./rxjs/DispatchSubject.js";
 
 initNdmvrAframe();
 
@@ -51,17 +46,15 @@ const sceneElm = generate_AFrame_blank_scene_html();
 
 document.querySelector("#app").appendChild(sceneElm);
 
-// const geom = new THREE.BoxGeometry(10, 5, 10);
-// const mate = new THREE.MeshNormalMaterial({wireframe: true});
-// const cube = new THREE.Mesh(geom, mate);
+
 // cube.position.set(0, 0, -5);
 // sceneElm.object3D.add(cube);
 
-//
+
 // const geom = new THREE.BoxGeometry(10, 0, 10);
 // const mate = new THREE.MeshNormalMaterial();
 // const cube = new THREE.Mesh(geom, mate);
-// cube.position.set(2, -1.166666, 0);
+// cube.position.set(4, -1.166666, 0);
 // sceneElm.object3D.add(cube);
 
 // const geom2 = new THREE.BoxGeometry(10, 2.333333333, 10);
@@ -78,10 +71,34 @@ imageContainer.setAttribute("scale", "10 10 10");
 
 sceneElm.appendChild(imageContainer);
 
+// const instGeomContainer = document.createElement("a-entity");
+// instGeomContainer.setAttribute("inst-geom-hist", "");
+// instGeomContainer.setAttribute("position", "0 0 0");
+//
+// sceneElm.appendChild(instGeomContainer);
+
+// setTimeout(() =>{
+//   const s = document.getElementById("a-min-scene");
+//   const r = s.getAttribute("renderer");
+//   console.log(s.renderer.info.render);
+// }, 4000);
+//
+// setTimeout(() =>{
+//   const s = document.getElementById("a-min-scene");
+//   const r = s.getAttribute("renderer");
+//   console.log(s.renderer.info.render);
+// }, 9000);
+//
+// setTimeout(() =>{
+//   const s = document.getElementById("a-min-scene");
+//   const r = s.getAttribute("renderer");
+//   console.log(s.renderer.info.render);
+// }, 13000);
+
 
 const histogramContainer = document.createElement("a-entity");
 histogramContainer.id = "histogram1";
-histogramContainer.setAttribute("histogram", "");
+histogramContainer.setAttribute("thnpainter", "");
 histogramContainer.setAttribute("position", "0 0 0");
 sceneElm.appendChild(histogramContainer);
 
@@ -147,7 +164,7 @@ histogramSelect.addEventListener("change", (event) => {
     histogramSubjectGet().next({
       id: "histogram1",
       opts: {render: "nested"},
-      histogram: options.get(selectedValue),
+      obj: options.get(selectedValue),
       config: {
         TH1ZScale: {
           default: 0.8,
@@ -189,7 +206,6 @@ const arraySelect = document.getElementById("arraySelect");
 stateSubjectGet()
   .getObservable()
   .subscribe((state) => {
-    console.log("state", state);
     const newOptions = state.sets || [];
 
     // Clear previous checkboxes
@@ -275,7 +291,7 @@ loadButton.addEventListener("click", async () => {
     histogramSubjectGet().next({
       id: "histogram1",
       opts: { render: "ndmvr" },
-      histogram: data,
+      obj: data,
     });
   } catch (error) {
     console.error("Failed to load histogram from URL:", error);
@@ -340,23 +356,32 @@ loadButton.addEventListener("click", async () => {
 //   histogram: histo125,
 // });
 
-histogramSubjectGet().next({id: "histogram1", opts: {render: "jsroot"}, histogram: h3scat});
-// histogramSubjectGet().next({ id: "histogram1", opts: { render: "ndmvr" }, histogram: h3scat });
+// histogramSubjectGet().next({id: "histogram1", opts: {render: "jsroot"}, obj: h3scat});
 
-// histogramSubjectGet().next({id: 'histogram2', opts: {render: "nested"}, histogram: h3scat});
+histogramSubjectGet().next({id: "histogram1", opts: {render: "nested"}, obj: h3scat});
 // histogramSubjectGet().next({id: 'histogram3', opts: {render: "nested"}, histogram: h3scat});
 // histogramSubjectGet().next({id: 'histogram4', opts: {render: "nested"}, histogram: h3scat});
 // histogramSubjectGet().next({id: 'histogram1', opts: {render: "jsroot"}, histogram: h3scat});
 //
+
+
 // setTimeout(()=> {
-//     histogramSubjectGet().next({id: "histogram1", opts: {render: "ndmvr"}, histogram: test_mv});
+//     histogramSubjectGet().next({id: "histogram1", opts: {render: "ndmvr"}, obj: testmv});
 // }, 3000);
 // setTimeout(()=> {
-//     histogramSubjectGet().next({id: 'histogram1', opts: {render: "jsroot"}, histogram: h3scat});
-// }, 4000);
-// setTimeout(()=> {
-//     histogramSubjectGet().next({id: 'histogram1', opts: {render: "nested"}, histogram: h3scat});
+//     histogramSubjectGet().next({id: "histogram1", opts: {render: "jsroot"}, obj: h3scat});
 // }, 6000);
+// setTimeout(()=> {
+//     histogramSubjectGet().next({id: "histogram1", opts: {render: "nested"}, obj: testmv});
+// }, 8000);
+// setTimeout(()=> {
+//   histogramSubjectGet().next({id: "histogram1", opts: {render: "jsroot"}, obj: h3scat});
+// }, 10000);
+// setTimeout(()=> {
+//   histogramSubjectGet().next({id: "histogram1", opts: {render: "nested"}, obj: testmv});
+// }, 12000);
+
+
 // histogramSubjectGet().next({id: 'histogram1', histogram: histo125});
 // histogramSubjectGet().next({id: 'histogram1', histogram: histo12_5});
 
@@ -368,6 +393,7 @@ binInfoSubjectGet()
   .getObservable()
   .subscribe((event) => {
     console.log(event);
+    // console.log(event.coords.forEach(c => console.log(c.x)));
   });
 
 // setTimeout(() => {
@@ -382,7 +408,7 @@ binInfoSubjectGet()
 //       set: "unlikepm"
 //     }
 //   });
-// }, 2000);
+// }, 5000);
 // //
 // setTimeout(() => {
 //   dispatchSubjectGet().next({
@@ -397,7 +423,7 @@ binInfoSubjectGet()
 //       set: "unlikepm"
 //     }
 //   });
-// }, 4000);
+// }, 6000);
 
 setTimeout(() => {
   //REMOVE ALL FUNCTIONS

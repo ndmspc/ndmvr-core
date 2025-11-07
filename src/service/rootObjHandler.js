@@ -8,10 +8,10 @@ export default class RootObjHandler {
   #ready;
 
   constructor (obj) {
-    if (typeof obj.histogram === "string") {
-      this.#handler = new FileHandler(obj.histogram);
-    } else if (typeof obj.histogram === "object") {
-      this.#handler = new JsonHandler(obj.histogram);
+    if (typeof obj.obj === "string") {
+      this.#handler = new FileHandler(obj.obj);
+    } else if (typeof obj.obj === "object") {
+      this.#handler = new JsonHandler(obj.obj);
     } else {
       throw new Error("Unsupported data type");
     }
