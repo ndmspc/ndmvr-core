@@ -18,12 +18,13 @@ class HistogramSubject {
 
   async next (e) {
     if (!e.id) throw new Error("Missing id in event");
+    console.log(e);
 
     // Preprocess histogram
-    if (typeof e.histogram === "string") {
-      e.histogram = await FileHandler.parseFile(e.histogram);
-    } else if (typeof e.histogram === "object") {
-      e.histogram = await JsonHandler.parseJson(e.histogram);
+    if (typeof e.obj === "string") {
+      e.obj = await FileHandler.parseFile(e.obj);
+    } else if (typeof e.obj === "object") {
+      e.obj = await JsonHandler.parseJson(e.obj);
       e.opts = e.opts || {};
       e.opts.config = parseConfig(e.opts.config);
     } else {

@@ -261,7 +261,7 @@ This example uses **histogram** component. If you want to use it in your app you
 
   ```javascript
   import { parse } from "jsroot";
-  histogramSubjectGet().next({ id: "histogram1", histogram: parse(v) });
+  histogramSubjectGet().next({ id: "histogram1", obj: parse(v) });
   ```
 
 ### Dynamic rendering of histogram

@@ -45,9 +45,17 @@ export class HistogramPointerClass {
       this.setOriginToChild(index, set);
     }
   }
-
   /**
+   * Method to get child (jsroot object) by position
+   * @warning for @param position only supply shallow copy of value,
    * @note Index have to exclude first index as the pointer is already on this node.
+   * as if deep copy is supplied, the original is rewritten.
+   * @param node Defines origin from which child set by position is obtained.
+   * @param index Defines index specified by jsroot indexing of bins.
+   * @param set Defines set from which histogram will be choosen, if possible.
+   * Has to be array (can go through more layers at once) where each entry represents children position in layer.
+   * */
+  /**
    * */
   getChildByPosition (index, set, node = this.origin) {
     if (!index || index.length === 0) return node;

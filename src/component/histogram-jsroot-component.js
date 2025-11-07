@@ -1,7 +1,6 @@
 import { HistogramJsrootClass } from "./histogram-jsroot-class.js";
 import { histogramSubjectGet } from "../rxjs/HistogramSubject.js";
 import { filter } from "rxjs";
-import { NestedHistogram } from "./nested-histogram-class.js";
 import { getCameraComponent } from "./camera.component.js";
 
 const registerHistogramJsrootComponent = () => {
@@ -18,11 +17,11 @@ const registerHistogramJsrootComponent = () => {
         )
         .subscribe((histo) => {
           if (this.jsrootHistogram) {
-            this.jsrootHistogram.updateHistogram(histo.histogram);
+            this.jsrootHistogram.updateHistogram(histo.obj);
           } else {
             this.jsrootHistogram = new HistogramJsrootClass(
               this.el.id,
-              histo.histogram,
+              histo.obj,
               getCameraComponent().object3D.children[0].children[0],
             );
             this.jsrootHistogram.render();

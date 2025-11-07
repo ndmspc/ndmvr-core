@@ -25,9 +25,9 @@
    const wsSub = brokerManagerGet().getSubject()
       .subscribe((v) => {
          // console.log(JSON.parse(v).arr[2])
-         histogramSubjectGet().next({id: 'histogram1', histogram: parse(JSON.parse(v).arr[0])});
-         histogramSubjectGet().next({id: 'histogram2', histogram: parse(JSON.parse(v).arr[1])});
-         histogramSubjectGet().next({id: 'histogram3', histogram: parse(JSON.parse(v).arr[2])});
+         histogramSubjectGet().next({id: 'histogram1', obj: parse(JSON.parse(v).arr[0])});
+         histogramSubjectGet().next({id: 'histogram2', obj: parse(JSON.parse(v).arr[1])});
+         histogramSubjectGet().next({id: 'histogram3', obj: parse(JSON.parse(v).arr[2])});
       });
 
 </script>

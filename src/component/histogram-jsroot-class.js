@@ -59,7 +59,6 @@ export class HistogramJsrootClass {
         ),
       )
       .subscribe((f) => {
-        console.log(f);
         if (f.flag === "add") {
           if (f.function) {
             this.addEvent(f.event, f.function);
@@ -129,7 +128,6 @@ export class HistogramJsrootClass {
 
   renderWithBuild3d() {
     build3d(this.rootObj).then(obj3d => {
-      console.log("obj3d: ", obj3d);
       const matrixScale = this.config.environment.histogramPads.find(el => el.id === this.id)?.scale;
       const box = new THREE.Box3().setFromObject(obj3d);
       const size = new THREE.Vector3();
