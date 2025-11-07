@@ -133,7 +133,6 @@ export default class HistogramWireframeClass {
         }
       }
     }
-    console.log("wireframe count: ", count);
 
     // Pre-allocate
     const positions = new Float32Array(count * 3);

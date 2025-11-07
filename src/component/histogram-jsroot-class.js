@@ -17,6 +17,8 @@ export class HistogramJsrootClass {
   dummyEl = undefined;
   defaultRaycastHandler = undefined;
   mouseEvents = [];
+  color = new THREE.Color();
+  colorTarget = new THREE.Color(0x00ffff);
 
   constructor (id, rootObj, camera) {
     this.id = id;
@@ -144,8 +146,10 @@ export class HistogramJsrootClass {
       // console.log(this.histogramGroup);
 
       const mesh = this.getInstancedMesh();
-      this.defaultRaycastHandler = mesh.raycast.bind(mesh);
-      mesh.raycast = this.raycastHandler.bind(this);
+      if (mesh) {
+        this.defaultRaycastHandler = mesh.raycast.bind(mesh);
+        mesh.raycast = this.raycastHandler.bind(this);
+      }
     });
   }
 
@@ -255,21 +259,17 @@ export class HistogramJsrootClass {
     if (event.instanceId === this.dirtyInstance) return;
     const mesh = event.object;
     if (this.dirtyInstance !== undefined) {
-      const color = new THREE.Color();
-      mesh.getColorAt(this.dirtyInstance, color);
-      const target = new THREE.Color(0x00ffff);
+      mesh.getColorAt(this.dirtyInstance, this.color);
       const t = 0.5;
-      color.lerp(target, -t / (1 - t)); // revert tint
-      mesh.setColorAt(this.dirtyInstance, color);
+      this.color.lerp(this.colorTarget, -t / (1 - t)); // revert tint
+      mesh.setColorAt(this.dirtyInstance, this.color);
     }
 
     this.dirtyInstance = event.instanceId;
 
-    const color = new THREE.Color();
-    mesh.getColorAt(this.dirtyInstance, color);
-    const target = new THREE.Color(0x00ffff);
-    color.lerp(target, 0.5); // 30% toward cyan
-    mesh.setColorAt(this.dirtyInstance, color);
+    mesh.getColorAt(this.dirtyInstance, this.color);
+    this.color.lerp(this.colorTarget, 0.5); // 30% toward cyan
+    mesh.setColorAt(this.dirtyInstance, this.color);
     mesh.instanceColor.needsUpdate = true;
 
     this.binInfoComponent.queue.next(event);

@@ -163,7 +163,7 @@ histogramSelect.addEventListener("change", (event) => {
     loadButton.style.display = "none";
     histogramSubjectGet().next({
       id: "histogram1",
-      opts: {render: "nested"},
+      opts: {render: "ndmvr"},
       obj: options.get(selectedValue),
       config: {
         TH1ZScale: {
@@ -358,7 +358,7 @@ loadButton.addEventListener("click", async () => {
 
 // histogramSubjectGet().next({id: "histogram1", opts: {render: "jsroot"}, obj: h3scat});
 
-histogramSubjectGet().next({id: "histogram1", opts: {render: "nested"}, obj: h3scat});
+histogramSubjectGet().next({id: "histogram1", opts: {render: "jsroot"}, obj: h3scat});
 // histogramSubjectGet().next({id: 'histogram3', opts: {render: "nested"}, histogram: h3scat});
 // histogramSubjectGet().next({id: 'histogram4', opts: {render: "nested"}, histogram: h3scat});
 // histogramSubjectGet().next({id: 'histogram1', opts: {render: "jsroot"}, histogram: h3scat});

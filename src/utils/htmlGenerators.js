@@ -27,7 +27,6 @@ function generateBlankScene () {
   const scene = document.createElement("a-scene");
   scene.id = "a-min-scene";
   scene.setAttribute("stats", "");
-  scene.setAttribute("renderer", "antialias: true; maxCanvasWidth: 1920; maxCanvasHeight: 1920;");
   // scene.setAttribute('device-detector', '');
   // scene.setAttribute('screen-controls', '');
   scene.setAttribute("ndmvr-raycaster", "");

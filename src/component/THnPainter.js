@@ -212,7 +212,6 @@ export class THnPainter extends TPainter {
         }
       }
     }
-    console.log("mesh count: ", count);
 
     // Pre-allocate exact size
     const positions = new Float32Array(count * 3);
@@ -505,7 +504,6 @@ export class THnPainter extends TPainter {
 
     render(startIndex, endIndex, 0, this.pointer.origin, this.limits).then(() => {
       setTimeout(() => {
-        console.log(this.matrixCache);
         this.wireframe.pushVisibleInstances(
           this.matrixCache, this.maxInstancesPerLayer,
           this.availableSets.indexOf(this.selectedSet[0])
@@ -516,7 +514,6 @@ export class THnPainter extends TPainter {
           this.matrixCache, this.pointer.origin, 0, this.selectedSet,
           this.availableSets, this.mesh.matrixWorld, this.maxInstancesPerLayer
         );
-        console.log(this.BVHTree);
 
       }, 0);
     });
