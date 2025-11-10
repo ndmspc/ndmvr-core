@@ -67,6 +67,8 @@ export class TPainter {
 
   remove() {
     this.functionSub.unsubscribe();
+    this.configSub.unsubscribe();
+    this.dispatchSub.unsubscribe();
     window.removeEventListener("keydown", this.keyDownHandler);
     window.removeEventListener("keydown", this.keyUpHandler);
   }

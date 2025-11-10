@@ -76,10 +76,13 @@ export class THnPainter extends TPainter {
   }
 
   remove () {
+    super.remove();
     this.matrixCache = [];
     this.instGeom.dispose();
-    this.mesh.parent.remove(this.mesh);
-    this.wireframe.dispose();
+    if (this.mesh.parent) {
+      this.mesh.parent.remove(this.mesh);
+      this.wireframe.dispose();
+    }
     this.stateSub.unsubscribe();
   }
 
@@ -134,8 +137,6 @@ export class THnPainter extends TPainter {
   }
 
   setupInsBufGeom () {
-    console.log(this.maxInstancesPerLayer);
-
     this.setupMatrixCache();
 
     let totalInst = this.maxInstancesPerLayer.reduce((acc, value) => {
