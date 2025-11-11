@@ -845,6 +845,10 @@ export function createBVHTreeRecursive (matrixCache, node, layer, selectedSet, a
         // }
 
         const childNode = currentNode.children.content[currentNode.getBin(relPos.x + 1, relPos.y + 1, relPos.z + 1)];
+        if (!childNode) {
+          if (counter.increment() === false) break;
+          continue;
+        }
         finalTree[currentLayer][j + offset] = createBVHTree(
           matrixCache, childNode, currentLayer, null,
           availableSets, matrixWorld, (j + offset) * step
@@ -873,7 +877,7 @@ export function createBVHTreeRecursive (matrixCache, node, layer, selectedSet, a
             return;
           }
 
-          const childNode = currentNode.children[set][currentNode.getBin(relPos.x + 1, relPos.y + 1, relPos.z + 1)];
+          const childNode = currentNode.children[set][currentNode.getBin(relPos.x + 1, relPos.z + 1, relPos.y + 1)];
           if (!childNode) return;
           finalTree[currentLayer][setIndex][j + offset] = createBVHTree(
             matrixCache, childNode, currentLayer, setIndex, availableSets,
