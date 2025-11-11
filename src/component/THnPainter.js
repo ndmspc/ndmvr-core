@@ -991,7 +991,7 @@ export class THnPainter extends TPainter {
             }
           }
         }
-        curIdx *= this.maxInstancesPerLayer[curLayer];
+        curIdx *= this.maxInstancesPerLayer[curLayer + 1];
       }
       return num;
     };
