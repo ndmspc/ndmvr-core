@@ -20,7 +20,9 @@ import histo12_5 from "../public/histograms/nested/test_12_5.json";
 import histo1_25 from "../public/histograms/nested/test_1_25.json";
 import histo1_2_5 from "../public/histograms/nested/test_1_2_5.json";
 import histo5_2_1 from "../public/histograms/nested/test_5_2_1.json";
+import nav from "../public/histograms/nested/nav.json";
 import h3scat from "../public/histograms/h3scat.json";
+import labelH from "../public/histograms/wLabel/label.json";
 
 import test55x57x56 from "../public/histograms/TH3variableBinning55x57x56.json";
 
@@ -356,9 +358,9 @@ loadButton.addEventListener("click", async () => {
 //   histogram: histo125,
 // });
 
-// histogramSubjectGet().next({id: "histogram1", opts: {render: "jsroot"}, obj: h3scat});
-
 histogramSubjectGet().next({id: "histogram1", opts: {render: "jsroot"}, obj: h3scat});
+//
+// histogramSubjectGet().next({id: "histogram1", opts: {render: "ndmvr"}, obj: labelH});
 // histogramSubjectGet().next({id: 'histogram3', opts: {render: "nested"}, histogram: h3scat});
 // histogramSubjectGet().next({id: 'histogram4', opts: {render: "nested"}, histogram: h3scat});
 // histogramSubjectGet().next({id: 'histogram1', opts: {render: "jsroot"}, histogram: h3scat});

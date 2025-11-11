@@ -203,7 +203,6 @@ export class BinInfoVisualizer {
         textGroup.position.x = -(width / 2) + padding;
         textGroup.position.y = y;
         textGroup.position.z = 0.001;
-        console.log(textGroup);
 
         this.group.add(textGroup);
 
