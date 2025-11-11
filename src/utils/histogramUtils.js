@@ -236,7 +236,8 @@ export function getRangeByPosition (position, set, obj, wireframe, selectedSet, 
         min: axisObj.GetBinLowEdge(posVal + 1),
         max: axisObj.GetBinCenter(posVal + 1) * 2 - axisObj.GetBinLowEdge(posVal + 1),
         name: axisObj.fName,
-        title: axisObj.fTitle
+        title: axisObj.fTitle,
+        label: axisObj.fLabels?.arr[posVal]?.fString
       };
     }
     range = { ...range, color: wireframe.getColorAt(layer, set), name: obj.fName };
