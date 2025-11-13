@@ -71,11 +71,51 @@ export default class HistogramWireframeClass {
       this.instGeom.dispose();
     }
 
+    const visibilityCache = [];
+    const lastLayer = matrixCache.length - 1;
+
+    {
+      const inst = Array.isArray(matrixCache[lastLayer])
+        ? matrixCache[lastLayer][setIndex]
+        : matrixCache[lastLayer];
+      const rend = inst.rendered;
+      const vis = new Uint8Array(rend.length);
+      for (let i = 0; i < rend.length; i++) vis[i] = rend[i] !== -1 ? 1 : 0;
+      visibilityCache[lastLayer] = vis;
+    }
+
+    for (let layer = lastLayer - 1; layer >= 0; layer--) {
+      const inst = Array.isArray(matrixCache[layer])
+        ? matrixCache[layer][setIndex]
+        : matrixCache[layer];
+      const rend = inst.rendered;
+      const nextVis = visibilityCache[layer + 1];
+      const nextSize = maxInstancesPerLayer[layer + 1] || 0;
+      const vis = new Uint8Array(rend.length);
+
+      for (let i = 0; i < rend.length; i++) {
+        if (rend[i] !== -1) {
+          vis[i] = 1;
+          continue;
+        }
+        const start = i * nextSize;
+        const end = start + nextSize;
+        for (let j = start; j < end; j++) {
+          if (nextVis[j]) {
+            vis[i] = 1;
+            break;
+          }
+        }
+      }
+      visibilityCache[layer] = vis;
+    }
+
+    const isVisible = (layer, i) => visibilityCache[layer][i] === 1;
+
     const computeNumOfInstBeneath = (layer, i) => {
       let num = 0;
       let curLayer = layer;
       let curIdx = i;
-
       while (curLayer + 1 < matrixCache.length) {
         curLayer++;
         curIdx *= maxInstancesPerLayer[curLayer];
@@ -83,8 +123,8 @@ export default class HistogramWireframeClass {
         const inst = Array.isArray(layerData)
           ? layerData[setIndex]
           : layerData;
-        for (let i = curIdx; i < curIdx + maxInstancesPerLayer[curLayer]; i++) {
-          if (inst.rendered[i] !== -1) {
+        for (let x = curIdx; x < curIdx + maxInstancesPerLayer[curLayer]; x++) {
+          if (inst.rendered[x] !== -1) {
             num = curLayer - layer;
             break;
           }
@@ -93,48 +133,17 @@ export default class HistogramWireframeClass {
       return num;
     };
 
-    const isVisible = (layer, i) => {
-      // const layerData = matrixCache[layer];
-      // if (!layerData) return false;
-
-      const instance = Array.isArray(matrixCache[layer])
-        ? matrixCache[layer][setIndex]
-        : matrixCache[layer];
-
-      if (instance.rendered[i] !== -1) return true;
-
-      if (layer + 1 >= matrixCache.length) return false;
-
-      const nextLayerSize = maxInstancesPerLayer[layer + 1] || 0;
-      const startIndex = i * nextLayerSize;
-      const endIndex = startIndex + nextLayerSize;
-
-      for (let j = startIndex; j < endIndex; j++) {
-        if (isVisible(layer + 1, j)) return true;
-      }
-      return false;
-    };
-
     let count = 0;
     for (let i = 0; i < matrixCache.length; i++) {
       const layer = matrixCache[i];
-      if (Array.isArray(layer)) {
-        for (let k = 0; k < layer.length; k++) {
-          if (this.config.displaySets) {
-            // const setLayer = layer[k];
-            // for (let j = 0; j < setLayer.rendered.length; j++) {
-            //   if (setLayer.rendered[j] !== -1) count++;
-            // }
-          }
-        }
-      } else {
+      if (!Array.isArray(layer)) {
         for (let j = 0; j < layer.rendered.length; j++) {
           if (isVisible(i, j)) count++;
         }
       }
     }
 
-    // Pre-allocate
+    // allocate buffers
     const positions = new Float32Array(count * 3);
     const scales = new Float32Array(count * 3);
     const colors = new Float32Array(count);
@@ -143,71 +152,21 @@ export default class HistogramWireframeClass {
     for (let i = 0; i < matrixCache.length; i++) {
       const layer = matrixCache[i];
       const colorIdx = this.getColorIndex(i, setIndex);
-      if (Array.isArray(layer)) {
-        for (let k = 0; k < layer.length; k++) {
-          if (this.config.displaySets) {
-            // const setLayer = layer[k];
-            // for (let j = 0; j < setLayer.rendered.length; j++) {
-            //   if (setLayer.rendered[j] !== -1) count++;
-            // }
-          }
-        }
-      } else {
+      if (!Array.isArray(layer)) {
         for (let j = 0; j < layer.rendered.length; j++) {
           if (isVisible(i, j)) {
             const scaleAdd = computeNumOfInstBeneath(i, j) * 0.05;
-            positions[(index * 3)] = layer.pos[j * 3];
-            positions[(index * 3) + 1] = layer.pos[(j * 3) + 1];
-            positions[(index * 3) + 2] = layer.pos[(j * 3) + 2];
-            scales[(index * 3)] = layer.scale[j * 3] + scaleAdd;
-            scales[(index * 3) + 1] = layer.scale[(j * 3) + 1] + scaleAdd;
-            scales[(index * 3) + 2] = layer.scale[(j * 3) + 2] + scaleAdd;
+            positions[index * 3]     = layer.pos[j * 3];
+            positions[index * 3 + 1] = layer.pos[j * 3 + 1];
+            positions[index * 3 + 2] = layer.pos[j * 3 + 2];
+            scales[index * 3]     = layer.scale[j * 3] + scaleAdd;
+            scales[index * 3 + 1] = layer.scale[j * 3 + 1] + scaleAdd;
+            scales[index * 3 + 2] = layer.scale[j * 3 + 2] + scaleAdd;
             colors[index++] = colorIdx;
           }
         }
       }
     }
-
-    // let idx = 0;
-    // let idx3 = 0;
-    //
-    // for (let layerIdx = 0; layerIdx < matrixCache.length; layerIdx++) {
-    //   const layer = matrixCache[layerIdx];
-    //   const colorIdx = this.getColorIndex(layerIdx, setIndex);
-    //
-    //   for (let instIdx = 0; instIdx < layer.length; instIdx++) {
-    //     const instance = layer[instIdx];
-    //
-    //     if (Array.isArray(instance)) {
-    //       if (!displaySets) continue;
-    //       for (let k = 0; k < instance.length; k++) {
-    //         const inst = instance[k];
-    //         if (!inst) continue;
-    //         const p = inst.position, s = inst.scale;
-    //         positions[idx3] = p.x;
-    //         positions[idx3 + 1] = p.y;
-    //         positions[idx3 + 2] = p.z;
-    //         scales[idx3] = s.x;
-    //         scales[idx3 + 1] = s.y;
-    //         scales[idx3 + 2] = s.z;
-    //         colors[idx++] = colorIdx;
-    //         idx3 += 3;
-    //       }
-    //     } else if (instance && isVisible(layerIdx, instIdx)) {
-    //       const numBeneath = computeNumOfInstBeneath(layerIdx, instIdx);
-    //       const scaleAdd = numBeneath * 0.05;
-    //       const p = instance.position, s = instance.scale;
-    //       positions[idx3] = p.x;
-    //       positions[idx3 + 1] = p.y;
-    //       positions[idx3 + 2] = p.z;
-    //       scales[idx3] = s.x + scaleAdd;
-    //       scales[idx3 + 1] = s.y + scaleAdd;
-    //       scales[idx3 + 2] = s.z + scaleAdd;
-    //       colors[idx++] = colorIdx;
-    //       idx3 += 3;
-    //     }
-    //   }
-    // }
 
     const baseBox = new THREE.BoxGeometry(1, 1, 1);
     const baseEdges = new THREE.EdgesGeometry(baseBox);
@@ -232,6 +191,7 @@ export default class HistogramWireframeClass {
     this.wireframe.frustumCulled = false;
     if (parent) parent.add(this.wireframe);
   }
+
 
   //TODO cool
   toggleVisibility (matrixCache, maxInstancesPerLayer, setIndex) {
