@@ -2,8 +2,8 @@
 export function parseConfig (json) {
   const data = typeof json === "string" ? JSON.parse(json) : json;
 
-  function expandHistogramPads (pads) {
-    // If already array → return transformed version
+  function expandHistogramPads(pads) {
+    // If already array → return as-is
     if (Array.isArray(pads)) return pads;
 
     // If object with "type" → expand into array
@@ -16,9 +16,21 @@ export function parseConfig (json) {
       const ny = parseInt(match[2], 10);
       const nz = parseInt(match[3], 10);
 
-      const scale = pads.scale || { x: 1, y: 1, z: 1 };
+      // total size, not per-pad size
+      const totalScale = pads.scale || { x: 1, y: 1, z: 1 };
+
+      // padding between pads
       const padding = pads.padding || { x: 0, y: 0, z: 0 };
+
+      // origin = bottom-inner-left
       const origin = pads.origin || { x: 0, y: 0, z: 0 };
+
+      // Compute per-pad scale:
+      const padScale = {
+        x: (totalScale.x - padding.x * (nx - 1)) / nx,
+        y: (totalScale.y - padding.y * (ny - 1)) / ny,
+        z: (totalScale.z - padding.z * (nz - 1)) / nz,
+      };
 
       const result = [];
       let counter = 1;
@@ -29,11 +41,11 @@ export function parseConfig (json) {
             result.push({
               id: `${prefix}${counter++}`,
               position: {
-                x: origin.x + (ix - (nx - 1) / 2) * (scale.x + padding.x),
-                y: origin.y + (iy - (ny - 1) / 2) * (scale.y + padding.y),
-                z: origin.z + (iz - (nz - 1) / 2) * (scale.z + padding.z),
+                x: origin.x + (ix * (padScale.x + padding.x)) + (padScale.x / 2),
+                y: origin.y + (iy * (padScale.y + padding.y)) + (padScale.y / 2),
+                z: origin.z + (iz * -(padScale.z + padding.z)) - (padScale.z / 2),
               },
-              scale: { ...scale },
+              scale: { ...padScale },
             });
           }
         }
@@ -41,9 +53,9 @@ export function parseConfig (json) {
       return result;
     }
 
-    // Otherwise → single object, wrap in array
     return [pads];
   }
+
 
   function transform (obj, key = null) {
     if (Array.isArray(obj)) {

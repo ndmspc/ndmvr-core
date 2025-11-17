@@ -55,9 +55,13 @@ export class THnPainter extends TPainter {
 
   updateHistogram (histo) {
     const parent = this.mesh.parent;
+    const raycastHandler = this.mesh.raycast;
 
+    this.mesh.raycast = () => {};
     this.matrixCache = [];
     this.BVHTree = [];
+    this.availableSets = [];
+    this.selectedSet = [];
     this.wireframe.dispose();
     this.instGeom.dispose();
     parent.remove(this.mesh);
@@ -65,11 +69,13 @@ export class THnPainter extends TPainter {
     this.rootObj = histo.obj;
     this.pointer = new HistogramPointerClass(this.rootObj);
     this.init();
+    this.renderHistogram(0, this.totalInstances, 0);
+
 
     setTimeout(() => {
       parent.add(this.mesh);
+      this.mesh.raycast = raycastHandler;
     }, 0);
-    this.renderHistogram(0, this.totalInstances, 0);
 
     // parent.add(this.mesh);
     parent.add(this.wireframe.wireframe);
@@ -113,6 +119,7 @@ export class THnPainter extends TPainter {
     this.matrixCache = new Array(this.maxInstancesPerLayer.length - 1);
     const hasSets = this.availableSets.length > 0;
     if (hasSets) {
+      console.log("SETING MATRIX CACHE FOR SETS: ", this.availableSets);
       this.matrixCache[this.matrixCache.length - 1] = new Array(this.availableSets.length);
     }
 
@@ -461,6 +468,10 @@ export class THnPainter extends TPainter {
         }
 
         if (!set) {
+          if (this.pointer.isOnSet) {
+            binSizePos.z.size = 0.01;
+            binSizePos.z.pos += (selectedSetIndex - (this.selectedSet.length - 1) / 2) * 0.1;
+          }
           this.setMatrixCacheAt(
             currentLayer, null, i / stepFor, binSizePos,
             (currentLayer === layer && scaleFactor !== 0) ? this.color : -1
@@ -575,7 +586,10 @@ export class THnPainter extends TPainter {
       return true;
     };
 
-    if (areIndexesEqual(event.index, this.dirtyInstance)) return;
+    if (areIndexesEqual(event.index, this.dirtyInstance)) {
+      this.dirtyInstance = null;
+      return;
+    }
     const parentRange = this.pointer.parentPath.map(p => {
       const range = p.range[0];
       return {
@@ -592,8 +606,9 @@ export class THnPainter extends TPainter {
       level: parentRange.length,
       range: parentRange.concat(event.range)
     };
-    const { range: coords, level, content, error, set, triggerSource } = merged;
-    const minimizedEvent = { coords, level, content, error, set, triggerSource };
+    console.log(merged);
+    const { range: coords, level, content, error, set, triggerSource, instanceId } = merged;
+    const minimizedEvent = { coords, level, content, error, set, triggerSource, instanceId };
     binInfoSubjectGet().next(minimizedEvent);
   }
 
@@ -845,6 +860,10 @@ export class THnPainter extends TPainter {
         currentValue.selectedSet = [currentValue.sets[0]];
       }
       stateSubjectGet().next(currentValue);
+    } else {
+      const currentValue = stateSubjectGet().getValue();
+      currentValue.sets = [];
+      currentValue.selectedSet = [];
     }
   }
 
