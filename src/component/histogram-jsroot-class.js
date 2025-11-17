@@ -141,6 +141,7 @@ export class HistogramJsrootClass {
         (matrixScale.y / size.z));
 
       obj3d.rotateX(-Math.PI / 2);
+      obj3d.translateZ(-(matrixScale.y / 2));
       this.histogramGroup.add(obj3d);
       // console.log("obj3d: ", obj3d);
       // console.log(this.histogramGroup);
