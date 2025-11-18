@@ -144,7 +144,7 @@ selectDiv.innerHTML = `
       <option value="histo5_2_1">histo5_2_1</option>
       <option value="custom">Set to URL</option>
     </select>
-    <input type="text" id="custom-url-input" value="https://eos.ndmspc.io/eos/ndmspc/scratch/test/test.json" placeholder="Enter custom URL" style="display: none; margin-top: 5px; width: 200px;" />
+    <input type="text" id="custom-url-input" value="https://eos.ndmspc.io/eos/ndmspc/scratch/ndmspc/ndmvr-aframe/demo/rsn.json" placeholder="Enter custom URL" style="display: none; margin-top: 5px; width: 200px;" />
     <button id="load-custom-url" style="display: none; margin-top: 5px;">Load</button>
   </div>
 `;
@@ -165,7 +165,7 @@ histogramSelect.addEventListener("change", (event) => {
     loadButton.style.display = "none";
     histogramSubjectGet().next({
       id: "histogram1",
-      opts: {render: "ndmvr"},
+      opts: { render: "ndmvr" },
       obj: options.get(selectedValue),
       config: {
         TH1ZScale: {
@@ -358,7 +358,7 @@ loadButton.addEventListener("click", async () => {
 //   histogram: histo125,
 // });
 
-histogramSubjectGet().next({id: "histogram1", opts: {render: "jsroot"}, obj: h3scat});
+histogramSubjectGet().next({ id: "histogram1", opts: { render: "jsroot" }, obj: h3scat });
 //
 // histogramSubjectGet().next({id: "histogram1", opts: {render: "ndmvr"}, obj: nav});
 // histogramSubjectGet().next({id: 'histogram4', opts: {render: "nested"}, histogram: h3scat});
