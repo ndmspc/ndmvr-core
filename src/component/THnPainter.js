@@ -62,6 +62,12 @@ export class THnPainter extends TPainter {
     this.BVHTree = [];
     this.availableSets = [];
     this.selectedSet = [];
+    stateSubjectGet().next({
+      sets: [],
+      selectedSet: [],
+      arrays: ["content"],
+      selectedArray: "content"
+    });
     this.wireframe.dispose();
     this.instGeom.dispose();
     parent.remove(this.mesh);
@@ -635,12 +641,16 @@ export class THnPainter extends TPainter {
   }
 
   raycastHandler (raycaster) {
-    const res = this.checkIntersectionBVH(raycaster.ray);
+    try {
+      const res = this.checkIntersectionBVH(raycaster.ray);
 
-    const intersection = res[0];
-    if (intersection) {
-      const triggerSource = raycaster._triggerSource;
-      this.intersectionHandler(intersection, triggerSource);
+      const intersection = res[0];
+      if (intersection) {
+        const triggerSource = raycaster._triggerSource;
+        this.intersectionHandler(intersection, triggerSource);
+      }
+    } catch (e) {
+      console.log(e);
     }
   }
 
