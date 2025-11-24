@@ -48,10 +48,14 @@ export class TPainter {
       .subscribe((v) => {
         this.config = configSubjectGet().mergeHistogramConfig(this?.opts?.config);
         // console.log(this.config);
-        this.limits = {
-          ...v.config.environment.histogramPads.find(
-            (el) => el.id === this.id,
-          )
+        const hasLimits = v.config.environment.histogramPads.find(
+          (el) => el.id === this.id
+        );
+
+        this.limits = hasLimits ?? {
+          scale:  { x: 20, y: 10, z: 20 },
+          padding:{ x: 0,  y: 0,  z: 0  },
+          position: { x: 0,  y: 0,  z: -5 }
         };
       });
 

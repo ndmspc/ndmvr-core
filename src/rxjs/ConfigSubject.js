@@ -1,5 +1,5 @@
 import { BehaviorSubject } from "rxjs";
-import { parseConfig } from "../utils/baseUtil.js";
+import { parseConfig, appendPads } from "../utils/baseUtil.js";
 
 let configSubject;
 
@@ -111,7 +111,14 @@ class ConfigSubject {
 
   next (e) {
     // console.log(this.parseConfig(e));
-    this.#subject.next(parseConfig(e));
+    this.#subject.next(parseConfig(e, this.#subject.getValue()));
+  }
+
+  appendPads(ids, settings) {
+    // settings = { scale, padding, origin }
+
+    const updated = appendPads(this.#subject.getValue(), ids, settings);
+    this.#subject.next(updated);
   }
 
   mergeHistogramConfig (partialConfig, defaultConfig = this.#subject.value.config.histogram) {
