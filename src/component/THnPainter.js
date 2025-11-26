@@ -576,7 +576,8 @@ export class THnPainter extends TPainter {
   mouseClickDefault (event) {
     this.showChildHistogram(event.index);
     canvasSubjectGet().next({
-      id: this.id + "-cinema",
+      // id: this.id + "-cinema",
+      id: "*",
       obj: event.jsrootObj,
     });
   }
