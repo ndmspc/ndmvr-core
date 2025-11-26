@@ -34,7 +34,7 @@ export class CanvasClass {
 
     this.cinemaSub = canvasSubjectGet()
       .getObservable()
-      .pipe(filter((e) => e.id === this.id))
+      .pipe(filter((e) => (e.id === this.id) || (e.id === "*")))
       .subscribe((obj) => {
         console.log("obj: ", obj);
         const object = obj.obj;

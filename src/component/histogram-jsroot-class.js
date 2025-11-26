@@ -151,6 +151,8 @@ export class HistogramJsrootClass {
         this.defaultRaycastHandler = mesh.raycast.bind(mesh);
         mesh.raycast = this.raycastHandler.bind(this);
       }
+    }).catch(err => {
+      console.log("JSROOT was not able to build object: ", err);
     });
   }
 

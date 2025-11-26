@@ -1,5 +1,5 @@
 
-export function appendPads(subjectValue, ids, { scale, padding, origin }) {
+export function appendPads(subjectValue, ids, disp_kind, { scale, padding, origin }) {
   // The raw config is inside subjectValue.config
   const rootCfg = subjectValue.config ?? {};
 
@@ -9,27 +9,81 @@ export function appendPads(subjectValue, ids, { scale, padding, origin }) {
 
   const pads = rootCfg.environment.histogramPads;
 
-  let offsetX = origin.x;
-  let offsetY = origin.y;
-  let offsetZ = origin.z;
+  // ------------------------
+  // 1. Extract grid settings
+  // ------------------------
+  let rows = 1;
+  let cols = ids.length;
+
+  if (typeof disp_kind === "string") {
+    // Match gridNxM or grid2x2 or grid3x4 etc.
+    const m = disp_kind.match(/^grid(\d+)x(\d+)$/i);
+    if (m) {
+      rows = parseInt(m[1], 10);
+      cols = parseInt(m[2], 10);
+    } else if (disp_kind === "simple") {
+      rows = 1;
+      cols = ids.length;
+    }
+    // flex layout -> treat horizontally
+    else if (disp_kind === "flex") {
+      rows = 1;
+      cols = ids.length;
+    }
+  }
+
+  // Guard: if grid smaller than IDs, expand
+  const totalCells = rows * cols;
+  if (totalCells < ids.length) {
+    cols = Math.ceil(Math.sqrt(ids.length));
+    rows = Math.ceil(ids.length / cols);
+  }
+
+  // -------------------------------------
+  // 2. Place each pad in a grid layout
+  // -------------------------------------
+  let currentRow = 0;
+  let currentCol = 0;
 
   ids.forEach(id => {
+    const posX =
+      origin.x +
+      currentCol * (scale.x + padding.x) +
+      scale.x / 2;
+
+    const posY =
+      origin.y +
+      (rows - 1 - currentRow) * (scale.y + padding.y) +
+      scale.y / 2;
+
+    const posZ =
+      origin.z -
+      scale.z / 2;
+
     pads.push({
       id,
-      position: {
-        x: offsetX + scale.x / 2,
-        y: offsetY + scale.y / 2,
-        z: offsetZ - scale.z / 2,
-      },
+      position: { x: posX, y: posY, z: posZ },
       scale: { ...scale },
       padding: { ...padding },
-      origin: { ...origin }
+      origin: { ...origin },
+      grid: {
+        row: currentRow,
+        col: currentCol,
+        rows,
+        cols,
+        disp_kind
+      }
     });
 
-    offsetX += scale.x + padding.x;
+    // Move to next grid cell
+    currentCol++;
+    if (currentCol >= cols) {
+      currentCol = 0;
+      currentRow++;
+    }
   });
 
-  return subjectValue; // keep structure intact
+  return subjectValue; // preserve shape
 }
 
 

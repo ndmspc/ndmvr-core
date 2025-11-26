@@ -1,4 +1,4 @@
-import { Subject } from "rxjs";
+import { ReplaySubject } from "rxjs";
 
 let binInfoSubject;
 
@@ -6,7 +6,7 @@ class BinInfoSubject {
   #subject;
 
   constructor () {
-    this.#subject = new Subject();
+    this.#subject = new ReplaySubject(1);
   };
 
   getObservable () {

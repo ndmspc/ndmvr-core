@@ -114,10 +114,8 @@ class ConfigSubject {
     this.#subject.next(parseConfig(e, this.#subject.getValue()));
   }
 
-  appendPads(ids, settings) {
-    // settings = { scale, padding, origin }
-
-    const updated = appendPads(this.#subject.getValue(), ids, settings);
+  appendPads(ids, disp_kind, settings) {
+    const updated = appendPads(this.#subject.getValue(), ids, disp_kind, settings);
     this.#subject.next(updated);
   }
 
