@@ -15,6 +15,8 @@ export default defineConfig([
       "no-unused-vars": "warn",
       semi: ["warn", "always"],
       quotes: ["warn", "double"],
+      indent: ["warn", 2],
     },
   },
 ]);
+

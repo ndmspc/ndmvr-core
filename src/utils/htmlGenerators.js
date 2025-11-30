@@ -23,14 +23,14 @@ export function generate_AFrame_blank_scene_html () {
 
 }
 
-function generateBlankScene () {
+function generateBlankScene() {
   const scene = document.createElement("a-scene");
   scene.id = "a-min-scene";
   scene.setAttribute("stats", "");
-  // scene.setAttribute('device-detector', '');
-  // scene.setAttribute('screen-controls', '');
   scene.setAttribute("ndmvr-raycaster", "");
-  scene.style.cssText = "position: absolute; height: 100%; width: 100%;";
+  // scene.setAttribute("vr-mode-ui", "enabled: false");
+  // scene.setAttribute("embedded", "");
+  scene.style.cssText = "height: 100%; width: 100%";
 
   const sky = document.createElement("a-sky");
   sky.setAttribute("color", "#ffffff");

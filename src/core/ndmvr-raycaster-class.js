@@ -16,10 +16,12 @@ export class NdmvrRaycaster {
   singleClickTimer;
   dbClickTimeout;
   configSub;
+  rendererElement;
 
-  constructor (scene) {
+  constructor (scene, rendererElement) {
     this.singleClickTimer = null;
     this.dbClickTimeout = 190;
+    this.rendererElement = rendererElement;
     this.raycaster = new THREE.Raycaster();
     this.mouse = new THREE.Vector2();
     this.sceneElement = scene;
@@ -47,8 +49,10 @@ export class NdmvrRaycaster {
     });
 
     window.addEventListener("click", (event) => {
-      this.mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
-      this.mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+      const rect = this.rendererElement.getBoundingClientRect();
+
+      this.mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+      this.mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
       this.raycaster.setFromCamera(this.mouse, this.cameraElement);
 
       const currentTime = Date.now();
@@ -79,13 +83,6 @@ export class NdmvrRaycaster {
     });
   }
 
-  intersectObject (obj) {
-    this.mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
-    this.mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
-    this.raycaster.setFromCamera(this.mouse, this.cameraElement);
-
-  }
-
   handleRaycast () {
     const hits = this.raycaster.intersectObjects(this.sceneElement.children, true);
     if (hits.length > 0) {
@@ -94,8 +91,10 @@ export class NdmvrRaycaster {
   }
 
   updateRaycaster (event) {
-    this.mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
-    this.mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+    const rect = this.rendererElement.getBoundingClientRect();
+
+    this.mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+    this.mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
     this.raycaster.setFromCamera(this.mouse, this.cameraElement);
     this.raycaster._triggerSource = "mousemove";
     const hits = this.raycaster.intersectObjects(this.sceneElement.children, true);

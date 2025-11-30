@@ -53,10 +53,10 @@ document.querySelector("#app").appendChild(sceneElm);
 // sceneElm.object3D.add(cube);
 
 
-// const geom = new THREE.BoxGeometry(10, 0, 10);
+// const geom = new THREE.BoxGeometry(0.2, 10, 2);
 // const mate = new THREE.MeshNormalMaterial();
 // const cube = new THREE.Mesh(geom, mate);
-// cube.position.set(4, -1.166666, 0);
+// cube.position.set(0.1, 5, -7);
 // sceneElm.object3D.add(cube);
 
 // const geom2 = new THREE.BoxGeometry(10, 2.333333333, 10);
@@ -358,9 +358,9 @@ loadButton.addEventListener("click", async () => {
 //   histogram: histo125,
 // });
 
-histogramSubjectGet().next({ id: "histogram1", opts: { render: "jsroot" }, obj: h3scat });
+// histogramSubjectGet().next({ id: "histogram1", opts: { render: "jsroot" }, obj: h3scat });
 //
-// histogramSubjectGet().next({id: "histogram1", opts: {render: "ndmvr"}, obj: nav});
+histogramSubjectGet().next({id: "histogram1", opts: {render: "ndmvr"}, obj: histo1_2_5});
 // histogramSubjectGet().next({id: 'histogram4', opts: {render: "nested"}, histogram: h3scat});
 // histogramSubjectGet().next({id: 'histogram1', opts: {render: "jsroot"}, histogram: h3scat});
 //
