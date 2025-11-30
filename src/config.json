@@ -30,9 +30,9 @@
         "type": "grid1x1x1",
         "prefix": "histogram",
         "scale": {
-          "x": 20,
+          "x": 0.2,
           "y": 10,
-          "z": 20
+          "z": 2
         },
         "padding": {
           "x": 0,

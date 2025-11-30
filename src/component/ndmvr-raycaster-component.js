@@ -6,7 +6,8 @@ const registerNdmvrRaycasterComponent = () => {
     schema: {},
 
     init: function () {
-      this.raycaster = new NdmvrRaycaster(this.el.object3D);
+      this.rendererElement = this.el.sceneEl.renderer.domElement;
+      this.raycaster = new NdmvrRaycaster(this.el.object3D, this.rendererElement);
     }
     // this.raycaster = new THREE.Raycaster();
     // this.mouse = new THREE.Vector2();

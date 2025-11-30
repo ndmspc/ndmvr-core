@@ -27,16 +27,15 @@ function getRootBinSizePosByAxis (axis, binRelPos, size, padding, offset, layer,
   target.pos = binLow + (binSize * 0.5) - axis.fXmin;
 
   if (size) {
-    const wholeSize = axis.fXmax - axis.fXmin;
-    const sizeWoPadding = size - padding * (axis.fNbins - 1);
-    const scale = wholeSize / sizeWoPadding;
+    const binSize = axis.fXmax - axis.fXmin;
+    const scale = (binSize * axis.fNbins) / (size * axis.fNbins);
 
     target.pos /= scale;
     target.size /= scale;
+    target.size *= (1 - padding);
     target.pos -= size * 0.5;
     target.pos += offset;
   }
-  target.pos += padding * binRelPos;
 }
 
 /**
@@ -68,11 +67,11 @@ export function rootSizePosToAFrame (jsrootSizePos) {
 export function computeAFrameBinSizePos (rootObj, rootBinRelPos, padding, size, offset, layer, target) {
   getRootBinSizePos(rootObj, rootBinRelPos, size, padding, offset, layer, target);
 
-  if (!size) {
-    target.x.pos += padding.x * (rootBinRelPos.x - 1);
-    target.y.pos += padding.y * (rootBinRelPos.y - 1);
-    target.z.pos += padding.z * (rootBinRelPos.z - 1);
-  }
+  // if (!size) {
+  //   target.x.pos += padding.x * (rootBinRelPos.x - 1);
+  //   target.y.pos += padding.y * (rootBinRelPos.y - 1);
+  //   target.z.pos += padding.z * (rootBinRelPos.z - 1);
+  // }
 
   return target;
 }
@@ -161,7 +160,7 @@ export function computeIndexFromPosition (position, obj, maxInstancesPerLayer, s
               position[layer].y + 1,
               position[layer].z + 1,
             )
-            ];
+          ];
       } else {
         child =
           obj.children[selectedSet[0]][
@@ -170,7 +169,7 @@ export function computeIndexFromPosition (position, obj, maxInstancesPerLayer, s
               position[layer].y + 1,
               position[layer].z + 1,
             )
-            ];
+          ];
       }
       if (index > layer) {
         rec(layer + 1, child, index);
@@ -248,12 +247,12 @@ export function getRangeByPosition (position, set, obj, wireframe, selectedSet, 
       child =
         obj.children.content[
           obj.getBin(position[0].x + 1, position[0].y + 1, position[0].z + 1)
-          ];
+        ];
     } else if (obj.children?.[selectedSet[0]]) {
       child =
         obj.children[selectedSet[0]][
           obj.getBin(position[0].x + 1, position[0].y + 1, position[0].z + 1)
-          ];
+        ];
     }
     return [range, ...getRangeByPosition(position.slice(1), set, child, wireframe, selectedSet, layer + 1)];
   } else {
