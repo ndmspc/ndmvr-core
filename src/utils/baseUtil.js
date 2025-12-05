@@ -87,7 +87,6 @@ export function appendPads(subjectValue, ids, disp_kind, { scale, padding, origi
 }
 
 
-
 export function parseConfig(json, existingConfig = null) {
   const data = typeof json === "string" ? JSON.parse(json) : json;
 
@@ -107,11 +106,11 @@ export function parseConfig(json, existingConfig = null) {
       const padding = pads.padding || { x: 0, y: 0, z: 0 };
       const origin = pads.origin || { x: 0, y: 0, z: 0 };
 
-      const padScale = {
-        x: (totalScale.x - padding.x * (nx - 1)) / nx,
-        y: (totalScale.y - padding.y * (ny - 1)) / ny,
-        z: (totalScale.z - padding.z * (nz - 1)) / nz,
-      };
+      const padScale = new THREE.Vector3(
+        (totalScale.x - padding.x * (nx - 1)) / nx,
+        (totalScale.y - padding.y * (ny - 1)) / ny,
+        (totalScale.z - padding.z * (nz - 1)) / nz,
+      );
 
       const list = [];
       let counter = 1;
@@ -121,18 +120,20 @@ export function parseConfig(json, existingConfig = null) {
           for (let iz = 0; iz < nz; iz++) {
             list.push({
               id: `${prefix}${counter++}`,
-              position: {
-                x: origin.x + ix * (padScale.x + padding.x) + padScale.x / 2,
-                y: origin.y + iy * (padScale.y + padding.y) + padScale.y / 2,
-                z: origin.z - iz * (padScale.z + padding.z) - padScale.z / 2,
-              },
-              scale: { ...padScale },
+              position: new THREE.Vector3(
+                origin.x + ix * (padScale.x + padding.x) + padScale.x / 2,
+                origin.y + iy * (padScale.y + padding.y) + padScale.y / 2,
+                origin.z - iz * (padScale.z + padding.z) - padScale.z / 2,
+              ),
+              // scale: { ...padScale },
+              scale: padScale.clone(),
             });
           }
         }
       }
       return list;
     }
+    console.log("pads: ", pads);
 
     return [pads];
   }

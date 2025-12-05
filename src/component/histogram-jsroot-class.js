@@ -1,10 +1,10 @@
-import { configSubjectGet } from "../rxjs/ConfigSubject.js";
-import { filter } from "rxjs";
-import { build3d } from "jsroot";
-import { functionSubjectGet } from "../rxjs/FunctionSubject.js";
+import {configSubjectGet} from "../rxjs/ConfigSubject.js";
+import {filter} from "rxjs";
+import {build3d} from "jsroot";
+import {functionSubjectGet} from "../rxjs/FunctionSubject.js";
 import BinInfoVisualizer from "./bininfo-jsroot-class.js";
-import { canvasSubjectGet } from "../rxjs/CanvasSubject.js";
-import { binInfoSubjectGet } from "../rxjs/BinInfoSubject.js";
+import {canvasSubjectGet} from "../rxjs/CanvasSubject.js";
+import {binInfoSubjectGet} from "../rxjs/BinInfoSubject.js";
 
 
 export class HistogramJsrootClass {
@@ -19,8 +19,9 @@ export class HistogramJsrootClass {
   mouseEvents = [];
   color = new THREE.Color();
   colorTarget = new THREE.Color(0x00ffff);
+  buildPromise = undefined;
 
-  constructor (id, rootObj, camera) {
+  constructor(id, rootObj, camera) {
     this.id = id;
     this.rootObj = rootObj;
     this.camera = camera;
@@ -44,7 +45,7 @@ export class HistogramJsrootClass {
       .pipe(filter(e =>
         ((e.target.id.includes("*")) || (e.target.id.includes(this.id)))))
       .subscribe((v) => {
-        this.config = { ...v.config };
+        this.config = {...v.config};
         const matrix = this.config.environment.histogramPads.find(el => el.id === this.id);
         const pos = matrix.position;
         // const scale = matrix.scale;
@@ -66,39 +67,39 @@ export class HistogramJsrootClass {
             this.addEvent(f.event, f.function);
           } else {
             switch (f.event) {
-              case "mousemove":
-                this.addEvent(f.event, this.mousemoveDefault);
-                break;
-              case "mouseclick":
-                this.addEvent(f.event, this.mouseClickDefault);
-                break;
-              case "shiftmouseclick":
-                this.addEvent(f.event, this.shiftMouseClickDefault);
-                break;
-              case "mousedbclick":
-                this.addEvent(f.event, this.mouseDBClickDefault);
-                break;
-              case "shiftmousedbclick":
-                this.addEvent(f.event, this.shiftMouseDBClickDefault);
-                break;
+            case "mousemove":
+              this.addEvent(f.event, this.mousemoveDefault);
+              break;
+            case "mouseclick":
+              this.addEvent(f.event, this.mouseClickDefault);
+              break;
+            case "shiftmouseclick":
+              this.addEvent(f.event, this.shiftMouseClickDefault);
+              break;
+            case "mousedbclick":
+              this.addEvent(f.event, this.mouseDBClickDefault);
+              break;
+            case "shiftmousedbclick":
+              this.addEvent(f.event, this.shiftMouseDBClickDefault);
+              break;
             }
           }
         } else if (f.flag === "remove" && f.function) {
           this.removeEvent(f.event, f.function);
         } else if (f.flag === "remove") {
           switch (f?.state) {
-            case "keydown":
-              this.keydownEvents = [];
-              break;
-            case "keyup":
-              this.keyupEvents = [];
-              break;
-            default:
-              this.mouseEvents = this.mouseEvents.filter(ev => ev.event !== f.event);
-              this.mousemoveDefault({
-                object: this.getInstancedMesh(),
-                instanceId: null
-              });
+          case "keydown":
+            this.keydownEvents = [];
+            break;
+          case "keyup":
+            this.keyupEvents = [];
+            break;
+          default:
+            this.mouseEvents = this.mouseEvents.filter(ev => ev.event !== f.event);
+            this.mousemoveDefault({
+              object: this.getInstancedMesh(),
+              instanceId: null
+            });
           }
         } else if (f.flag === "removeAll") {
           this.keydownEvents = [];
@@ -119,17 +120,18 @@ export class HistogramJsrootClass {
     this.addEvent("mousedbclick", this.mouseDBClickDefault);
     this.addEvent("shiftmousedbclick", this.shiftMouseDBClickDefault);
 
-    this.renderWithBuild3d();
+    this.buildPromise = this.renderWithBuild3d();
+    console.log("buildPromise: ", this.buildPromise);
   }
 
-  updateHistogram (histo) {
+  updateHistogram(histo) {
     this.rootObj = histo;
     this.histogramGroup.clear();
-    this.renderWithBuild3d();
+    this.buildPromise = this.renderWithBuild3d();
   }
 
   renderWithBuild3d() {
-    build3d(this.rootObj).then(obj3d => {
+    return build3d(this.rootObj).then(obj3d => {
       const matrixScale = this.config.environment.histogramPads.find(el => el.id === this.id)?.scale;
       const box = new THREE.Box3().setFromObject(obj3d);
       const size = new THREE.Vector3();
@@ -152,7 +154,13 @@ export class HistogramJsrootClass {
         mesh.raycast = this.raycastHandler.bind(this);
       }
     }).catch(err => {
-      console.log("JSROOT was not able to build object: ", err);
+      const matrix = this.config.environment.histogramPads.find(el => el.id === this.id);
+      console.log("JSROOT was not able to build object: ", err, matrix);
+      throw {
+        message: err,
+        scale: matrix?.scale,
+        position: matrix?.position
+      };
     });
   }
 
@@ -160,7 +168,7 @@ export class HistogramJsrootClass {
   raycastHandler(raycaster, intersects) {
     this.defaultRaycastHandler(raycaster, intersects);
 
-    setTimeout(() =>{
+    setTimeout(() => {
       const firstIntersect = intersects
         .filter(intersect => intersect.instanceId !== undefined)
         .sort((a, b) => {
@@ -205,7 +213,6 @@ export class HistogramJsrootClass {
     }, 0);
 
 
-
   }
 
   /**
@@ -214,7 +221,7 @@ export class HistogramJsrootClass {
    * or keyboard event which has to concise state (keydown or keyup) and keyCode (e.g. Numpad1)
    * @param func Function that is called if event is triggered.
    * */
-  addEvent (event, func) {
+  addEvent(event, func) {
     if (event?.state === "keydown") {
       this.keydownEvents.push({
         key: event.key,
@@ -239,16 +246,16 @@ export class HistogramJsrootClass {
    * @param event Defines from which event should listening be removed.
    * @param func has to have same reference to one that was added by addEvent.
    * */
-  removeEvent (event, func) {
+  removeEvent(event, func) {
     const index = this.mouseEvents.find((f) => f === func);
     if (index) this.mouseEvents.splice(index, 1);
   }
 
-  mouseClickDefault (event) {
+  mouseClickDefault(event) {
     console.log("mouseclick default");
   }
 
-  mousemoveDefault (event) {
+  mousemoveDefault(event) {
     const areIndexesEqual = (index1, index2) => {
       if (index1.length !== index2.length) return false;
       for (let i = 0; i < index1.length; i++) {
@@ -279,15 +286,15 @@ export class HistogramJsrootClass {
     binInfoSubjectGet().next(event);
   }
 
-  shiftMouseClickDefault (event) {
+  shiftMouseClickDefault(event) {
     console.log("shiftMouseClickDefault");
   }
 
-  mouseDBClickDefault (event) {
+  mouseDBClickDefault(event) {
     console.log("mouseDBClickDefault");
   }
 
-  shiftMouseDBClickDefault (event) {
+  shiftMouseDBClickDefault(event) {
     console.log("shiftMouseDBClickDefault");
   }
 
@@ -313,7 +320,7 @@ export class HistogramJsrootClass {
    * @param position – should be array with position for each layer.
    * e.g. ([{x: 1, y: 3, z: 2}, {x: 89, 0, 0}])
    * */
-  getRangeByPosition (position) {
+  getRangeByPosition(position) {
     const axisNames = ["x", "y", "z"];
     const nAxes = Number.parseInt(this.rootObj._typename.substring(2, 3), 10);
 
@@ -338,7 +345,7 @@ export class HistogramJsrootClass {
   }
 
 
-  remove () {
+  remove() {
     this.histogramGroup.parent.remove(this.histogramGroup);
     this.dummyEl = document.getElementById("dummyDiv" + this.id);
     if (this.dummyEl) document.body.removeChild(this.dummyEl);
@@ -346,7 +353,7 @@ export class HistogramJsrootClass {
     this.sub.unsubscribe();
   }
 
-  getHistogramMesh () {
+  getHistogramMesh() {
     return this.histogramGroup;
   }
 
