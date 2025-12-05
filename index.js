@@ -15,6 +15,7 @@ export * from "./src/rxjs/BinInfoSubject.js";
 export * from "./src/component/camera.component";
 export * from "./src/controllers/mobile/mobileController";
 export * from "./src/utils/htmlGenerators";
+export * from "./src/utils/userUtil";
 export * from "./src/core/ndmvr-raycaster-class";
 export * from "./src/component/THnPainter.js";
 export * from "./src/core/histogram-pointer-class";
