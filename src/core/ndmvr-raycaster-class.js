@@ -5,6 +5,7 @@ import { configSubjectGet } from "../rxjs/ConfigSubject.js";
  * On event (either mouse move or mouse click) all child elements of scene are checked for intersection (recursively).
  * You can check trigger source of intersection by accessing <_triggerSource> in raycaster.
  * @param scene Three.js scene object, in scene children camera has to be present.
+ * @param domElement DOM element that is attached to renderer. This is used to calculate mouse position relative to renderer
  * Raycaster then traverse childs of specified scene.
  */
 export class NdmvrRaycaster {
