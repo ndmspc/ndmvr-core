@@ -86,6 +86,24 @@ export function appendPads(subjectValue, ids, disp_kind, { scale, padding, origi
   return subjectValue; // preserve shape
 }
 
+export function ensureDefaultBindings(config) {
+  const defaults = {
+    resetHistogram: "r",
+    goToPreviousLayer: "z",
+    hideOutlines: "o"
+  };
+
+  config.bindings = config.bindings || {};
+
+  for (const key in defaults) {
+    if (!config.bindings.hasOwnProperty(key)) {
+      config.bindings[key] = defaults[key];
+    }
+  }
+
+  return config;
+}
+
 
 export function parseConfig(json, existingConfig = null) {
   const data = typeof json === "string" ? JSON.parse(json) : json;
