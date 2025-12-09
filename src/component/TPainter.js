@@ -3,6 +3,7 @@ import { filter } from "rxjs";
 import { configSubjectGet } from "../rxjs/ConfigSubject.js";
 import { stateSubjectGet } from "../rxjs/StateSubject.js";
 import { dispatchSubjectGet } from "../rxjs/DispatchSubject.js";
+import {ensureDefaultBindings} from "../utils/baseUtil.js";
 
 export class TPainter {
   id = undefined;
@@ -19,6 +20,7 @@ export class TPainter {
   mouseEvents = [];
   keydownEvents = [];
   keyupEvents = [];
+  keyBindings = {};
   opts = undefined;
   //
   constructor ( rootObj, id, opts) {
@@ -47,7 +49,8 @@ export class TPainter {
       )
       .subscribe((v) => {
         this.config = configSubjectGet().mergeHistogramConfig(this?.opts?.config);
-        // console.log(this.config);
+        console.log(v.config);
+        this.keyBindings = ensureDefaultBindings(v.config.bindings);
         const hasLimits = v.config.environment.histogramPads.find(
           (el) => el.id === this.id
         );
@@ -103,35 +106,35 @@ export class TPainter {
         this.addEvent(event.event, event.function);
       } else {
         switch (event.event) {
-          case "mousemove":
-            this.addEvent(event.event, this.mousemoveDefault);
-            break;
-          case "mouseclick":
-            this.addEvent(event.event, this.mouseClickDefault);
-            break;
-          case "shiftmouseclick":
-            this.addEvent(event.event, this.shiftMouseClickDefault);
-            break;
-          case "mousedbclick":
-            this.addEvent(event.event, this.mouseDBClickDefault);
-            break;
-          case "shiftmousedbclick":
-            this.addEvent(event.event, this.shiftMouseDBClickDefault);
-            break;
+        case "mousemove":
+          this.addEvent(event.event, this.mousemoveDefault);
+          break;
+        case "mouseclick":
+          this.addEvent(event.event, this.mouseClickDefault);
+          break;
+        case "shiftmouseclick":
+          this.addEvent(event.event, this.shiftMouseClickDefault);
+          break;
+        case "mousedbclick":
+          this.addEvent(event.event, this.mouseDBClickDefault);
+          break;
+        case "shiftmousedbclick":
+          this.addEvent(event.event, this.shiftMouseDBClickDefault);
+          break;
         }
       }
     } else if (event.flag === "remove" && event.function) {
       this.removeEvent(event.event, event.function);
     } else if (event.flag === "remove") {
       switch (event?.state) {
-        case "keydown":
-          this.keydownEvents = [];
-          break;
-        case "keyup":
-          this.keyupEvents = [];
-          break;
-        default:
-          this.mouseEvents = this.mouseEvents.filter(ev => ev.event !== event.event);
+      case "keydown":
+        this.keydownEvents = [];
+        break;
+      case "keyup":
+        this.keyupEvents = [];
+        break;
+      default:
+        this.mouseEvents = this.mouseEvents.filter(ev => ev.event !== event.event);
       }
     } else if (event.flag === "removeAll") {
       this.keydownEvents = [];

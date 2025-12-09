@@ -30,7 +30,7 @@
         "type": "grid1x1x1",
         "prefix": "histogram",
         "scale": {
-          "x": 0.2,
+          "x": 10,
           "y": 10,
           "z": 2
         },
@@ -125,6 +125,11 @@
           }
         ]
       }
+    },
+    "bindings": {
+      "resetHistogram": "r",
+      "goToPreviousLayer": "z",
+      "hideOutlines": "o"
     }
   }
 }

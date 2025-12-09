@@ -914,16 +914,24 @@ export class THnPainter extends TPainter {
         0, this.totalInstances, parseInt(match[1]) - 1
       );
 
-    } else if (event.key === "h") {
+    } else if (event.key === this.keyBindings.hideOutlines) {
       this.wireframe.toggleVisibility(
         this.matrixCache, this.maxInstancesPerLayer,
         this.availableSets.indexOf(this.selectedSet[0])
       );
+    } else if (event.key === this.keyBindings.resetHistogram) {
+      this.resetHistogram();
+    } else if (event.key === this.keyBindings.goToPreviousLayer) {
+      this.setPointerToParent();
     }
   }
 
   keyUpHandler (event) {
     // console.log(event);
+  }
+
+  resetHistogram() {
+    this.updateHistogram({obj: this.rootObj});
   }
 
   /**
