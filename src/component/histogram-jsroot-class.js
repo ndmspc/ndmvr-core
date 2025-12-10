@@ -5,6 +5,7 @@ import {functionSubjectGet} from "../rxjs/FunctionSubject.js";
 import BinInfoVisualizer from "./bininfo-jsroot-class.js";
 import {canvasSubjectGet} from "../rxjs/CanvasSubject.js";
 import {binInfoSubjectGet} from "../rxjs/BinInfoSubject.js";
+import {Box3, Color, Group, Vector3} from "three";
 
 
 export class HistogramJsrootClass {
@@ -17,15 +18,15 @@ export class HistogramJsrootClass {
   dummyEl = undefined;
   defaultRaycastHandler = undefined;
   mouseEvents = [];
-  color = new THREE.Color();
-  colorTarget = new THREE.Color(0x00ffff);
+  color = new Color();
+  colorTarget = new Color(0x00ffff);
   buildPromise = undefined;
 
   constructor(id, rootObj, camera) {
     this.id = id;
     this.rootObj = rootObj;
     this.camera = camera;
-    this.histogramGroup = new THREE.Group();
+    this.histogramGroup = new Group();
     this.dummyEl = document.getElementById("dummyDiv" + id);
     if (this.dummyEl) document.body.removeChild(this.dummyEl);
 
@@ -121,7 +122,6 @@ export class HistogramJsrootClass {
     this.addEvent("shiftmousedbclick", this.shiftMouseDBClickDefault);
 
     this.buildPromise = this.renderWithBuild3d();
-    console.log("buildPromise: ", this.buildPromise);
   }
 
   updateHistogram(histo) {
@@ -133,8 +133,8 @@ export class HistogramJsrootClass {
   renderWithBuild3d() {
     return build3d(this.rootObj).then(obj3d => {
       const matrixScale = this.config.environment.histogramPads.find(el => el.id === this.id)?.scale;
-      const box = new THREE.Box3().setFromObject(obj3d);
-      const size = new THREE.Vector3();
+      const box = new Box3().setFromObject(obj3d);
+      const size = new Vector3();
       box.getSize(size);
 
       obj3d.scale.set(
@@ -227,7 +227,6 @@ export class HistogramJsrootClass {
         key: event.key,
         function: func,
       });
-      console.log("down");
     } else if (event?.state === "keyup") {
       this.keyupEvents.push({
         key: event.key,
@@ -339,7 +338,7 @@ export class HistogramJsrootClass {
           title: axisObj.fTitle
         };
       }
-      range = {...range, color: new THREE.Color(0x000000)};
+      range = {...range, color: new Color(0x000000)};
     }
     return range;
   }

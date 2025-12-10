@@ -14,7 +14,6 @@ export default class JsonHandler {
 
   computeMaxInstancesPerLayer () {
     if (!this.#rootFile) return;
-    console.log(this.#rootFile);
     const temp = this.#rootFile.fXaxis.fNbins * this.#rootFile.fYaxis.fNbins * this.#rootFile.fZaxis.fNbins;
     let max = [];
     max.push(temp);

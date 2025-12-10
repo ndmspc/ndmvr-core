@@ -2,6 +2,8 @@ import { canvasSubjectGet } from "../rxjs/CanvasSubject.js";
 import { filter } from "rxjs";
 import { makeImage } from "jsroot";
 import { configSubjectGet } from "../rxjs/ConfigSubject.js";
+import {Vector3, PlaneGeometry, MeshBasicMaterial, Color, DoubleSide, Mesh, TextureLoader} from "three";
+
 
 export class CanvasClass {
   plane = undefined;
@@ -13,13 +15,13 @@ export class CanvasClass {
   configSub = undefined;
 
   constructor (image, position, rotation, scale, id) {
-    const geometry = new THREE.PlaneGeometry(scale.x, scale.y);
-    const material = new THREE.MeshBasicMaterial({
-      color: new THREE.Color().setHex(0xffffff),
-      side: THREE.DoubleSide,
+    const geometry = new PlaneGeometry(scale.x, scale.y);
+    const material = new MeshBasicMaterial({
+      color: new Color().setHex(0xffffff),
+      side: DoubleSide,
     });
     if (!this.plane) {
-      this.plane = new THREE.Mesh(geometry, material);
+      this.plane = new Mesh(geometry, material);
       this.plane.position.set(position.x, position.y, position.z);
     }
 
@@ -77,7 +79,7 @@ export class CanvasClass {
       return;
     }
 
-    const loader = new THREE.TextureLoader();
+    const loader = new TextureLoader();
 
     if (
       typeof image === "string" &&
@@ -93,7 +95,7 @@ export class CanvasClass {
         (err) => console.error("Texture load failed", err),
       );
     } else if (image instanceof HTMLImageElement) {
-      const texture = new THREE.Texture(image);
+      const texture = new Texture(image);
       texture.needsUpdate = true;
       this.plane.material.map = texture;
       this.plane.material.needsUpdate = true;
@@ -103,6 +105,7 @@ export class CanvasClass {
   }
 
   remove () {
+    if (!this.plane.parent) return;
     this.plane.parent.remove(this.plane);
     this.cinemaSub.unsubscribe();
     this.configSub.unsubscribe();

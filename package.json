@@ -32,16 +32,15 @@
     "npmignore": "^0.3.1",
     "standard": "^17.1.2",
     "three": "^0.173.0",
-    "jsroot": "github:root-project/jsroot#30c16c1c5b73eb71fe741bf6ecc27c603f7658be"
-  },
-  "dependencies": {
+    "jsroot": "github:root-project/jsroot#30c16c1c5b73eb71fe741bf6ecc27c603f7658be",
     "aframe": "^1.7.0",
-    "networked-aframe": "^0.14.0",
-    "rxjs": "^7.8.1",
     "vite": "6.0.8"
   },
+  "dependencies": {
+    "rxjs": "^7.8.1"
+  },
   "peerDependencies": {
-    "three": "^0.173.0",
+    "three": "~0.173.0",
     "jsroot": "github:root-project/jsroot#30c16c1c5b73eb71fe741bf6ecc27c603f7658be"
   }
 }

@@ -15,6 +15,10 @@ import { canvasSubjectGet } from "../rxjs/CanvasSubject.js";
 import { binInfoSubjectGet } from "../rxjs/BinInfoSubject.js";
 import HistogramWireframeClass from "./histogram-wireframe-class.js";
 import { TPainter } from "./TPainter.js";
+import {
+  Vector3, Color, BoxGeometry, InstancedBufferGeometry,
+  InstancedBufferAttribute, Mesh, ShaderMaterial, Object3D, Box3
+} from "three";
 
 export class THnPainter extends TPainter {
   stateSub = undefined;
@@ -24,7 +28,7 @@ export class THnPainter extends TPainter {
   maxInstancesPerLayer = undefined;
   maxContentPerLayer = undefined;
   totalInstances = undefined;
-  color = new THREE.Color();
+  color = new Color();
   matrixCache = undefined;
   selectedSet = [];
   selectedArray = "content";
@@ -160,8 +164,8 @@ export class THnPainter extends TPainter {
       totalInst *= this.selectedSet.length;
     }
 
-    const baseBox = new THREE.BoxGeometry(1, 1, 1);
-    this.instGeom = new THREE.InstancedBufferGeometry();
+    const baseBox = new BoxGeometry(1, 1, 1);
+    this.instGeom = new InstancedBufferGeometry();
     this.instGeom.instanceCount = 0; // Start with 0, will be set in render
     this.instGeom.frustumCulled = false;
     this.instGeom.index = baseBox.index;
@@ -181,18 +185,18 @@ export class THnPainter extends TPainter {
 
     this.instGeom.setAttribute(
       "instancePosition",
-      new THREE.InstancedBufferAttribute(this.instancePositions, 3)
+      new InstancedBufferAttribute(this.instancePositions, 3)
     );
     this.instGeom.setAttribute(
       "instanceScale",
-      new THREE.InstancedBufferAttribute(this.instanceScales, 3)
+      new InstancedBufferAttribute(this.instanceScales, 3)
     );
     this.instGeom.setAttribute(
       "instanceColorIndex",
-      new THREE.InstancedBufferAttribute(this.instanceColors, 1)
+      new InstancedBufferAttribute(this.instanceColors, 1)
     );
 
-    this.mesh = new THREE.Mesh(this.instGeom, this.material);
+    this.mesh = new Mesh(this.instGeom, this.material);
     this.mesh.raycast = this.raycastHandler;
     this.mesh.frustumCulled = false;
 
@@ -265,8 +269,8 @@ export class THnPainter extends TPainter {
       }
     }
 
-    const baseBox = new THREE.BoxGeometry(1, 1, 1);
-    this.instGeom = new THREE.InstancedBufferGeometry();
+    const baseBox = new BoxGeometry(1, 1, 1);
+    this.instGeom = new InstancedBufferGeometry();
     this.instGeom.instanceCount = count;
     this.instGeom.frustumCulled = false;
     this.instGeom.index = baseBox.index;
@@ -279,11 +283,11 @@ export class THnPainter extends TPainter {
     this.instancePositions = positions;
     this.instanceScales = scales;
     this.instanceColors = colors;
-    this.instGeom.setAttribute("instancePosition", new THREE.InstancedBufferAttribute(positions, 3));
-    this.instGeom.setAttribute("instanceScale", new THREE.InstancedBufferAttribute(scales, 3));
-    this.instGeom.setAttribute("instanceColorIndex", new THREE.InstancedBufferAttribute(colors, 1));
+    this.instGeom.setAttribute("instancePosition", new InstancedBufferAttribute(positions, 3));
+    this.instGeom.setAttribute("instanceScale", new InstancedBufferAttribute(scales, 3));
+    this.instGeom.setAttribute("instanceColorIndex", new InstancedBufferAttribute(colors, 1));
 
-    this.mesh = new THREE.Mesh(this.instGeom, this.material);
+    this.mesh = new Mesh(this.instGeom, this.material);
     this.mesh.raycast = this.raycastHandler;
     this.mesh.frustumCulled = false;
     if (parent) parent.add(this.mesh);
@@ -501,8 +505,8 @@ export class THnPainter extends TPainter {
           const index = obj.getBin(relPos.x + 1, relPos.y + 1, relPos.z + 1);
           let child = undefined;
           const limits = {
-            position: new THREE.Vector3(binSizePos.x.pos, binSizePos.y.pos, binSizePos.z.pos),
-            scale: new THREE.Vector3(binSizePos.x.size, binSizePos.y.size, binSizePos.z.size)
+            position: new Vector3(binSizePos.x.pos, binSizePos.y.pos, binSizePos.z.pos),
+            scale: new Vector3(binSizePos.x.size, binSizePos.y.size, binSizePos.z.size)
           };
           if (obj.children.content) {
             child = obj.children.content[index];
@@ -538,7 +542,7 @@ export class THnPainter extends TPainter {
   }
 
   createMaterial () {
-    return new THREE.ShaderMaterial({
+    return new ShaderMaterial({
       vertexShader: `
     attribute vec3 instancePosition;
     attribute vec3 instanceScale;
@@ -613,7 +617,6 @@ export class THnPainter extends TPainter {
       level: parentRange.length,
       range: parentRange.concat(event.range)
     };
-    console.log(merged);
     const { range: coords, level, content, error, set, triggerSource, instanceId } = merged;
     const minimizedEvent = { coords, level, content, error, set, triggerSource, instanceId };
     binInfoSubjectGet().next(minimizedEvent);
@@ -896,7 +899,7 @@ export class THnPainter extends TPainter {
     const match = event.code.match(regex);
     if (match) {
       if (parseInt(match[1]) > this.matrixCache.length) return;
-      const dummy = new THREE.Object3D();
+      const dummy = new Object3D();
       dummy.scale.set(0, 0, 0);
       dummy.updateMatrix();
 
@@ -972,7 +975,7 @@ export class THnPainter extends TPainter {
   }
 
   checkIntersectionBVH (ray) {
-    const target = new THREE.Vector3();
+    const target = new Vector3();
 
     const createBox3 = (layer, index, offset, set) => {
       if (index < 0 || 1 / index === -Infinity) {
@@ -983,9 +986,9 @@ export class THnPainter extends TPainter {
             ? this.matrixCache[layer]?.[this.availableSets.indexOf(set)]
             : this.matrixCache[layer];
         return t
-          ? new THREE.Box3().setFromCenterAndSize(
-            new THREE.Vector3(t.pos[indexABS * 3], t.pos[(indexABS * 3) + 1], t.pos[(indexABS * 3) + 2]),
-            new THREE.Vector3(t.scale[indexABS * 3], t.scale[(indexABS * 3) + 1], t.scale[(indexABS * 3) + 2])
+          ? new Box3().setFromCenterAndSize(
+            new Vector3(t.pos[indexABS * 3], t.pos[(indexABS * 3) + 1], t.pos[(indexABS * 3) + 2]),
+            new Vector3(t.scale[indexABS * 3], t.scale[(indexABS * 3) + 1], t.scale[(indexABS * 3) + 2])
           )
           : undefined;
       } else {
@@ -994,9 +997,9 @@ export class THnPainter extends TPainter {
             ? this.BVHTree[layer][this.availableSets.indexOf(set)][offset]
             : this.BVHTree[layer][offset];
         return t
-          ? new THREE.Box3().setFromCenterAndSize(
-            new THREE.Vector3(t.pos[index * 3], t.pos[(index * 3) + 1], t.pos[(index * 3) + 2]),
-            new THREE.Vector3(t.scale[index * 3], t.scale[(index * 3) + 1], t.scale[(index * 3) + 2])
+          ? new Box3().setFromCenterAndSize(
+            new Vector3(t.pos[index * 3], t.pos[(index * 3) + 1], t.pos[(index * 3) + 2]),
+            new Vector3(t.scale[index * 3], t.scale[(index * 3) + 1], t.scale[(index * 3) + 2])
           )
           : undefined;
       }

@@ -1,4 +1,6 @@
 import AFRAME from "aframe";
+import {MathUtils} from "three/src/math/MathUtils.js";
+import {Vector3, Euler} from "three";
 
 var KEYCODE_TO_CODE = {
   "38": "ArrowUp",
@@ -50,7 +52,7 @@ const registerDesktopController = () => {
     init: function () {
       this.keys = {};
       this.easing = 1.1;
-      this.velocity = new THREE.Vector3();
+      this.velocity = new Vector3();
 
       setTimeout(() => {
         const cameraElement = document.querySelector("a-scene a-camera");
@@ -209,8 +211,8 @@ const registerDesktopController = () => {
     },
 
     getMovementVector: (function () {
-      var directionVector = new THREE.Vector3(0, 0, 0);
-      var rotationEuler = new THREE.Euler(0, 0, 0, "YXZ");
+      var directionVector = new Vector3(0, 0, 0);
+      var rotationEuler = new Euler(0, 0, 0, "YXZ");
 
       return function (delta) {
         var rotation = this.el.getAttribute("rotation");
@@ -226,7 +228,7 @@ const registerDesktopController = () => {
 
         xRotation = this.data.fly ? rotation.x : 0;
 
-        rotationEuler.set(THREE.MathUtils.degToRad(xRotation), THREE.MathUtils.degToRad(rotation.y), 0);
+        rotationEuler.set(MathUtils.degToRad(xRotation), MathUtils.degToRad(rotation.y), 0);
         directionVector.applyEuler(rotationEuler);
         return directionVector;
       };

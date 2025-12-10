@@ -1,5 +1,6 @@
 // service to manage camera
 /** @module CameraService */
+import {Vector3, Vector2} from "three";
 
 /**
  * Servis pre ovládanie a manipuláciu pozície kamery.
@@ -30,14 +31,14 @@ class CameraService {
     if (this.#cameraRig === null)
       this.#cameraRig = document.getElementById("cameraRig");
     if (this.#cameraRig !== null) {
-      const targetPosition = new THREE.Vector3();
+      const targetPosition = new Vector3();
       const currentPosition = this.#cameraRig.object3D.position.clone(); // naklonuj aktuálnu pozíciu
       if (moveUp) {
-        targetPosition.copy(currentPosition).add(new THREE.Vector3(0, +speed, 0)); // nastav cieľovú pozíciu o `speed` jednotiek vyššie
+        targetPosition.copy(currentPosition).add(new Vector3(0, +speed, 0)); // nastav cieľovú pozíciu o `speed` jednotiek vyššie
         this.#cameraRig.object3D.position.lerp(targetPosition, 0.5); // 0.5 - koeficient interpolácie
       } else {
         if (this.#cameraRig.object3D.position.y > 1.6) {
-          targetPosition.copy(currentPosition).add(new THREE.Vector3(0, -speed, 0)); // nastav cieľovú pozíciu o `speed` jednotiek nižšie
+          targetPosition.copy(currentPosition).add(new Vector3(0, -speed, 0)); // nastav cieľovú pozíciu o `speed` jednotiek nižšie
           this.#cameraRig.object3D.position.lerp(targetPosition, 0.5); // 0.5 - koeficient interpolácie
         }
       }
@@ -46,9 +47,9 @@ class CameraService {
 
   horizontalMoveCameraLocal = (joystickX, joystickY, movementSpeed) => {
     if (!this.#cameraRig || !this.#camera) return;
-    let joystickVector = new THREE.Vector2(joystickX, joystickY);
+    let joystickVector = new Vector2(joystickX, joystickY);
     let elementRotation = this.#camera.object3D.rotation.y;
-    joystickVector.rotateAround(new THREE.Vector3(0, 0), -elementRotation);
+    joystickVector.rotateAround(new Vector3(0, 0), -elementRotation);
     joystickVector.normalize();
     joystickVector.multiplyScalar(movementSpeed);
     this.#cameraRig.object3D.position["x"] += joystickVector.x;

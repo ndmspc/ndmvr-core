@@ -44,7 +44,6 @@ class FunctionSubject {
    * Function that takes array of functions and proposes them to histogram with delete flag.
    * */
   removeFunctions (input) {
-    console.log("vojde do remove");
     if (!input) return;
     let functions;
     if ((input instanceof Array)) {

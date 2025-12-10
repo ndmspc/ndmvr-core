@@ -1,4 +1,4 @@
-import * as THREE from "three";
+import {Box3, DoubleSide, Group, Mesh, MeshBasicMaterial, PlaneGeometry, Vector3} from "three";
 import { TextGeometry } from "three/addons/geometries/TextGeometry.js";
 import { FontLoader } from "three/addons/loaders/FontLoader.js";
 import { canvasSubjectGet } from "../rxjs/CanvasSubject.js";
@@ -53,7 +53,7 @@ export class BinInfoVisualizer {
       .subscribe();
 
     // THREE.js group to hold the visualization
-    this.group = new THREE.Group();
+    this.group = new Group();
 
     // Current bin data
     // this.currentData = null;
@@ -125,13 +125,13 @@ export class BinInfoVisualizer {
   createBackgroundPanel (height) {
     const { width, backgroundColor } = this.options;
 
-    const geometry = new THREE.PlaneGeometry(width, height);
-    const material = new THREE.MeshBasicMaterial({
+    const geometry = new PlaneGeometry(width, height);
+    const material = new MeshBasicMaterial({
       color: backgroundColor,
-      side: THREE.DoubleSide
+      side: DoubleSide
     });
 
-    const panel = new THREE.Mesh(geometry, material);
+    const panel = new Mesh(geometry, material);
     return panel;
   }
 
@@ -210,23 +210,23 @@ export class BinInfoVisualizer {
         console.error("Error creating text line:", error);
       }
     }
-    const worldPos = new THREE.Vector3(data.point.x, data.point.y, data.point.z);
+    const worldPos = new Vector3(data.point.x, data.point.y, data.point.z);
     this.camera.worldToLocal(worldPos);
-    const dir = new THREE.Vector3()
+    const dir = new Vector3()
       .subVectors(worldPos, this.camera.position)
       .normalize();
 
     const distance = 0.1;
-    const pos = new THREE.Vector3()
+    const pos = new Vector3()
       .copy(this.camera.position)
       .addScaledVector(dir, distance);
 
-    const box = new THREE.Box3().setFromObject(this.group);
-    const size = new THREE.Vector3();
+    const box = new Box3().setFromObject(this.group);
+    const size = new Vector3();
     box.getSize(size);
 
     const halfSize = size.clone().multiplyScalar(0.5);
-    pos.add(new THREE.Vector3(halfSize.x, halfSize.y, 0));
+    pos.add(new Vector3(halfSize.x, halfSize.y, 0));
     this.group.position.copy(pos);
 
     this.camera.add(this.group);
