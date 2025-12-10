@@ -1,6 +1,13 @@
 import { configSubjectGet } from "../rxjs/ConfigSubject.js";
 import { filter } from "rxjs";
-import { FloatType } from "three";
+import {
+  BoxGeometry, Color,
+  EdgesGeometry,
+  FloatType,
+  InstancedBufferAttribute,
+  InstancedBufferGeometry,
+  LineSegments, ShaderMaterial
+} from "three";
 import { stateSubjectGet } from "../rxjs/StateSubject.js";
 
 export default class HistogramWireframeClass {
@@ -24,9 +31,9 @@ export default class HistogramWireframeClass {
     this.config = config;
     this.maxInstancesPerLayer = maxInstancesPerLayer;
 
-    const baseBox = new THREE.BoxGeometry(1, 1, 1);
-    const baseEdges = new THREE.EdgesGeometry(baseBox);
-    this.instGeom = new THREE.InstancedBufferGeometry();
+    const baseBox = new BoxGeometry(1, 1, 1);
+    const baseEdges = new EdgesGeometry(baseBox);
+    this.instGeom = new InstancedBufferGeometry();
     this.instGeom.instanceCount = 0;
     this.instGeom.frustumCulled = false;
     this.instGeom.index = baseEdges.index;
@@ -45,18 +52,18 @@ export default class HistogramWireframeClass {
 
     this.instGeom.setAttribute(
       "instancePosition",
-      new THREE.InstancedBufferAttribute(this.instancePositions, 3)
+      new InstancedBufferAttribute(this.instancePositions, 3)
     );
     this.instGeom.setAttribute(
       "instanceScale",
-      new THREE.InstancedBufferAttribute(this.instanceScales, 3)
+      new InstancedBufferAttribute(this.instanceScales, 3)
     );
     this.instGeom.setAttribute(
       "instanceColorIndex",
-      new THREE.InstancedBufferAttribute(this.instanceColors, 1)
+      new InstancedBufferAttribute(this.instanceColors, 1)
     );
 
-    this.wireframe = new THREE.LineSegments(this.instGeom, this.material);
+    this.wireframe = new LineSegments(this.instGeom, this.material);
     this.wireframe.frustumCulled = false;
 
     this.stateSub = stateSubjectGet().getObservable().subscribe(v => {
@@ -168,9 +175,9 @@ export default class HistogramWireframeClass {
       }
     }
 
-    const baseBox = new THREE.BoxGeometry(1, 1, 1);
-    const baseEdges = new THREE.EdgesGeometry(baseBox);
-    this.instGeom = new THREE.InstancedBufferGeometry();
+    const baseBox = new BoxGeometry(1, 1, 1);
+    const baseEdges = new EdgesGeometry(baseBox);
+    this.instGeom = new InstancedBufferGeometry();
     this.instGeom.instanceCount = count;
     this.instGeom.frustumCulled = false;
     this.instGeom.index = baseEdges.index;
@@ -183,11 +190,11 @@ export default class HistogramWireframeClass {
     this.instancePositions = positions;
     this.instanceScales = scales;
     this.instanceColors = colors;
-    this.instGeom.setAttribute("instancePosition", new THREE.InstancedBufferAttribute(positions, 3));
-    this.instGeom.setAttribute("instanceScale", new THREE.InstancedBufferAttribute(scales, 3));
-    this.instGeom.setAttribute("instanceColorIndex", new THREE.InstancedBufferAttribute(colors, 1));
+    this.instGeom.setAttribute("instancePosition", new InstancedBufferAttribute(positions, 3));
+    this.instGeom.setAttribute("instanceScale", new InstancedBufferAttribute(scales, 3));
+    this.instGeom.setAttribute("instanceColorIndex", new InstancedBufferAttribute(colors, 1));
 
-    this.wireframe = new THREE.LineSegments(this.instGeom, this.material);
+    this.wireframe = new LineSegments(this.instGeom, this.material);
     this.wireframe.frustumCulled = false;
     if (parent) parent.add(this.wireframe);
   }
@@ -224,11 +231,11 @@ export default class HistogramWireframeClass {
 
   //TODO cool
   fillColorArray () {
-    new THREE.Color(this.config.color.default).toArray(this.colorArray, 0);
+    new Color(this.config.color.default).toArray(this.colorArray, 0);
     let currentIndex = 1;
 
     this.config.color.layer
-      .map(c => new THREE.Color(c))
+      .map(c => new Color(c))
       .forEach((color) => {
         const baseIdx = currentIndex * 3;
         color.toArray(this.colorArray, baseIdx);
@@ -236,7 +243,7 @@ export default class HistogramWireframeClass {
       });
 
     this.config.color.set
-      .map(c => new THREE.Color(c))
+      .map(c => new Color(c))
       .forEach((color) => {
         const baseIdx = currentIndex * 3;
         color.toArray(this.colorArray, baseIdx);
@@ -249,7 +256,7 @@ export default class HistogramWireframeClass {
 
   //TODO cool
   createMaterial () {
-    return new THREE.ShaderMaterial({
+    return new ShaderMaterial({
       vertexShader: `
                 attribute vec3 instancePosition;
                 attribute vec3 instanceScale;

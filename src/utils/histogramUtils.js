@@ -1,4 +1,5 @@
 import RadixCounter from "./radixCounter.js";
+import {Vector3, Color } from "three";
 
 /**
  *Instead of GetBinCoord, which is added to the JSRoot object only when rendered by JSRoot.
@@ -486,22 +487,22 @@ export function computeMaxInstancesPerLayer (obj) {
 }
 
 export function fillColorArray (config, material, colorArray) {
-  new THREE.Color(config.color.default.min).toArray(colorArray, 0);
-  new THREE.Color(config.color.default.max).toArray(colorArray, 3);
+  new Color(config.color.default.min).toArray(colorArray, 0);
+  new Color(config.color.default.max).toArray(colorArray, 3);
 
   let currentIndex = 1;
 
   config.color.layer.forEach((color) => {
     const baseIdx = currentIndex * 6;
-    new THREE.Color(color.min).toArray(colorArray, baseIdx);
-    new THREE.Color(color.max).toArray(colorArray, baseIdx + 3);
+    new Color(color.min).toArray(colorArray, baseIdx);
+    new Color(color.max).toArray(colorArray, baseIdx + 3);
     currentIndex++;
   });
 
   config.color.set.forEach((color) => {
     const baseIdx = currentIndex * 6;
-    new THREE.Color(color.min).toArray(colorArray, baseIdx);
-    new THREE.Color(color.max).toArray(colorArray, baseIdx + 3);
+    new Color(color.min).toArray(colorArray, baseIdx);
+    new Color(color.max).toArray(colorArray, baseIdx + 3);
     currentIndex++;
   });
 
@@ -545,7 +546,7 @@ export function getGradientColor (colorConfig, availableSets, value, min, max, s
 /**
  * Union of two { position, scale } AABBs
  * @param {{position: THREE.Vector3, scale: THREE.Vector3}} a
- * @param {{position: THREE.Vector3, scale: THREE.Vector3}} b
+ * @param {{position: THREE.Vector3, scale: Vector3}} b
  * @returns {{position: THREE.Vector3, scale: THREE.Vector3}}
  */
 function unionBoundsMC (a, b) {
@@ -568,10 +569,10 @@ function unionBoundsMC (a, b) {
   const umax_z = amax_z > bmax_z ? amax_z : bmax_z;
 
   return {
-    position: new THREE.Vector3(
+    position: new Vector3(
       (umin_x + umax_x) * 0.5, (umin_y + umax_y) * 0.5, (umin_z + umax_z) * 0.5
     ),
-    scale: new THREE.Vector3(
+    scale: new Vector3(
       umax_x - umin_x, umax_y - umin_y, umax_z - umin_z
     )
   };

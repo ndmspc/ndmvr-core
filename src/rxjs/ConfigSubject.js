@@ -1,5 +1,6 @@
 import { BehaviorSubject } from "rxjs";
 import { parseConfig, appendPads } from "../utils/baseUtil.js";
+import {Vector3, Color} from "three";
 
 let configSubject;
 
@@ -17,13 +18,13 @@ class ConfigSubject {
           histogramPads: [
             {
               id: "histo1",
-              position: new THREE.Vector3(0, 0, 0),
-              scale: new THREE.Vector3(10, 5, 10),
+              position: new Vector3(0, 0, 0),
+              scale: new Vector3(10, 5, 10),
             },
             {
               id: "histo2",
-              position: new THREE.Vector3(0, 0, 0),
-              scale: new THREE.Vector3(10, 5, 10),
+              position: new Vector3(0, 0, 0),
+              scale: new Vector3(10, 5, 10),
             },
           ],
           canvas: {
@@ -73,26 +74,26 @@ class ConfigSubject {
           },
           color: {
             default: {
-              min: new THREE.Color(0x0000ff),
-              max: new THREE.Color(0xff0000),
+              min: new Color(0x0000ff),
+              max: new Color(0xff0000),
             },
             layer: [],
             set: [
               {
-                min: new THREE.Color(0x222222),
-                max: new THREE.Color(0xffaa00),
+                min: new Color(0x222222),
+                max: new Color(0xffaa00),
               },
               {
-                min: new THREE.Color(0x00ffff),
-                max: new THREE.Color(0xff7f00),
+                min: new Color(0x00ffff),
+                max: new Color(0xff7f00),
               },
               {
-                min: new THREE.Color(0x00ff00),
-                max: new THREE.Color(0x800080),
+                min: new Color(0x00ff00),
+                max: new Color(0x800080),
               },
               {
-                min: new THREE.Color(0x0000ff),
-                max: new THREE.Color(0xff0000),
+                min: new Color(0x0000ff),
+                max: new Color(0xff0000),
               },
             ],
           },
@@ -139,8 +140,8 @@ class ConfigSubject {
     const isValueObject = (obj) => {
       return (
         Array.isArray(obj) ||
-        obj instanceof THREE.Color ||
-        obj instanceof THREE.Vector3 ||
+        obj instanceof Color ||
+        obj instanceof Vector3 ||
         (obj && obj.isColor === true) || // Handle converted THREE.Color objects
         (obj && obj.isVector3 === true)  // Handle converted THREE.Vector3 objects
       );

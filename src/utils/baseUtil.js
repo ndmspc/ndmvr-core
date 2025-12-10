@@ -1,3 +1,4 @@
+import { Vector3, Color } from "three";
 
 export function appendPads(subjectValue, ids, disp_kind, { scale, padding, origin }) {
   // The raw config is inside subjectValue.config
@@ -124,7 +125,7 @@ export function parseConfig(json, existingConfig = null) {
       const padding = pads.padding || { x: 0, y: 0, z: 0 };
       const origin = pads.origin || { x: 0, y: 0, z: 0 };
 
-      const padScale = new THREE.Vector3(
+      const padScale = new Vector3(
         (totalScale.x - padding.x * (nx - 1)) / nx,
         (totalScale.y - padding.y * (ny - 1)) / ny,
         (totalScale.z - padding.z * (nz - 1)) / nz,
@@ -138,12 +139,11 @@ export function parseConfig(json, existingConfig = null) {
           for (let iz = 0; iz < nz; iz++) {
             list.push({
               id: `${prefix}${counter++}`,
-              position: new THREE.Vector3(
+              position: new Vector3(
                 origin.x + ix * (padScale.x + padding.x) + padScale.x / 2,
                 origin.y + iy * (padScale.y + padding.y) + padScale.y / 2,
                 origin.z - iz * (padScale.z + padding.z) - padScale.z / 2,
               ),
-              // scale: { ...padScale },
               scale: padScale.clone(),
             });
           }
@@ -151,26 +151,10 @@ export function parseConfig(json, existingConfig = null) {
       }
       return list;
     }
-    console.log("pads: ", pads);
-
     return [pads];
   }
 
-  function transformPads(existingPads, incomingPads) {
-    const map = {};
-
-    // 1. Copy existing pads
-    for (const pad of existingPads) {
-      map[pad.id] = pad;
-    }
-
-    // 2. Copy incoming (expanded or custom) → overwrite duplicates
-    for (const pad of incomingPads) {
-      map[pad.id] = pad;
-    }
-
-    return Object.values(map);
-  }
+  // REMOVED: transformPads function - no longer needed
 
   function transformSinglePad(pad) {
     const result = {};
@@ -178,9 +162,9 @@ export function parseConfig(json, existingConfig = null) {
       const val = pad[k];
       // Check if it's a Vector3-like object
       if (val && typeof val === "object" && "x" in val && "y" in val && "z" in val && Object.keys(val).length === 3) {
-        result[k] = new THREE.Vector3(val.x, val.y, val.z);
+        result[k] = new Vector3(val.x, val.y, val.z);
       } else if (typeof val === "string" && val.startsWith("0x")) {
-        result[k] = new THREE.Color(parseInt(val));
+        result[k] = new Color(parseInt(val));
       } else if (val && typeof val === "object" && !Array.isArray(val)) {
         // Recursively transform nested objects
         result[k] = transformSinglePad(val);
@@ -205,21 +189,13 @@ export function parseConfig(json, existingConfig = null) {
       if (key === "histogramPads") {
         const incoming = expandHistogramPads(obj);
 
-        // Transform each pad individually
-        const transformedIncoming = incoming.map(pad => transformSinglePad(pad));
-
-        // Check if we have existing pads to merge with
-        const existingPads = existingConfig?.config?.environment?.histogramPads;
-        if (existingPads && Array.isArray(existingPads)) {
-          return transformPads(existingPads, transformedIncoming);
-        }
-
-        return transformedIncoming;
+        // Transform each pad individually and RETURN directly (no merging)
+        return incoming.map(pad => transformSinglePad(pad));
       }
 
       // Vector3 auto-convert
       if ("x" in obj && "y" in obj && "z" in obj && Object.keys(obj).length === 3) {
-        return new THREE.Vector3(obj.x, obj.y, obj.z);
+        return new Vector3(obj.x, obj.y, obj.z);
       }
 
       // Regular object
@@ -238,7 +214,7 @@ export function parseConfig(json, existingConfig = null) {
     }
 
     if (typeof obj === "string" && obj.startsWith("0x")) {
-      return new THREE.Color(parseInt(obj));
+      return new Color(parseInt(obj));
     }
 
     return obj;

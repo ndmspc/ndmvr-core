@@ -41,8 +41,10 @@ import { parse, redraw, makeSVG, openFile, makeImage } from "jsroot";
 import { stateSubjectGet } from "./rxjs/StateSubject.js";
 import { configSubjectGet } from "./rxjs/ConfigSubject.js";
 import { binInfoSubjectGet } from "./rxjs/BinInfoSubject.js";
+import {registerComponents} from "./core/registerComponents.js";
 
 initNdmvrAframe();
+registerComponents();
 
 const sceneElm = generate_AFrame_blank_scene_html();
 

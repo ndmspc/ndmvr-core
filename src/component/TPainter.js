@@ -4,6 +4,7 @@ import { configSubjectGet } from "../rxjs/ConfigSubject.js";
 import { stateSubjectGet } from "../rxjs/StateSubject.js";
 import { dispatchSubjectGet } from "../rxjs/DispatchSubject.js";
 import {ensureDefaultBindings} from "../utils/baseUtil.js";
+import {Vector3} from "three";
 
 export class TPainter {
   id = undefined;
@@ -14,8 +15,8 @@ export class TPainter {
   rootObj = undefined;
   config = undefined;
   limits = {
-    position: new THREE.Vector3(0, 0, 0),
-    scale: new THREE.Vector3(10, 10, 10)
+    position: new Vector3(0, 0, 0),
+    scale: new Vector3(10, 10, 10)
   };
   mouseEvents = [];
   keydownEvents = [];
@@ -49,7 +50,6 @@ export class TPainter {
       )
       .subscribe((v) => {
         this.config = configSubjectGet().mergeHistogramConfig(this?.opts?.config);
-        console.log(v.config);
         this.keyBindings = ensureDefaultBindings(v.config.bindings);
         const hasLimits = v.config.environment.histogramPads.find(
           (el) => el.id === this.id
@@ -155,7 +155,6 @@ export class TPainter {
         key: event.key,
         function: func,
       });
-      console.log("down");
     } else if (event?.state === "keyup") {
       this.keyupEvents.push({
         key: event.key,
