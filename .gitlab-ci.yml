@@ -17,6 +17,8 @@ cache:
 
 pages:
   stage: deploy
+  tags:
+    - ndmspc-hosted
   script:
     - npm install
     - npm run build -- --mode pages --base=$PUBLIC_URL
