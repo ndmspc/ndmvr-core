@@ -30,6 +30,8 @@ pages:
 publish:
   stage: deploy
   image: node:22.11.0
+  tags:
+    - gitlab-org-docker
   id_tokens:
     NPM_ID_TOKEN:
       aud: "npm:registry.npmjs.org"
