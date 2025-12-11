@@ -41,6 +41,6 @@ deploy-npm:
     - npm install -g npm@latest
     - CI=true npm install
     - CI=true npm run build
-    - CI=true npm publish --access public
+    - CI=true npm publish --access public --tag ${CI_COMMIT_REF_NAME/v/}
   only:
     - tags
