@@ -1,6 +1,7 @@
 import { BehaviorSubject } from "rxjs";
 import { parseConfig, appendPads } from "../utils/baseUtil.js";
 import {Vector3, Color} from "three";
+import defaultConfig from "../config-default.json";
 
 let configSubject;
 
@@ -8,98 +9,7 @@ class ConfigSubject {
   #subject;
 
   constructor () {
-    this.#subject = new BehaviorSubject({
-      target: {
-        entity: "nested-histogram",
-        id: "*",
-      },
-      config: {
-        environment: {
-          histogramPads: [
-            {
-              id: "histogram1",
-              position: new Vector3(0, 0, 0),
-              scale: new Vector3(10, 5, 10),
-            },
-            {
-              id: "histogram2",
-              position: new Vector3(0, 0, 0),
-              scale: new Vector3(10, 5, 10),
-            },
-          ],
-          canvas: {
-            position: { x: 0, y: 5, z: -15 },
-            rotation: { x: 10, y: 0, z: 0 },
-            scale: { x: 10, y: 10, z: 0 },
-          },
-        },
-        histogram: {
-          padding: {
-            default: {
-              x: 0.1,
-              y: 0.1,
-              z: 0.1,
-            },
-            layer: [{ x: 0.1, y: 0.1, z: 0.1 }],
-          },
-          scale: {
-            default: {
-              min: 0.5,
-              max: 1.0,
-            },
-            layer: [],
-          },
-          sets: {
-            scale: {
-              maximum: "relative",
-            },
-          },
-          TH1ZScale: {
-            default: 0.8,
-            layer: [0.2, 1, 1, 1],
-            set: 0.01,
-          },
-          wireframe: {
-            display: {
-              start: 0,
-              end: 5,
-            },
-            displaySets: false,
-            layer: [],
-            color: {
-              default: "0x000000",
-              layer: [],
-              set: [],
-            },
-          },
-          color: {
-            default: {
-              min: new Color(0x0000ff),
-              max: new Color(0xff0000),
-            },
-            layer: [],
-            set: [
-              {
-                min: new Color(0x222222),
-                max: new Color(0xffaa00),
-              },
-              {
-                min: new Color(0x00ffff),
-                max: new Color(0xff7f00),
-              },
-              {
-                min: new Color(0x00ff00),
-                max: new Color(0x800080),
-              },
-              {
-                min: new Color(0x0000ff),
-                max: new Color(0xff0000),
-              },
-            ],
-          },
-        },
-      },
-    });
+    this.#subject = new BehaviorSubject(parseConfig(defaultConfig, {}));
   }
 
   getObservable () {

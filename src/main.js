@@ -13,7 +13,7 @@ import { functionSubjectGet } from "./rxjs/FunctionSubject.js";
 import { initNdmvrAframe } from "./core/ndmvr-aframe-core.js";
 import histogramRecursive from "../public/histograms/THrecursive.json";
 
-import config from "./config.json";
+import config from "./config-aframe.json";
 
 import histo125 from "../public/histograms/nested/test_125.json";
 import histo12_5 from "../public/histograms/nested/test_12_5.json";
