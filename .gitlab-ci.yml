@@ -20,6 +20,8 @@ pages:
   image: registry.gitlab.com/ndmspc/docs/ndmspc-doc
   tags:
     - ndmspc-hosted
+  variables:
+    GIT_DEPTH: 0
   script:
     - mkdocs build -d public/docs
     - npm install
