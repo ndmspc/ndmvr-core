@@ -17,9 +17,11 @@ cache:
 
 pages:
   stage: deploy
+  image: registry.gitlab.com/ndmspc/docs/ndmspc-doc
   tags:
     - ndmspc-hosted
   script:
+    - mkdocs build -d public/docs
     - npm install
     - npm run build -- --mode pages --base=$PUBLIC_URL
     - cp -a dist/. public/
