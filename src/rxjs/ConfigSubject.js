@@ -17,12 +17,12 @@ class ConfigSubject {
         environment: {
           histogramPads: [
             {
-              id: "histo1",
+              id: "histogram1",
               position: new Vector3(0, 0, 0),
               scale: new Vector3(10, 5, 10),
             },
             {
-              id: "histo2",
+              id: "histogram2",
               position: new Vector3(0, 0, 0),
               scale: new Vector3(10, 5, 10),
             },
@@ -112,7 +112,9 @@ class ConfigSubject {
 
   next (e) {
     // console.log(this.parseConfig(e));
-    this.#subject.next(parseConfig(e, this.#subject.getValue()));
+    const parsed = parseConfig(e, this.#subject.getValue());
+    this.#subject.next(parsed);
+    return parsed;
   }
 
   appendPads(ids, disp_kind, settings) {

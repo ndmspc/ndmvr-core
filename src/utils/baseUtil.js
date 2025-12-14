@@ -154,8 +154,6 @@ export function parseConfig(json, existingConfig = null) {
     return [pads];
   }
 
-  // REMOVED: transformPads function - no longer needed
-
   function transformSinglePad(pad) {
     const result = {};
     for (const k in pad) {
@@ -209,7 +207,6 @@ export function parseConfig(json, existingConfig = null) {
       if (!("target" in result)) {
         result.target = { entity: "*", id: "*" };
       }
-
       return result;
     }
 
@@ -220,5 +217,55 @@ export function parseConfig(json, existingConfig = null) {
     return obj;
   }
 
-  return transform(data);
+  function deepMerge(existing, incoming) {
+    // If no existing config, return incoming as-is
+    if (!existing) return incoming;
+
+    // Handle arrays - replace entirely with incoming
+    if (Array.isArray(incoming)) {
+      return incoming;
+    }
+
+    // Handle non-objects - incoming overwrites existing
+    if (!incoming || typeof incoming !== "object") {
+      return incoming;
+    }
+
+    // Handle special cases (Vector3, Color) - replace entirely
+    if (incoming instanceof Vector3 || incoming instanceof Color) {
+      return incoming;
+    }
+
+    // Merge objects
+    const result = { ...existing };
+
+    for (const key in incoming) {
+      const existingVal = existing[key];
+      const incomingVal = incoming[key];
+
+      // If value exists in both and both are plain objects, merge recursively
+      if (
+        existingVal &&
+        typeof existingVal === "object" &&
+        !Array.isArray(existingVal) &&
+        !(existingVal instanceof Vector3) &&
+        !(existingVal instanceof Color) &&
+        incomingVal &&
+        typeof incomingVal === "object" &&
+        !Array.isArray(incomingVal) &&
+        !(incomingVal instanceof Vector3) &&
+        !(incomingVal instanceof Color)
+      ) {
+        result[key] = deepMerge(existingVal, incomingVal);
+      } else {
+        // Otherwise, incoming value overwrites existing
+        result[key] = incomingVal;
+      }
+    }
+
+    return result;
+  }
+
+  const transformedData = transform(data);
+  return deepMerge(existingConfig, transformedData);
 }
