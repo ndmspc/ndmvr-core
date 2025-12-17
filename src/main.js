@@ -11,31 +11,31 @@
 import { generate_AFrame_blank_scene_html } from "./utils/htmlGenerators.js";
 import { functionSubjectGet } from "./rxjs/FunctionSubject.js";
 import { initNdmvrAframe } from "./core/ndmvr-aframe-core.js";
-import histogramRecursive from "../public/histograms/THrecursive.json";
+import histogramRecursive from "./assets/histograms/THrecursive.json";
 
 import config from "./config-aframe.json";
 
-import histo125 from "../public/histograms/nested/test_125.json";
-import histo12_5 from "../public/histograms/nested/test_12_5.json";
-import histo1_25 from "../public/histograms/nested/test_1_25.json";
-import histo1_2_5 from "../public/histograms/nested/test_1_2_5.json";
-import histo5_2_1 from "../public/histograms/nested/test_5_2_1.json";
-import nav from "../public/histograms/nested/nav.json";
-import h3scat from "../public/histograms/h3scat.json";
-import labelH from "../public/histograms/wLabel/label.json";
+import histo125 from "./assets/histograms/nested/test_125.json";
+import histo12_5 from "./assets/histograms/nested/test_12_5.json";
+import histo1_25 from "./assets/histograms/nested/test_1_25.json";
+import histo1_2_5 from "./assets/histograms/nested/test_1_2_5.json";
+import histo5_2_1 from "./assets/histograms/nested/test_5_2_1.json";
+import nav from "./assets/histograms/nested/nav.json";
+import h3scat from "./assets/histograms/h3scat.json";
+import labelH from "./assets/histograms/wLabel/label.json";
 
-import test55x57x56 from "../public/histograms/TH3variableBinning55x57x56.json";
+import test55x57x56 from "./assets/histograms/TH3variableBinning55x57x56.json";
 
 
-import histogram2x2x3 from "../public/histograms/TH3variableBinning2x2x3OnlyInsideContent.json";
-import histo2x2x3 from "../public/histograms/TH3variableBinning2x2x3WOutsideContent.json";
-import histo6x2x1 from "../public/histograms/TH3variable6x2x1wOutsideContent.json";
-import test3D from "../public/histograms/test3D.json";
+import histogram2x2x3 from "./assets/histograms/TH3variableBinning2x2x3OnlyInsideContent.json";
+import histo2x2x3 from "./assets/histograms/TH3variableBinning2x2x3WOutsideContent.json";
+import histo6x2x1 from "./assets/histograms/TH3variable6x2x1wOutsideContent.json";
+import test3D from "./assets/histograms/test3D.json";
 import { histogramSubjectGet } from "./rxjs/HistogramSubject.js";
-import nestedHisto from "../public/histograms/hist3D.axis1-pt_axis2-ce_axis5-eta.json";
-import nestedHisto2 from "../public/histograms/hist2D.axis1-pt_axis2-ce.json";
-import nestedHisto3 from "../public/histograms/hist1D.axis1-pt.json";
-import nestedHisto4 from "../public/histograms/test3D.axis1-pt_axis2-ce_axis5-eta (1).json";
+import nestedHisto from "./assets/histograms/hist3D.axis1-pt_axis2-ce_axis5-eta.json";
+import nestedHisto2 from "./assets/histograms/hist2D.axis1-pt_axis2-ce.json";
+import nestedHisto3 from "./assets/histograms/hist1D.axis1-pt.json";
+import nestedHisto4 from "./assets/histograms/test3D.axis1-pt_axis2-ce_axis5-eta (1).json";
 // import histoSparse5 from "../public/histograms/test3D.axis1-pt_axis2-ce_axis5-eta.root"
 import { parse, redraw, makeSVG, openFile, makeImage } from "jsroot";
 import { stateSubjectGet } from "./rxjs/StateSubject.js";

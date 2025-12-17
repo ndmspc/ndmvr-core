@@ -1,9 +1,9 @@
-import histogram55x57x34 from "../../public/histograms/TH3variableBinning55x57x34.json";
-import histogramTHX from "../../public/histograms/THXvariableBinning.json";
-import histogramArray from "../../public/histograms/THArray.json";
-import histogram2x2x3 from "../../public/histograms/TH3variableBinning2x2x3OnlyInsideContent.json";
-import histogram2x2x3Negative from "../../public/histograms/TH3variableBinning2x2x3Negative.json";
-import histogramRecursive from "../../public/histograms/THrecursive.json";
+import histogram55x57x34 from "../assets/histograms/TH3variableBinning55x57x34.json";
+import histogramTHX from "../assets/histograms/THXvariableBinning.json";
+import histogramArray from "../assets/histograms/THArray.json";
+import histogram2x2x3 from "../assets/histograms/TH3variableBinning2x2x3OnlyInsideContent.json";
+import histogram2x2x3Negative from "../assets/histograms/TH3variableBinning2x2x3Negative.json";
+import histogramRecursive from "../assets/histograms/THrecursive.json";
 import { parse } from "jsroot";
 import { histogramSubjectGet } from "../rxjs/HistogramSubject.js";
 import MobileController from "../controllers/mobile/mobileController.js";
