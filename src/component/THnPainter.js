@@ -129,7 +129,6 @@ export class THnPainter extends TPainter {
     this.matrixCache = new Array(this.maxInstancesPerLayer.length - 1);
     const hasSets = this.availableSets.length > 0;
     if (hasSets) {
-      console.log("SETING MATRIX CACHE FOR SETS: ", this.availableSets);
       this.matrixCache[this.matrixCache.length - 1] = new Array(this.availableSets.length);
     }
 
