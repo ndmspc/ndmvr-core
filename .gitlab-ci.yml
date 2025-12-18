@@ -1,5 +1,5 @@
 variables:
-  PUBLIC_URL: "/ndmvr-aframe/" # slash is important
+  PUBLIC_URL: "/ndmvr-core/" # slash is important
 
 image: node:22.11.0
 
