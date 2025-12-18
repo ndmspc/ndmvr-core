@@ -1,6 +1,6 @@
 site_name: NDMVR CORE
-repo_name: ndmspc/ndmvr-aframe
-repo_url: https://gitlab.com/ndmspc/ndmvr-aframe/docs
+repo_name: ndmspc/ndmvr-core
+repo_url: https://gitlab.com/ndmspc/ndmvr-core/docs
 edit_uri: edit/main/docs/
 nav:
   - "Home": index.md
