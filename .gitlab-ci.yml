@@ -1,7 +1,7 @@
 variables:
   PUBLIC_URL: "/ndmvr-core/" # slash is important
-
-image: node:22.11.0
+  IMAGE: node:22.11.0
+image: ${IMAGE}
 
 stages:
   - build
@@ -35,7 +35,7 @@ pages:
 
 publish:
   stage: deploy
-  image: node:22.11.0
+  image: ${IMAGE}
   tags:
     - gitlab-org-docker
   id_tokens:
