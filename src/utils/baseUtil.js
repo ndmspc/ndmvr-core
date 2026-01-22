@@ -269,3 +269,12 @@ export function parseConfig(json, existingConfig = null) {
   const transformedData = transform(data);
   return deepMerge(existingConfig, transformedData);
 }
+
+export function isObjectEmpty(obj) {
+  for (const key in obj) {
+    if (Object.prototype.hasOwnProperty.call(obj, key)) {
+      return false;
+    }
+  }
+  return true;
+}
