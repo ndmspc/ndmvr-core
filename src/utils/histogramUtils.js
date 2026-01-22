@@ -204,7 +204,7 @@ export function computeJsRootIndexFromPosition (position, obj, selectedSet) {
       if (obj.children?.content) {
         obj = obj.children.content[ind[i]];
       } else {
-        obj = obj.children[selectedSet[0]][ind[i]];
+        obj = obj.children[selectedSet[0]]?.[ind[i]];
       }
     } else {
       return ind;
@@ -607,6 +607,23 @@ function getPositionAndScale (index, pos, scale, matrixCache, layer, setIndex, o
   return out;
 }
 
+const hasNonContentChild = (children) => {
+  if (!children) return false;
+
+  for (const key in children) {
+    if (
+      key !== "content" &&
+      Object.prototype.hasOwnProperty.call(children, key) &&
+      children[key] &&
+      typeof children[key] === "object" &&
+      Object.keys(children[key]).length > 0
+    ) {
+      return true;
+    }
+  }
+  return false;
+};
+
 export function createBVHTree (matrixCache, node, layer, setIndex, availableSets, matrixWorld, totalOffset) {
   const fX = node.fXaxis.fNbins;
   const fY = node.fYaxis.fNbins;
@@ -856,7 +873,7 @@ export function createBVHTreeRecursive (matrixCache, node, layer, selectedSet, a
 
         traverse(childNode, currentLayer + 1, ((counter.getIndex() + offset) * stepOffset));
 
-      } else if (currentNode.children && !currentNode.children.hasOwnProperty("content")) {
+      } else if (hasNonContentChild(currentNode.children)) {
         selectedSet.forEach((set => {
           const setIndex = availableSets.indexOf(set);
 

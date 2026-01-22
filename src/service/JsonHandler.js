@@ -1,4 +1,5 @@
 import { parse } from "jsroot";
+import { isObjectEmpty } from "../utils/baseUtil.js";
 
 export default class JsonHandler {
 
@@ -9,7 +10,25 @@ export default class JsonHandler {
   }
 
   static async parseJson (obj) {
-    return parse(obj);
+    const parsed = parse(obj);
+
+    const removeEmptyChildren = (node) => {
+      console.log("parsing JSON_______________");
+      if (node && typeof node === "object") {
+        if (node.children && isObjectEmpty(node.children)) {
+          delete node.children;
+        } else if (node.children) {
+          Object.values(node.children).forEach(childArray => {
+            if (Array.isArray(childArray)) {
+              childArray.forEach(child => removeEmptyChildren(child));
+            }
+          });
+        }
+      }
+    };
+
+    removeEmptyChildren(parsed);
+    return parsed;
   }
 
   computeMaxInstancesPerLayer () {

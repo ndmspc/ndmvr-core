@@ -224,7 +224,6 @@ export class THnPainter extends TPainter {
         }
       } else {
         for (let j = 0; j < layer.rendered.length; j++) {
-          // console.log(layer.rendered[j]);
           if (layer.rendered[j] !== -1) count++;
         }
       }
@@ -885,6 +884,24 @@ export class THnPainter extends TPainter {
     currentValue.arrays = [];
     if (origin.fArrays) currentValue.arrays = Object.keys(origin.fArrays);
     currentValue.arrays.unshift("content");
+
+    const appendChildArrays = (children) => {
+      const firstChild = children.find(s => s);
+      if (firstChild.fArrays) {
+        currentValue.arrays = currentValue.arrays.concat(Object.keys(firstChild.fArrays));
+      }
+      if (firstChild.children?.content) appendChildArrays(firstChild.children.content);
+    };
+
+    if (origin.children?.content) appendChildArrays(origin.children.content);
+
+    // if (origin.children?.content) {
+    //   console.log(origin.children.content.fArrays);
+    // } else if (origin?.children) {
+    //   origin.children.forEach((child) => {
+    //     console.log(child.fArrays);
+    //   });
+    // }
     stateSubjectGet().next(currentValue);
   }
 
