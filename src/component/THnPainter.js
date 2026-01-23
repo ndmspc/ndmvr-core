@@ -577,6 +577,12 @@ export class THnPainter extends TPainter {
 
   mouseClickDefault (event) {
     this.showChildHistogram(event.index);
+    if (event.selectedArray !== "content") {
+      event.jsrootObj.fArray = event.jsrootObj.fArrays[event.selectedArray]?.values;
+      event.jsrootObj.fSumw2 = event.jsrootObj.fArrays[event.selectedArray]?.errors;
+      event.jsrootObj.fMinimum = event.jsrootObj.fArrays[event.selectedArray]?.min;
+      event.jsrootObj.fMaximum = event.jsrootObj.fArrays[event.selectedArray]?.max;
+    }
     canvasSubjectGet().next({
       // id: this.id + "-cinema",
       id: "*",
@@ -990,6 +996,15 @@ export class THnPainter extends TPainter {
     }
   }
 
+  getBinError (obj, posX, posY, posZ, selectedArray) {
+    if (selectedArray === "content" || !obj.fArrays) {
+      return obj.getBinError(posX + 1, posY + 1, posZ + 1);
+    } else {
+      const index = obj.getBin(posX + 1, posY + 1, posZ + 1);
+      return obj.fArrays?.[selectedArray].errors[index];
+    }
+  }
+
   checkIntersectionBVH (ray) {
     const target = new Vector3();
 
@@ -1176,6 +1191,7 @@ export class THnPainter extends TPainter {
                 target: intersect.target,
                 distance: intersect.distance,
                 set: set,
+                selectedArray: this.selectedArray,
                 instanceId: computeIndexFromPosition(
                   fullPath, this.pointer.origin,
                   this.maxInstancesPerLayer, this.selectedSet),
@@ -1186,7 +1202,7 @@ export class THnPainter extends TPainter {
                 origin: this,
                 jsrootObj: node,
                 content: this.getBinContent(node, posX, posY, posZ, this.selectedArray),
-                error: node.getBinError(posX + 1, posY + 1, posZ + 1),
+                error: this.getBinError(node, posX, posY, posZ, this.selectedArray),
               });
           }
         } else {
@@ -1195,6 +1211,7 @@ export class THnPainter extends TPainter {
             target: intersect.target,
             distance: intersect.distance,
             set: set,
+            selectedArray: this.selectedArray,
             instanceId: computeIndexFromPosition(
               fullPath, this.pointer.origin,
               this.maxInstancesPerLayer, this.selectedSet),
@@ -1205,7 +1222,7 @@ export class THnPainter extends TPainter {
             origin: this,
             jsrootObj: node,
             content: this.getBinContent(node, posX, posY, posZ, this.selectedArray),
-            error: node.getBinError(posX + 1, posY + 1, posZ + 1),
+            error: this.getBinError(node, posX, posY, posZ, this.selectedArray),
           });
         }
       });
