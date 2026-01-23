@@ -40,7 +40,7 @@ export class CanvasClass {
       .subscribe((obj) => {
         console.log("obj: ", obj);
         const object = obj.obj;
-        makeImage({ format: "png", object, width: 1200, height: 600 }).then(
+        makeImage({ format: "png", option: "pE", object, width: 1200, height: 600 }).then(
           (png) => {
             this.updateTexture(png);
           },

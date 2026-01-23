@@ -13,7 +13,6 @@ export default class JsonHandler {
     const parsed = parse(obj);
 
     const removeEmptyChildren = (node) => {
-      console.log("parsing JSON_______________");
       if (node && typeof node === "object") {
         if (node.children && isObjectEmpty(node.children)) {
           delete node.children;
