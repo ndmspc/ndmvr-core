@@ -460,7 +460,7 @@ export function computeMaxInstancesPerLayer (obj) {
   const computation = (children, layer = 1) => {
     let temp = 0;
     if (layer >= max.length) {
-      max.push(0);
+      max.push(1);
     }
     Object.entries(children).forEach((value, index) => {
       value[1].forEach((child) => {

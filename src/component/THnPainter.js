@@ -19,6 +19,7 @@ import {
   Vector3, Color, BoxGeometry, InstancedBufferGeometry,
   InstancedBufferAttribute, Mesh, ShaderMaterial, Object3D, Box3
 } from "three";
+import {createHnotFilledSprite} from "../utils/baseUtil.js";
 
 export class THnPainter extends TPainter {
   stateSub = undefined;
@@ -58,10 +59,16 @@ export class THnPainter extends TPainter {
   }
 
   updateHistogram (histo) {
+    let raycastHandler = undefined;
     const parent = this.mesh.parent;
-    const raycastHandler = this.mesh.raycast;
+    parent.remove(this.mesh);
+    if (this.pointer.isHistogramFilled) {
+      raycastHandler = this.mesh.raycast;
+      this.mesh.raycast = () => {};
+      this.wireframe.dispose();
+      this.instGeom.dispose();
+    }
 
-    this.mesh.raycast = () => {};
     this.matrixCache = [];
     this.BVHTree = [];
     this.availableSets = [];
@@ -72,9 +79,6 @@ export class THnPainter extends TPainter {
       arrays: ["content"],
       selectedArray: "content"
     });
-    this.wireframe.dispose();
-    this.instGeom.dispose();
-    parent.remove(this.mesh);
 
     this.rootObj = histo.obj;
     this.pointer = new HistogramPointerClass(this.rootObj);
@@ -115,6 +119,7 @@ export class THnPainter extends TPainter {
     this.totalInstances = this.maxInstancesPerLayer.reduce((acc, value) => {
       return acc * value;
     }, 1);
+    console.log(this.maxInstancesPerLayer , this.totalInstances);
 
     this.setupInsBufGeom();
 
@@ -716,6 +721,13 @@ export class THnPainter extends TPainter {
     this.pointer.setOriginToChild(
       computeJsRootIndexFromPosition(position, this.pointer.origin, this.selectedSet),
       set, range);
+
+    if (!this.pointer.isHistogramFilled) {
+      this.mesh = createHnotFilledSprite(this.limits, this.setPointerToParent.bind(this));
+      parent.add(this.mesh);
+      return;
+    }
+
     this.init();
     console.log("path: ", this.pointer.path);
     console.log("title: ", this.pointer.title);
@@ -729,11 +741,12 @@ export class THnPainter extends TPainter {
    * * */
   setPointerToParent () {
     const parent = this.mesh.parent;
-
-    this.matrixCache = [];
-    this.instGeom.dispose();
-    this.wireframe.dispose();
     parent.remove(this.mesh);
+    if (this.pointer.isHistogramFilled) {
+      this.matrixCache = [];
+      this.instGeom.dispose();
+      this.wireframe.dispose();
+    }
 
     this.pointer.setOriginToParent(1);
     console.log("path: ", this.pointer.path);

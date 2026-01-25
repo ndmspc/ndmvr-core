@@ -1,4 +1,5 @@
-import { Vector3, Color } from "three";
+import {Vector3, Color, TextureLoader, SRGBColorSpace, SpriteMaterial, Sprite} from "three";
+import hnotFilledUrl from "../assets/HnotFilled.png";
 
 export function appendPads(subjectValue, ids, disp_kind, { scale, padding, origin }) {
   // The raw config is inside subjectValue.config
@@ -277,4 +278,23 @@ export function isObjectEmpty(obj) {
     }
   }
   return true;
+}
+
+export function createHnotFilledSprite(limits, setPointerToParent) {
+  const texture = new TextureLoader().load(hnotFilledUrl);
+  texture.colorSpace = SRGBColorSpace;
+
+  const material = new SpriteMaterial({map: texture, transparent: true});
+
+
+  const sprite = new Sprite(material);
+
+  sprite.scale.set(...limits.scale);
+  sprite.position.set(...limits.position);
+
+  sprite.raycast = (e) => {
+    if (e._triggerSource === "shiftmousedbclick") setPointerToParent();
+  };
+
+  return sprite;
 }
