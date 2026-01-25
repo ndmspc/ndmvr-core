@@ -2,7 +2,7 @@ import { canvasSubjectGet } from "../rxjs/CanvasSubject.js";
 import { filter } from "rxjs";
 import { makeImage } from "jsroot";
 import { configSubjectGet } from "../rxjs/ConfigSubject.js";
-import {Vector3, PlaneGeometry, MeshBasicMaterial, Color, DoubleSide, Mesh, TextureLoader} from "three";
+import {Vector3, PlaneGeometry, MeshBasicMaterial, Color, DoubleSide, Mesh, TextureLoader, Texture} from "three";
 
 
 export class CanvasClass {
@@ -42,6 +42,7 @@ export class CanvasClass {
         const object = obj.obj;
         makeImage({ format: "png", option: "pE", object, width: 1200, height: 600 }).then(
           (png) => {
+            console.log("png: ", png);
             this.updateTexture(png);
           },
         );
