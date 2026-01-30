@@ -1,7 +1,7 @@
 {
   "config": {
     "environment": {
-      "dbClickTimeout": 190,
+      "dbClickTimeout": 300,
       "camera": {
         "position": {
           "x": 0,
@@ -32,7 +32,7 @@
         "scale": {
           "x": 10,
           "y": 10,
-          "z": 2
+          "z": 10
         },
         "padding": {
           "x": 0,
@@ -61,16 +61,15 @@
         }
       },
       "scale": {
+        "scaleBy": "error",
+        "content": "global",
+        "parameter": "global",
+        "sets": "global",
         "default": {
-          "min": 0,
+          "min": 0.1,
           "max": 1
         },
         "layer": []
-      },
-      "sets": {
-        "scale": {
-          "maximum": "relative"
-        }
       },
       "TH1ZScale": {
         "default": 0.8,
@@ -101,6 +100,7 @@
         }
       },
       "color": {
+        "colorBy": "error",
         "default": {
           "min": "0x0000ff",
           "max": "0xff0000"

@@ -11,15 +11,18 @@
 import { generate_AFrame_blank_scene_html } from "./utils/htmlGenerators.js";
 import { functionSubjectGet } from "./rxjs/FunctionSubject.js";
 import { initNdmvrAframe } from "./core/ndmvr-aframe-core.js";
-import histogramRecursive from "./assets/histograms/THrecursive.json";
+// import histogramRecursive from "./assets/histograms/THrecursive.json";
 
 import config from "./config-aframe.json";
 
 import histo125 from "./assets/histograms/nested/test_125.json";
 import histo12_5 from "./assets/histograms/nested/test_12_5.json";
+// import rsn from "./assets/histograms/nested/rsn.json";
 import histo1_25 from "./assets/histograms/nested/test_1_25.json";
 import histo1_2_5 from "./assets/histograms/nested/test_1_2_5.json";
 import histo5_2_1 from "./assets/histograms/nested/test_5_2_1.json";
+// import test3 from "./assets/histograms/nested/test3.json";
+// import test3f from "./assets/histograms/nested/test3f.json";
 import nav from "./assets/histograms/nested/nav.json";
 import h3scat from "./assets/histograms/h3scat.json";
 import labelH from "./assets/histograms/wLabel/label.json";
@@ -363,7 +366,7 @@ loadButton.addEventListener("click", async () => {
 // histogramSubjectGet().next({ id: "histogram1", opts: { render: "jsroot" }, obj: h3scat });
 //
 
-histogramSubjectGet().next({id: "histogram1", opts: {render: "ndmvr"}, obj: histo125});
+histogramSubjectGet().next({id: "histogram1", opts: {render: "ndmvr"}, obj: h3scat});
 // histogramSubjectGet().next({id: 'histogram4', opts: {render: "nested"}, histogram: h3scat});
 // histogramSubjectGet().next({id: 'histogram1', opts: {render: "jsroot"}, histogram: h3scat});
 //

@@ -81,10 +81,6 @@ export default class HistogramWireframeClass {
     const visibilityCache = [];
     let lastLayer = matrixCache.length - 1;
 
-    if (Array.isArray(matrixCache[lastLayer])) {
-      lastLayer = lastLayer - 1;
-    }
-
     {
       const inst = Array.isArray(matrixCache[lastLayer])
         ? matrixCache[lastLayer][setIndex]
@@ -153,6 +149,7 @@ export default class HistogramWireframeClass {
         }
       }
     }
+    console.log(visibilityCache);
 
     // allocate buffers
     const positions = new Float32Array(count * 3);
