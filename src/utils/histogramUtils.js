@@ -367,6 +367,16 @@ export function computeMaxContentPerLayer (obj) {
           max[layer][key] = temp;
         }
 
+        if (child.fArrays) {
+          Object.keys(child.fArrays).forEach((array) => {
+            const temp = child.fArrays[array].max;
+            if (!(array in max[layer]) || temp > max[layer][array]) {
+              max[layer][array] = temp;
+            }
+            max[layer][array] = Math.max(max[layer][array], getMax(child.fArrays[array].values));
+          });
+        }
+
         if (child.children) {
           computation(child.children, layer + 1);
         }
@@ -378,6 +388,76 @@ export function computeMaxContentPerLayer (obj) {
     computation(obj.children);
   }
 
+  return max;
+}
+
+export function computeMaxErrorPerLayer (obj, maxContentPerLayer) {
+  if (!obj) return;
+
+  // looping is faster than Math.max or reduce
+  const getMax = (arr) => {
+    let max = 0;
+    for (let i = 0; i < arr.length; i++) {
+      const v = arr[i];
+      if (v > max) max = v;
+    }
+    return max;
+  };
+
+  const max = [];
+
+  max[0] = { content: getMax(obj.fSumw2) };
+
+  if (obj.fArrays) {
+    Object.keys(obj?.fArrays).forEach((array) => {
+      if (obj.fArrays[array].errors) {
+        max[0] = {
+          ...max[0],
+          [array]: getMax(obj.fArrays[array].errors),
+        };
+      }
+    });
+  }
+
+  const computation = (children, layer = 1) => {
+    if (!max[layer]) {
+      max[layer] = {};
+    }
+
+    Object.entries(children).forEach(([key, childArray]) => {
+      childArray.forEach((child) => {
+        if (!child) return;
+        const fSumw2Max = getMax(child.fSumw2);
+        const temp = isNaN(fSumw2Max) ? 0 : fSumw2Max;
+
+        if (!(key in max[layer]) || temp > max[layer][key]) {
+          max[layer][key] = temp;
+        }
+        if (child.fArrays) {
+          // const temp = getMax(child.fArray)
+          Object.keys(child.fArrays).forEach((array) => {
+            if (!child.fArrays[array].errors) return;
+            if (!(array in max[layer]) || temp > max[layer][array]) {
+              max[layer][array] = temp;
+            }
+            max[layer][array] = Math.max(max[layer][array], getMax(child.fArrays[array].errors));
+          });
+        }
+
+        if (child.children) {
+          computation(child.children, layer + 1);
+        }
+      });
+    });
+  };
+  if (obj.children) {
+    computation(obj.children);
+  }
+  for (let i = 0; i < max.length; i++) {
+    Object.keys(max[i]).forEach((key) => {
+      if (max[i][key] === 0) max[i][key] = Math.sqrt(maxContentPerLayer[i][key]);
+    });
+  }
   return max;
 }
 
@@ -415,6 +495,7 @@ export function computeMinContentPerLayer (obj) {
     });
   }
 
+
   const computation = (children, layer = 1) => {
     if (!min[layer]) {
       min[layer] = {};
@@ -426,8 +507,19 @@ export function computeMinContentPerLayer (obj) {
 
         const temp = getMin(child.fArray.filter((v) => v !== 0));
 
-        if (!(key in min[layer]) || temp > min[layer][key]) {
+        if (!(key in min[layer]) || temp < min[layer][key]) {
           min[layer][key] = temp;
+        }
+
+        if (child.fArrays) {
+          Object.keys(child.fArrays).forEach((array) => {
+            if (!(array in min[layer]) || temp > min[layer][array]) {
+              min[layer][array] = temp;
+            }
+            min[layer][array] = Math.min(
+              min[layer][array],
+              getMin(child.fArrays[array].values.filter((v) => v !== 0)));
+          });
         }
 
         if (child.children) {
@@ -464,7 +556,6 @@ export function computeMaxInstancesPerLayer (obj) {
     }
     Object.entries(children).forEach((value, index) => {
       value[1].forEach((child) => {
-        // console.log(child)
         if (child) {
           temp =
             child.fXaxis.fNbins * child.fYaxis.fNbins * child.fZaxis.fNbins;
@@ -510,9 +601,20 @@ export function fillColorArray (config, material, colorArray) {
   material.uniformsNeedUpdate = true;
 }
 
-export function getGradientColorInst (colorConfig, availableSets, value, min, max, availableSetIndex, layer) {
-  const normalize = (value, min, max) => (value - min) / (max - min);
-  const t = normalize(value, min, max);
+export function getGradientColorInst (colorConfig, availableSets, value, error, min, max, errorMax, availableSetIndex, layer) {
+  const normalize = (value, min, max) => {
+    let val = (value - min) / (max - min);
+    if (val > 1) val = 1;
+    return isNaN(val) || val === Infinity ? 0 : val;
+    // return (value - min) / (max - min);
+  };
+  const t = normalize(
+    colorConfig.colorBy === "value" ? value : error,
+    min,
+    colorConfig.colorBy === "value" ? max : errorMax,
+  );
+  // console.log(t, "value: ", colorConfig.colorBy === "value" ? value : error, "min: ", min, "max: ", colorConfig.colorBy === "value" ? max : errorMax);
+  // const t = normalize(value, min, max);
 
   let colorPairIndex = 0;
 
