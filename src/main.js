@@ -21,7 +21,7 @@ import histo12_5 from "./assets/histograms/nested/test_12_5.json";
 import histo1_25 from "./assets/histograms/nested/test_1_25.json";
 import histo1_2_5 from "./assets/histograms/nested/test_1_2_5.json";
 import histo5_2_1 from "./assets/histograms/nested/test_5_2_1.json";
-// import test3 from "./assets/histograms/nested/test3.json";
+import test3 from "./assets/histograms/nested/test3.json";
 // import test3f from "./assets/histograms/nested/test3f.json";
 import nav from "./assets/histograms/nested/nav.json";
 import h3scat from "./assets/histograms/h3scat.json";
@@ -45,6 +45,7 @@ import { stateSubjectGet } from "./rxjs/StateSubject.js";
 import { configSubjectGet } from "./rxjs/ConfigSubject.js";
 import { binInfoSubjectGet } from "./rxjs/BinInfoSubject.js";
 import {registerComponents} from "./core/registerComponents.js";
+import {Vector3} from "three";
 
 initNdmvrAframe();
 registerComponents();
@@ -210,7 +211,7 @@ arrayDiv.innerHTML = `
 document.querySelector("#app").appendChild(arrayDiv);
 const arraySelect = document.getElementById("arraySelect");
 
-stateSubjectGet()
+stateSubjectGet("histogram1")
   .getObservable()
   .subscribe((state) => {
     const newOptions = state.sets || [];
@@ -257,14 +258,14 @@ stateSubjectGet()
 arraySelect.addEventListener("change", (event) => {
   // console.log(event);
   console.log(arraySelect.value);
-  const currentValue = stateSubjectGet().getValue();
+  const currentValue = stateSubjectGet("histogram1").getValue();
   currentValue.selectedArray = arraySelect.value;
-  stateSubjectGet().next(currentValue);
+  stateSubjectGet("histogram1").next(currentValue);
 });
 
 checkboxContainer.addEventListener("change", (event) => {
   if (event.target.type === "checkbox") {
-    const currentValue = stateSubjectGet().getValue();
+    const currentValue = stateSubjectGet("histogram1").getValue();
 
     // Collect all checked values
     const checkedValues = Array.from(
@@ -276,7 +277,7 @@ checkboxContainer.addEventListener("change", (event) => {
       JSON.stringify(currentValue.selectedSet) !== JSON.stringify(checkedValues)
     ) {
       currentValue.selectedSet = checkedValues;
-      stateSubjectGet().next(currentValue);
+      stateSubjectGet("histogram1").next(currentValue);
     }
   }
 });
@@ -366,7 +367,7 @@ loadButton.addEventListener("click", async () => {
 // histogramSubjectGet().next({ id: "histogram1", opts: { render: "jsroot" }, obj: h3scat });
 //
 
-histogramSubjectGet().next({id: "histogram1", opts: {render: "ndmvr"}, obj: h3scat});
+histogramSubjectGet().next({id: "histogram1", opts: {render: "ndmvr"}, obj: test3});
 // histogramSubjectGet().next({id: 'histogram4', opts: {render: "nested"}, histogram: h3scat});
 // histogramSubjectGet().next({id: 'histogram1', opts: {render: "jsroot"}, histogram: h3scat});
 //
@@ -397,13 +398,61 @@ histogramSubjectGet().next({id: "histogram1", opts: {render: "ndmvr"}, obj: h3sc
 // histogramSubjectGet().next({id: 'histogram1', histogram: parse(histo4x3x1)});
 
 configSubjectGet().next(config);
+//
+// setTimeout(() => {
+//   const v = stateSubjectGet("histogram1").getValue();
+//   v.minMaxValue[1]["ComBg"].value.max  = 50000;
+//   stateSubjectGet("histogram1").next(v);
+// }, 5000);
 
+// let conf;
+//
+// configSubjectGet().getObservable().subscribe((config) => {
+//   conf = config;
+// });
+//
+// setTimeout(() => {
+//   conf.config.environment.histogramPads[0].scale = new Vector3(15, 15, 15);
+//   configSubjectGet().next(conf);
+// }, 5000);
+//
 binInfoSubjectGet()
   .getObservable()
   .subscribe((event) => {
     console.log(event);
     // console.log(event.coords.forEach(c => console.log(c.x)));
   });
+
+const tools = {
+  empty: [{
+    target: {
+      entity: "nested-histogram",
+      id: "histogram1"
+    }
+  }],
+  first: [{
+    target: {
+      entity: "nested-histogram",
+      id: "histogram1"
+    }, event: "mousemove"
+  }, {
+    target: {
+      entity: "nested-histogram",
+      id: "histogram1"
+    }, event: "mouseclick",
+    function: function (event, context) {
+      console.log("custom function from set functions: ", event, context);
+    }
+  }]
+};
+
+setTimeout(() => {
+  functionSubjectGet().setFunctions(tools.empty);
+}, 2000);
+
+setTimeout(() => {
+  functionSubjectGet().setFunctions(tools.first);
+}, 5000);
 
 // setTimeout(() => {
 //   dispatchSubjectGet().next({
@@ -434,45 +483,45 @@ binInfoSubjectGet()
 //   });
 // }, 6000);
 
-setTimeout(() => {
-  //REMOVE ALL FUNCTIONS
-  // functionSubjectGet().removeFunctions({
-  //   target: {
-  //     entity: "nested-histogram",
-  //     id: "*"
-  //   }
-  // });
+// setTimeout(() => {
+//REMOVE ALL FUNCTIONS
+// functionSubjectGet().removeFunctions({
+//   target: {
+//     entity: "nested-histogram",
+//     id: "*"
+//   }
+// });
 
-  // REMOVE ALL FUNCTIONS ON EVENT
-  // functionSubjectGet().removeFunctions({
-  //   event: "mousemove",
-  //   target: {
-  //     entity: "nested-histogram",
-  //     id: "*"
-  //   }
-  // });
+// REMOVE ALL FUNCTIONS ON EVENT
+// functionSubjectGet().removeFunctions({
+//   event: "mousemove",
+//   target: {
+//     entity: "nested-histogram",
+//     id: "*"
+//   }
+// });
 
-  //ADD DEFAULT FUNCTION
-  // functionSubjectGet().addFunctions({
-  //   event: "mousemove",
-  //   target: {
-  //     entity: "nested-histogram",
-  //     id: "*"
-  //   },
-  // });
+//ADD DEFAULT FUNCTION
+// functionSubjectGet().addFunctions({
+//   event: "mousemove",
+//   target: {
+//     entity: "nested-histogram",
+//     id: "*"
+//   },
+// });
 
-  //ADD CUSTOM FUNCTION
-  functionSubjectGet().addFunctions({
-    event: "mouseclick",
-    target: {
-      entity: "nested-histogram",
-      id: "*"
-    },
-    function: function (event, context) {
-      console.log("my-custom-function: ", event);
-    }
-  });
-}, 3000);
+//ADD CUSTOM FUNCTION
+//   functionSubjectGet().addFunctions({
+//     event: "mouseclick",
+//     target: {
+//       entity: "nested-histogram",
+//       id: "*"
+//     },
+//     function: function (event, context) {
+//       console.log("my-custom-function: ", event);
+//     }
+//   });
+// }, 3000);
 
 // const functions = [
 //     {

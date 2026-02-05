@@ -1,6 +1,6 @@
 import { BehaviorSubject } from "rxjs";
 
-let inputDeviceSubject;
+let stateSubjectMap = new Map();
 
 class StateSubject {
   #subject;
@@ -10,7 +10,8 @@ class StateSubject {
       sets: [],
       selectedSet: [],
       arrays: ["content"],
-      selectedArray: "content"
+      selectedArray: "content",
+      minMaxValue: []
     });
   }
 
@@ -27,7 +28,8 @@ class StateSubject {
   }
 }
 
-export const stateSubjectGet = () => {
-  if (!inputDeviceSubject) inputDeviceSubject = new StateSubject();
-  return inputDeviceSubject;
+export const stateSubjectGet = (id) => {
+  if (!id) throw new Error("StateSubject id is undefined");
+  if (!stateSubjectMap.get(id)) stateSubjectMap.set(id, new StateSubject());
+  return stateSubjectMap.get(id);
 };

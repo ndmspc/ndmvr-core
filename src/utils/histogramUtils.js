@@ -1,11 +1,11 @@
 import RadixCounter from "./radixCounter.js";
-import {Vector3, Color } from "three";
+import {Vector3, Color} from "three";
 
 /**
  *Instead of GetBinCoord, which is added to the JSRoot object only when rendered by JSRoot.
  *
  */
-function GetBinUpperEdge (axis, bin) {
+function GetBinUpperEdge(axis, bin) {
   if (bin <= 0) return axis.fXmin;
   if (bin > axis.fNbins) return axis.fXmax;
   return axis.GetBinLowEdge(bin + 1);
@@ -18,7 +18,7 @@ function GetBinUpperEdge (axis, bin) {
  * @param size defines size of dimension on axis.
  * @param padding defines padding on axis.
  * */
-function getRootBinSizePosByAxis (axis, binRelPos, size, padding, offset, layer, target) {
+function getRootBinSizePosByAxis(axis, binRelPos, size, padding, offset, layer, target) {
   const bin = binRelPos + 1;
   const binLow = axis.GetBinLowEdge(bin);
   const binUpper = GetBinUpperEdge(axis, bin);
@@ -42,13 +42,13 @@ function getRootBinSizePosByAxis (axis, binRelPos, size, padding, offset, layer,
 /**
  * Get bin's size and position relative to histogram axis.
  * */
-function getRootBinSizePos (rootObj, rootBinRelPos, size, padding, offset, layer, target) {
+function getRootBinSizePos(rootObj, rootBinRelPos, size, padding, offset, layer, target) {
   getRootBinSizePosByAxis(rootObj.fXaxis, rootBinRelPos.x, size?.x, padding?.x, offset?.x, layer, target.x);
   getRootBinSizePosByAxis(rootObj.fYaxis, rootBinRelPos.y, size?.z, padding?.y, offset?.z, layer, target.y);
   getRootBinSizePosByAxis(rootObj.fZaxis, rootBinRelPos.z, size?.y, padding?.z, offset?.y, layer, target.z);
 }
 
-export function rootSizePosToAFrame (jsrootSizePos) {
+export function rootSizePosToAFrame(jsrootSizePos) {
   const sizeY = jsrootSizePos.y.size;
   const posY = jsrootSizePos.y.pos;
 
@@ -65,7 +65,7 @@ export function rootSizePosToAFrame (jsrootSizePos) {
  * - bins start at 0 in all axes
  * - 1 is the smallest bin dimension in all axes
  */
-export function computeAFrameBinSizePos (rootObj, rootBinRelPos, padding, size, offset, layer, target) {
+export function computeAFrameBinSizePos(rootObj, rootBinRelPos, padding, size, offset, layer, target) {
   getRootBinSizePos(rootObj, rootBinRelPos, size, padding, offset, layer, target);
 
   // if (!size) {
@@ -81,7 +81,7 @@ export function computeAFrameBinSizePos (rootObj, rootBinRelPos, padding, size, 
  * Flips target Z position by limitMatrix.
  * Origin of rotation is at center of limitMatrix.
  * */
-export function flipLocalZAxis (worldPosition, worldScale, localPosition) {
+export function flipLocalZAxis(worldPosition, worldScale, localPosition) {
   localPosition.z.pos = 2 * worldPosition - localPosition.z.pos;
   return localPosition;
   // return {
@@ -93,7 +93,7 @@ export function flipLocalZAxis (worldPosition, worldScale, localPosition) {
   // };
 }
 
-export function areArraysEqual (arr1, arr2) {
+export function areArraysEqual(arr1, arr2) {
   if (arr1.length !== arr2.length) return false;
 
   const countMap = {};
@@ -111,17 +111,69 @@ export function areArraysEqual (arr1, arr2) {
   return true;
 }
 
-export function easeOutQuad (t) {
+
+export function areMinMaxValuesEqual(obj1, obj2) {
+  if (!Array.isArray(obj1) || !Array.isArray(obj2) || obj1.length !== obj2.length) {
+    return false;
+  }
+
+  for (let i = 0; i < obj1.length; i++) {
+    const keys1 = Object.keys(obj1[i]);
+    const keys2 = Object.keys(obj2[i]);
+
+    if (keys1.length !== keys2.length) {
+      return false;
+    }
+
+    for (const key of keys1) {
+      if (!obj2[i].hasOwnProperty(key)) {
+        return false;
+      }
+
+      const val1 = obj1[i][key];
+      const val2 = obj2[i][key];
+
+      if (typeof val1 !== typeof val2) {
+        return false;
+      }
+
+      if (typeof val1 === "object") {
+        if (!val1 || !val2) {
+          if (val1 !== val2) return false;
+          continue;
+        }
+
+        const subKeys1 = Object.keys(val1);
+        const subKeys2 = Object.keys(val2);
+
+        if (subKeys1.length !== subKeys2.length) {
+          return false;
+        }
+
+        for (const subKey of subKeys1) {
+          if (!val2.hasOwnProperty(subKey) || val1[subKey] !== val2[subKey]) {
+            return false;
+          }
+        }
+      } else if (val1 !== val2) {
+        return false;
+      }
+    }
+  }
+  return true;
+}
+
+export function easeOutQuad(t) {
   return 1 - (1 - t) * (1 - t);
 }
 
-export function easeOutCubic (t) {
+export function easeOutCubic(t) {
   return 1 - Math.pow(1 - t, 3);
 }
 
-export function stringToXYZ (str) {
+export function stringToXYZ(str) {
   const [x, y, z] = str.split(" ").map(Number);
-  return { x, y, z };
+  return {x, y, z};
 }
 
 /**
@@ -132,7 +184,7 @@ export function stringToXYZ (str) {
  * If used with combination from position obtained by ray-cast event,
  * the last entry is always index of visible bin.
  * */
-export function computeIndexFromPosition (position, obj, maxInstancesPerLayer, selectedSet) {
+export function computeIndexFromPosition(position, obj, maxInstancesPerLayer, selectedSet) {
   let ind = Array(position.length).fill(0);
   const rec = (layer, obj, index) => {
     const fX = obj.fXaxis.fNbins;
@@ -192,7 +244,7 @@ export function computeIndexFromPosition (position, obj, maxInstancesPerLayer, s
  * If used with combination from position obtained by ray-cast event,
  * the last entry is always index of visible bin.
  * */
-export function computeJsRootIndexFromPosition (position, obj, selectedSet) {
+export function computeJsRootIndexFromPosition(position, obj, selectedSet) {
   let ind = Array(position.length).fill(0);
   for (let i = 0; i < position.length; i++) {
     ind[i] = obj.getBin(
@@ -220,7 +272,7 @@ export function computeJsRootIndexFromPosition (position, obj, selectedSet) {
  * @param obj Jsroot object from which histogram is computed range of bin.
  * @default Pointers origin.
  * */
-export function getRangeByPosition (position, set, obj, wireframe, selectedSet, layer = 0) {
+export function getRangeByPosition(position, set, obj, wireframe, selectedSet, layer = 0) {
   const axisNames = ["x", "y", "z"];
   const nAxes = Number.parseInt(obj._typename.substring(2, 3), 10);
 
@@ -240,7 +292,7 @@ export function getRangeByPosition (position, set, obj, wireframe, selectedSet, 
         label: axisObj.fLabels?.arr[posVal]?.fString
       };
     }
-    range = { ...range, color: wireframe.getColorAt(layer, set), name: obj.fName };
+    range = {...range, color: wireframe.getColorAt(layer, set), name: obj.fName};
   }
   if (position[1]) {
     let child = undefined;
@@ -267,7 +319,7 @@ export function getRangeByPosition (position, set, obj, wireframe, selectedSet, 
  * e.g. ([{x: 1, y: 3, z: 2}, {x: 89, 0, 0}])
  * @return Linear index of starting bin of the histogram specified by position.
  * * */
-export function calculateHierarchicalIndex (position, obj, maxInstancesPerLayer, selectedSet) {
+export function calculateHierarchicalIndex(position, obj, maxInstancesPerLayer, selectedSet) {
   let calculatedIndex = 0;
   const layerSizes = maxInstancesPerLayer.slice(1);
   const multipliers = [];
@@ -280,9 +332,9 @@ export function calculateHierarchicalIndex (position, obj, maxInstancesPerLayer,
   }
 
   const traverse = (layer, obj) => {
-    const { fNbins: fX } = obj.fXaxis;
-    const { fNbins: fY } = obj.fYaxis;
-    const { fNbins: fZ } = obj.fZaxis;
+    const {fNbins: fX} = obj.fXaxis;
+    const {fNbins: fY} = obj.fYaxis;
+    const {fNbins: fZ} = obj.fZaxis;
 
     const linearIndex =
       position[layer].x +
@@ -308,7 +360,7 @@ export function calculateHierarchicalIndex (position, obj, maxInstancesPerLayer,
  * e.g. ({x: 0, y: 2, z: 1})
  * @return Jsroot histogram object of children specified by indexLayer from obj.
  * */
-function getChildObject (obj, positionLayer, selectedSet) {
+function getChildObject(obj, positionLayer, selectedSet) {
   const binIndex = obj.getBin(
     positionLayer.x + 1,
     positionLayer.y + 1,
@@ -323,10 +375,28 @@ function getChildObject (obj, positionLayer, selectedSet) {
 }
 
 /**
+ * @desc Getter function for child in jsroot histogram object.
+ * @param obj Jsroot histogram object
+ * @param positionLayer - array of jsroot indexes for each layer
+ * @return Jsroot histogram object of children specified by indexLayer from obj.
+ * */
+export function getChildObjectByIndex(obj, positionLayer, set) {
+  const index = positionLayer.splice(0, 1)[0];
+  if (positionLayer.length > 0) {
+    return getChildObjectByIndex(obj.children.content[index], positionLayer, set);
+  }
+  if (obj.children.content) {
+    return obj.children.content[index];
+  } else {
+    return obj.children[set][index];
+  }
+}
+
+/**
  * @desc Computes max numeric content for each layer and each set if available.
  * @return Array of content or set objects containing max value.
  * */
-export function computeMaxContentPerLayer (obj) {
+export function computeMaxContentPerLayer(obj) {
   if (!obj) return;
 
   // looping is faster than Math.max or reduce
@@ -341,13 +411,13 @@ export function computeMaxContentPerLayer (obj) {
 
   const max = [];
 
-  max[0] = { content: getMax(obj.fArray) };
+  max[0] = {content: getMax(obj.fArray)};
 
   if (obj.fArrays) {
     Object.keys(obj?.fArrays).forEach((array) => {
       max[0] = {
         ...max[0],
-        [array]: getMax(obj.fArrays[array]),
+        [array]: getMax(obj.fArrays[array].values),
       };
     });
   }
@@ -391,7 +461,7 @@ export function computeMaxContentPerLayer (obj) {
   return max;
 }
 
-export function computeMaxErrorPerLayer (obj, maxContentPerLayer) {
+export function computeMaxErrorPerLayer(obj, maxContentPerLayer) {
   if (!obj) return;
 
   // looping is faster than Math.max or reduce
@@ -406,7 +476,7 @@ export function computeMaxErrorPerLayer (obj, maxContentPerLayer) {
 
   const max = [];
 
-  max[0] = { content: getMax(obj.fSumw2) };
+  max[0] = {content: getMax(obj.fSumw2)};
 
   if (obj.fArrays) {
     Object.keys(obj?.fArrays).forEach((array) => {
@@ -461,11 +531,89 @@ export function computeMaxErrorPerLayer (obj, maxContentPerLayer) {
   return max;
 }
 
+export function computeMinErrorPerLayer(obj, minContentPerLayer) {
+  if (!obj) return;
+
+  // looping is faster than Math.max or reduce
+  const getMin = (arr) => {
+    let min = Infinity;
+    for (let i = 0; i < arr.length; i++) {
+      const v = arr[i];
+      if (v < min) min = v;
+    }
+    return min;
+  };
+
+  const min = [];
+
+  min[0] = {content: getMin(obj.fSumw2)};
+
+  if (obj.fArrays) {
+    Object.keys(obj?.fArrays).forEach((array) => {
+      if (obj.fArrays[array].errors) {
+        min[0] = {
+          ...min[0],
+          [array]: getMin(obj.fArrays[array].errors),
+        };
+      }
+    });
+  }
+
+  const computation = (children, layer = 1) => {
+    if (!min[layer]) {
+      min[layer] = {};
+    }
+
+    Object.entries(children).forEach(([key, childArray]) => {
+      childArray.forEach((child) => {
+        if (!child) return;
+        const fSumw2Max = getMin(child.fSumw2);
+        const temp = isNaN(fSumw2Max) ? 0 : fSumw2Max;
+
+        if (!(key in min[layer]) || temp < min[layer][key]) {
+          min[layer][key] = temp;
+        }
+        if (child.fArrays) {
+          // const temp = getMax(child.fArray)
+          Object.keys(child.fArrays).forEach((array) => {
+            if (!child.fArrays[array].errors) return;
+            if (!(array in min[layer]) || temp < min[layer][array]) {
+              min[layer][array] = temp;
+            }
+            // if (array === "ComBg") {
+            //   console.log(getMin(child.fArrays[array].errors.filter(v => v > 0)));
+            // }
+            min[layer][array] = Math.min(min[layer][array], getMin(child.fArrays[array].errors.filter((v) => v > 0)));
+          });
+        }
+
+        if (child.children) {
+          computation(child.children, layer + 1);
+        }
+      });
+    });
+  };
+  if (obj.children) {
+    computation(obj.children);
+  }
+  for (let i = 0; i < min.length; i++) {
+    Object.keys(min[i]).forEach((key) => {
+      if (min[i][key] === 0 || min[i][key] === Infinity) {
+        // console.log("BERIE SQRT Z ", key, " ", maxContentPerLayer[i][key], "");
+        min[i][key] = Math.sqrt(minContentPerLayer[i][key]);
+      }
+      ;
+    });
+  }
+  return min;
+}
+
+
 /**
  * @desc Computes max numeric content for each layer and each set if available.
  * @return Array of content or set objects containing max value.
  * */
-export function computeMinContentPerLayer (obj) {
+export function computeMinContentPerLayer(obj) {
   if (!obj) return;
 
   // looping is faster than Math.max or reduce
@@ -540,7 +688,7 @@ export function computeMinContentPerLayer (obj) {
  * @desc Computes Maximum number of instances for each layer of histogram.
  * @return Array of numbers representing max value for each layer.
  * */
-export function computeMaxInstancesPerLayer (obj) {
+export function computeMaxInstancesPerLayer(obj) {
   if (!obj) return;
   const temp =
     obj.fXaxis.fNbins *
@@ -577,7 +725,7 @@ export function computeMaxInstancesPerLayer (obj) {
   return max;
 }
 
-export function fillColorArray (config, material, colorArray) {
+export function fillColorArray(config, material, colorArray) {
   new Color(config.color.default.min).toArray(colorArray, 0);
   new Color(config.color.default.max).toArray(colorArray, 3);
 
@@ -597,22 +745,18 @@ export function fillColorArray (config, material, colorArray) {
     currentIndex++;
   });
 
-  material.uniforms.colorPairs = { value: colorArray };
+  material.uniforms.colorPairs = {value: colorArray};
   material.uniformsNeedUpdate = true;
 }
 
-export function getGradientColorInst (colorConfig, availableSets, value, error, min, max, errorMax, availableSetIndex, layer) {
+export function getGradientColorInst(colorConfig, value, min, max, availableSetIndex, layer) {
   const normalize = (value, min, max) => {
     let val = (value - min) / (max - min);
     if (val > 1) val = 1;
     return isNaN(val) || val === Infinity ? 0 : val;
     // return (value - min) / (max - min);
   };
-  const t = normalize(
-    colorConfig.colorBy === "value" ? value : error,
-    min,
-    colorConfig.colorBy === "value" ? max : errorMax,
-  );
+  const t = normalize(value, min, max);
   // console.log(t, "value: ", colorConfig.colorBy === "value" ? value : error, "min: ", min, "max: ", colorConfig.colorBy === "value" ? max : errorMax);
   // const t = normalize(value, min, max);
 
@@ -627,7 +771,7 @@ export function getGradientColorInst (colorConfig, availableSets, value, error, 
   return colorPairIndex + t;
 }
 
-export function getGradientColor (colorConfig, availableSets, value, min, max, set, layer) {
+export function getGradientColor(colorConfig, availableSets, value, min, max, set, layer) {
   const normalize = (value, min, max) => (value - min) / (max - min);
   const t = normalize(value, min, max);
 
@@ -651,7 +795,7 @@ export function getGradientColor (colorConfig, availableSets, value, min, max, s
  * @param {{position: THREE.Vector3, scale: Vector3}} b
  * @returns {{position: THREE.Vector3, scale: THREE.Vector3}}
  */
-function unionBoundsMC (a, b) {
+function unionBoundsMC(a, b) {
   const ap = a.position, as = a.scale;
   const bp = b.position, bs = b.scale;
 
@@ -680,7 +824,7 @@ function unionBoundsMC (a, b) {
   };
 }
 
-function getPositionAndScale (index, pos, scale, matrixCache, layer, setIndex, out) {
+function getPositionAndScale(index, pos, scale, matrixCache, layer, setIndex, out) {
   // Detect negative zero or negative index
   const isNegative = 1 / index === -Infinity || index < 0;
 
@@ -726,7 +870,7 @@ const hasNonContentChild = (children) => {
   return false;
 };
 
-export function createBVHTree (matrixCache, node, layer, setIndex, availableSets, matrixWorld, totalOffset) {
+export function createBVHTree(matrixCache, node, layer, setIndex, availableSets, matrixWorld, totalOffset) {
   const fX = node.fXaxis.fNbins;
   const fY = node.fYaxis.fNbins;
   const fZ = node.fZaxis.fNbins;
@@ -794,8 +938,8 @@ export function createBVHTree (matrixCache, node, layer, setIndex, availableSets
   let arrayIndex = 0;
 
   const _result = {
-    position: { x: 0, y: 0, z: 0 },
-    scale: { x: 0, y: 0, z: 0 }
+    position: {x: 0, y: 0, z: 0},
+    scale: {x: 0, y: 0, z: 0}
   };
 
   for (let k = 0; k < fY; k++) {
@@ -908,17 +1052,26 @@ export function createBVHTree (matrixCache, node, layer, setIndex, availableSets
   };
 }
 
-export function createBVHTreeRecursive (matrixCache, node, layer, selectedSet, availableSets, matrixWorld, maxInstancesPerLayer) {
+export function createBVHTreeRecursive(matrixCache, node, layer, selectedSet, pointerSet, availableSets, matrixWorld, maxInstancesPerLayer) {
   const finalTree = new Array(matrixCache.length).fill().map(v => []);
   finalTree[finalTree.length - 1] = Array.from(
-    { length: availableSets.length },
+    {length: availableSets.length},
     () => []
   );
 
-  finalTree[0] = [createBVHTree(
-    matrixCache, node, layer, null,
-    availableSets, matrixWorld, 0
-  )];
+  if (pointerSet === null) {
+    finalTree[0] = [createBVHTree(
+      matrixCache, node, layer, null,
+      availableSets, matrixWorld, 0
+    )];
+  } else {
+    finalTree[0] = new Array(availableSets.length);
+    selectedSet.forEach(set =>
+      finalTree[0][availableSets.indexOf(set)] = createBVHTree(
+        matrixCache, node, layer, availableSets.indexOf(set),
+        availableSets, matrixWorld, 0
+      ));
+  }
 
   const traverse = (currentNode, currentLayer, offset) => {
     if (!currentNode.children) return;
@@ -941,28 +1094,8 @@ export function createBVHTreeRecursive (matrixCache, node, layer, selectedSet, a
     //offset by one histogram on current layer
     const step = maxInstancesPerLayer[currentLayer];
     for (let j = 0; j < n; j++) {
-      const relPos = { x: counter.getValueAt(0), y: counter.getValueAt(1), z: counter.getValueAt(2) };
+      const relPos = {x: counter.getValueAt(0), y: counter.getValueAt(1), z: counter.getValueAt(2)};
       if (currentNode?.children?.content) {
-
-        // const startIndex = (j * step) + (offset * maxInstancesPerLayer[currentLayer]);
-        // let shouldBuild = false;
-        // for (
-        //   let rendIndex = startIndex;
-        //   rendIndex < startIndex + maxInstancesPerLayer[currentLayer];
-        //   rendIndex++
-        // ){
-        //   if (matrixCache[currentLayer].rendered[rendIndex] !== -1) {
-        //     shouldBuild = true;
-        //     break;
-        //   }
-        // }
-        // if (!shouldBuild) {
-        //   //pushuje null ked nie je vyrenderovany
-        //   finalTree[currentLayer].push(null);
-        //   counter.increment();
-        //   continue;
-        // }
-
         const childNode = currentNode.children.content[currentNode.getBin(relPos.x + 1, relPos.y + 1, relPos.z + 1)];
         if (!childNode) {
           if (counter.increment() === false) break;
@@ -985,7 +1118,7 @@ export function createBVHTreeRecursive (matrixCache, node, layer, selectedSet, a
             let rendIndex = startIndex;
             rendIndex < startIndex + maxInstancesPerLayer[currentLayer];
             rendIndex++
-          ){
+          ) {
             if (matrixCache[currentLayer][setIndex].rendered[rendIndex] !== -1) {
               shouldBuild = true;
               break;
@@ -1014,7 +1147,7 @@ export function createBVHTreeRecursive (matrixCache, node, layer, selectedSet, a
   return finalTree;
 }
 
-function applyWorldMatrix (box, matrixWorld) {
+function applyWorldMatrix(box, matrixWorld) {
   const e = matrixWorld.elements;
 
   const sx = Math.sqrt(e[0] * e[0] + e[1] * e[1] + e[2] * e[2]);
