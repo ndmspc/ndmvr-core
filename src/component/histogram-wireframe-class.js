@@ -26,10 +26,12 @@ export default class HistogramWireframeClass {
   config = undefined;
   numOfavailableSets = undefined;
   visibility = true;
+  id = undefined;
 
-  constructor(maxInstancesPerLayer, matrixCache, config) {
+  constructor(maxInstancesPerLayer, matrixCache, config, id) {
     this.config = config;
     this.maxInstancesPerLayer = maxInstancesPerLayer;
+    this.id = id;
 
     const baseBox = new BoxGeometry(1, 1, 1);
     const baseEdges = new EdgesGeometry(baseBox);
@@ -66,7 +68,7 @@ export default class HistogramWireframeClass {
     this.wireframe = new LineSegments(this.instGeom, this.material);
     this.wireframe.frustumCulled = false;
 
-    this.stateSub = stateSubjectGet().getObservable().subscribe(v => {
+    this.stateSub = stateSubjectGet(this.id).getObservable().subscribe(v => {
       this.numOfavailableSets = v.sets.length;
     });
   }
@@ -77,6 +79,9 @@ export default class HistogramWireframeClass {
       parent.remove(this.wireframe);
       this.instGeom.dispose();
     }
+
+    const startLayer = this.config.display.start ?? 0;
+    const endLayer = this.config.display.end ?? matrixCache.length - 1;
 
     const visibilityCache = [];
     let lastLayer = matrixCache.length - 1;
@@ -121,7 +126,10 @@ export default class HistogramWireframeClass {
       visibilityCache[layer] = vis;
     }
 
-    const isVisible = (layer, i) => visibilityCache[layer][i] === 1;
+    const isVisible = (layer, i) => {
+      if (layer < startLayer || layer > endLayer) return false;
+      return visibilityCache[layer][i] === 1;
+    };
 
     const computeNumOfInstBeneath = (layer, i) => {
       let num = 0;

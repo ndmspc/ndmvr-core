@@ -1,39 +1,58 @@
 import RadixCounter from "../utils/radixCounter.js";
 import {
-  areArraysEqual,
+  areArraysEqual, areMinMaxValuesEqual,
   calculateHierarchicalIndex,
-  computeAFrameBinSizePos, computeIndexFromPosition, computeJsRootIndexFromPosition, computeMaxContentPerLayer,
+  computeAFrameBinSizePos,
+  computeIndexFromPosition,
+  computeJsRootIndexFromPosition,
+  computeMaxContentPerLayer,
+  computeMaxErrorPerLayer,
   computeMaxInstancesPerLayer,
   computeMinContentPerLayer,
-  createBVHTreeRecursive, fillColorArray,
-  flipLocalZAxis, getGradientColor, getGradientColorInst, getRangeByPosition,
+  computeMinErrorPerLayer,
+  createBVHTreeRecursive,
+  fillColorArray,
+  flipLocalZAxis,
+  getGradientColorInst,
+  getRangeByPosition,
+  getChildObjectByIndex,
   rootSizePosToAFrame,
 } from "../utils/histogramUtils.js";
-import { HistogramPointerClass } from "../core/histogram-pointer-class.js";
-import { stateSubjectGet } from "../rxjs/StateSubject.js";
-import { canvasSubjectGet } from "../rxjs/CanvasSubject.js";
-import { binInfoSubjectGet } from "../rxjs/BinInfoSubject.js";
+import {HistogramPointerClass} from "../core/histogram-pointer-class.js";
+import {stateSubjectGet} from "../rxjs/StateSubject.js";
+import {canvasSubjectGet} from "../rxjs/CanvasSubject.js";
+import {binInfoSubjectGet} from "../rxjs/BinInfoSubject.js";
 import HistogramWireframeClass from "./histogram-wireframe-class.js";
-import { TPainter } from "./TPainter.js";
+import {TPainter} from "./TPainter.js";
 import {
-  Vector3, Color, BoxGeometry, InstancedBufferGeometry,
-  InstancedBufferAttribute, Mesh, ShaderMaterial, Object3D, Box3
+  Box3,
+  BoxGeometry,
+  Color,
+  InstancedBufferAttribute,
+  InstancedBufferGeometry,
+  Mesh,
+  Object3D,
+  ShaderMaterial,
+  Vector3
 } from "three";
+import {areLimitsEqual, createHnotFilledSprite, ensureDefaultBindings} from "../utils/baseUtil.js";
+import {configSubjectGet} from "../rxjs/ConfigSubject.js";
 
 export class THnPainter extends TPainter {
   stateSub = undefined;
   pointer = undefined;
   wireframe = undefined;
   BVHTree = [];
+  minMaxValue = [];
   maxInstancesPerLayer = undefined;
   maxContentPerLayer = undefined;
+  maxErrorPerLayer = undefined;
   totalInstances = undefined;
   color = new Color();
   matrixCache = undefined;
   selectedSet = [];
   selectedArray = "content";
   availableSets = [];
-  renderHistory = [];
   dirtyInstance = [];
 
   mesh = undefined;
@@ -44,41 +63,47 @@ export class THnPainter extends TPainter {
   instanceColors = undefined;
   colorArray = undefined;
 
-  constructor (histo, id, opts) {
+  constructor(histo, id, opts) {
     super(histo, id, opts);
     this.pointer = new HistogramPointerClass(this.rootObj);
 
     this.handleStateChange = this.handleStateChange.bind(this);
-    this.stateSub = stateSubjectGet()
+    this.stateSub = stateSubjectGet(this.id)
       .getObservable()
       .subscribe(this.handleStateChange);
 
-    this.init();
+    this.init(true);
     this.renderHistogram(0, this.totalInstances, 0);
   }
 
-  updateHistogram (histo) {
+  updateHistogram(histo) {
+    let raycastHandler = undefined;
     const parent = this.mesh.parent;
-    const raycastHandler = this.mesh.raycast;
+    parent.remove(this.mesh);
+    if (this.pointer.isHistogramFilled) {
+      raycastHandler = this.mesh.raycast;
+      this.mesh.raycast = () => {
+      };
+      this.wireframe.dispose();
+      this.instGeom.dispose();
+    }
 
-    this.mesh.raycast = () => {};
     this.matrixCache = [];
     this.BVHTree = [];
     this.availableSets = [];
     this.selectedSet = [];
-    stateSubjectGet().next({
+    this.minMaxValue = [];
+    stateSubjectGet(this.id).next({
       sets: [],
       selectedSet: [],
       arrays: ["content"],
-      selectedArray: "content"
+      selectedArray: "content",
+      minMaxValue: []
     });
-    this.wireframe.dispose();
-    this.instGeom.dispose();
-    parent.remove(this.mesh);
 
     this.rootObj = histo.obj;
     this.pointer = new HistogramPointerClass(this.rootObj);
-    this.init();
+    this.init(true);
     this.renderHistogram(0, this.totalInstances, 0);
 
 
@@ -91,7 +116,7 @@ export class THnPainter extends TPainter {
     parent.add(this.wireframe.wireframe);
   }
 
-  remove () {
+  remove() {
     super.remove();
     this.matrixCache = [];
     this.instGeom.dispose();
@@ -105,13 +130,31 @@ export class THnPainter extends TPainter {
   /**
    * @desc Initializes base values and objects.
    * */
-  init () {
-    this.setAvailableSets(this.pointer.origin);
-    this.setAvailableArrays(this.pointer.origin);
-
+  init(updateState = false) {
     this.maxInstancesPerLayer = computeMaxInstancesPerLayer(this.pointer.origin);
-    this.maxContentPerLayer = computeMaxContentPerLayer(this.pointer.origin);
-    this.minContentPerLayer = computeMinContentPerLayer(this.pointer.origin);
+    if (updateState) {
+      this.maxContentPerLayer = computeMaxContentPerLayer(this.pointer.origin);
+      this.minContentPerLayer = computeMinContentPerLayer(this.pointer.origin);
+      this.maxErrorPerLayer = computeMaxErrorPerLayer(this.pointer.origin, this.maxContentPerLayer);
+      this.minErrorPerLayer = computeMinErrorPerLayer(this.pointer.origin, this.minContentPerLayer);
+      this.setAvailableSets(this.pointer.origin);
+      this.setAvailableArrays(this.pointer.origin);
+
+      const minMaxValues = new Array(this.maxContentPerLayer.length);
+      for (let i = 0; i < this.maxContentPerLayer.length; i++) {
+        minMaxValues[i] = {};
+        Object.keys(this.maxContentPerLayer[i]).forEach(key => {
+          minMaxValues[i][key] = {
+            value: {min: this.minContentPerLayer[i][key], max: this.maxContentPerLayer[i][key]},
+            error: {min: this.minErrorPerLayer[i][key], max: this.maxErrorPerLayer[i][key]}
+          };
+        });
+      }
+      console.log("minMaxValues: ", minMaxValues);
+      stateSubjectGet(this.id).next(
+        {...stateSubjectGet(this.id).getValue(), minMaxValue: minMaxValues});
+    }
+
     this.totalInstances = this.maxInstancesPerLayer.reduce((acc, value) => {
       return acc * value;
     }, 1);
@@ -121,7 +164,8 @@ export class THnPainter extends TPainter {
     this.wireframe = new HistogramWireframeClass(
       this.maxInstancesPerLayer,
       this.matrixCache,
-      this.config.wireframe
+      this.config.wireframe,
+      this.id
     );
   }
 
@@ -133,7 +177,7 @@ export class THnPainter extends TPainter {
     }
 
     let multiplier = this.maxInstancesPerLayer[0];
-    for (let i = 0; i < this.maxInstancesPerLayer.length - 1 -(hasSets ? 1 : 0); i++) {
+    for (let i = 0; i < this.maxInstancesPerLayer.length - 1 - (hasSets ? 1 : 0); i++) {
       this.matrixCache[i] = {
         pos: new Float32Array(multiplier * 3),
         scale: new Float32Array(multiplier * 3),
@@ -152,7 +196,7 @@ export class THnPainter extends TPainter {
     }
   }
 
-  setupInsBufGeom () {
+  setupInsBufGeom() {
     this.setupMatrixCache();
 
     let totalInst = this.maxInstancesPerLayer.reduce((acc, value) => {
@@ -175,7 +219,7 @@ export class THnPainter extends TPainter {
 
     this.material = this.createMaterial();
     this.colorArray = new Float32Array(32 * 6);
-    this.material.uniforms.colorArray = { value: this.colorArray };
+    this.material.uniforms.colorArray = {value: this.colorArray};
     fillColorArray(this.config, this.material, this.colorArray);
 
     this.instancePositions = new Float32Array(3);
@@ -199,11 +243,11 @@ export class THnPainter extends TPainter {
     this.mesh.raycast = this.raycastHandler;
     this.mesh.frustumCulled = false;
 
-    this.material.uniforms.colorArray = { value: this.colorArray };
+    this.material.uniforms.colorArray = {value: this.colorArray};
     this.mesh.material.uniformsNeedUpdate = true;
   }
 
-  pushVisibleInstances () {
+  pushVisibleInstances() {
     let parent = this.mesh.parent;
     if (parent) {
       parent.remove(this.mesh);
@@ -215,7 +259,7 @@ export class THnPainter extends TPainter {
     // Count first to pre-allocate
     for (let i = 0; i < this.matrixCache.length; i++) {
       const layer = this.matrixCache[i];
-      if (Array.isArray(layer)){
+      if (Array.isArray(layer)) {
         for (let k = 0; k < layer.length; k++) {
           const setLayer = layer[k];
           for (let j = 0; j < setLayer.rendered.length; j++) {
@@ -237,11 +281,11 @@ export class THnPainter extends TPainter {
     let index = 0;
     for (let i = 0; i < this.matrixCache.length; i++) {
       const layer = this.matrixCache[i];
-      if (Array.isArray(layer)){
+      if (Array.isArray(layer)) {
         for (let k = 0; k < layer.length; k++) {
           const setLayer = layer[k];
           for (let j = 0; j < setLayer.rendered.length; j++) {
-            if (setLayer.rendered[j] !== -1){
+            if (setLayer.rendered[j] !== -1) {
               positions[(index * 3)] = setLayer.pos[j * 3];
               positions[(index * 3) + 1] = setLayer.pos[(j * 3) + 1];
               positions[(index * 3) + 2] = setLayer.pos[(j * 3) + 2];
@@ -313,7 +357,7 @@ export class THnPainter extends TPainter {
    *  Bins of the deepest layer are offset by 1.
    *  Bins from each upward layer are offset by maximum number of layer beneath.
    * */
-  renderHistogram (startIndex, endIndex, layer) {
+  renderHistogram(startIndex, endIndex, layer) {
     if (!this.pointer || layer >= this.maxInstancesPerLayer.length - 1) return;
     this.logRender({
       procedure: "render",
@@ -324,10 +368,11 @@ export class THnPainter extends TPainter {
       },
     });
 
+
     const _binSizePos = {
-      x: { size: 0, pos: 0 },
-      y: { size: 0, pos: 0 },
-      z: { size: 0, pos: 0 }
+      x: {size: 0, pos: 0},
+      y: {size: 0, pos: 0},
+      z: {size: 0, pos: 0}
     };
 
     const render = async (startIndex, endIndex, currentLayer, obj, limits, set) => {
@@ -337,38 +382,135 @@ export class THnPainter extends TPainter {
       const counter = new RadixCounter(
         [obj.fXaxis.fNbins, obj.fYaxis.fNbins, obj.fZaxis.fNbins]
       );
+
       let contentMin;
       let contentMax;
+      let errorMax;
+      let errorMin;
       let contentMinOut;
       let contentMaxOut;
       const outside = obj.fArrays?.[this.selectedArray]?.outside ?? false;
       const selectedSetIndex = this.selectedSet.indexOf(set);
       const availableSetIndex = this.availableSets.indexOf(set);
 
-      if (this.config.sets.scale.maximum === "relative") {
-        const selectedArrayConfig = obj.fArrays?.[this.selectedArray];
-        if (!selectedArrayConfig) {
-          const valuesWithoutZero = obj.fArray.filter((v) => v !== 0);
+      //PRIKLAD NA static CONFIG
+      // {
+      //   "static": {
+      //   "default": {
+      //     "min": -1,
+      //       "max": 1
+      //   },
+      //   "layer": [{
+      //     "min": -1,
+      //     "max": 1
+      //   }, {
+      //     "min": -1,
+      //     "max": 500000
+      //   }]
+      // }
+      // }
+      const scaleByValue = this.config.scale.scaleBy === "value";
+
+      if (set) {  //set
+        if (this.config.scale.sets === "fixed") {
+          // ({min: contentMin, max: contentMax} =
+          //   this.config.scale.sets.static.layer?.[currentLayer] ??
+          //   this.config.scale.sets.static.default);
+          ({min: contentMin, max: contentMax} =
+            this.minMaxValue[currentLayer + this.pointer.parentPath.length][set].value);
+          ({min: errorMin, max: errorMax} =
+            this.minMaxValue[currentLayer + this.pointer.parentPath.length][set].error);
+          // errorMax = this.maxErrorPerLayer[currentLayer][set];
+          // errorMin = this.minErrorPerLayer[currentLayer][set];
+
+        } else if (this.config.scale.sets === "relative") { //set relative
+          const fSumw2Filtered = obj.fSumw2.filter((v) => v !== 0);
+          const valuesWithoutZero = scaleByValue
+            ? obj.fArray.filter((v) => v !== 0)
+            : fSumw2Filtered;
           contentMin = Math.min(...valuesWithoutZero);
           contentMax = Math.max(...valuesWithoutZero);
-        } else {
-          const valuesWithoutZero = selectedArrayConfig.values.filter(
-            (v) => v !== 0,
-          );
-          contentMinOut = Math.min(...valuesWithoutZero);
-          contentMaxOut = Math.max(...valuesWithoutZero);
-          contentMin = selectedArrayConfig.min ?? contentMinOut;
-          contentMax = selectedArrayConfig.max ?? contentMaxOut;
+          errorMax = this.maxErrorPerLayer[currentLayer + this.pointer.parentPath.length][set];
+          errorMin = this.minErrorPerLayer[currentLayer + this.pointer.parentPath.length][set];
+        } else {  //set global
+          contentMin = scaleByValue
+            ? this.minContentPerLayer[currentLayer + this.pointer.parentPath.length][set]
+            : -0.1;
+          contentMax = scaleByValue
+            ? this.maxContentPerLayer[currentLayer + this.pointer.parentPath.length][set]
+            : this.maxErrorPerLayer[currentLayer + this.pointer.parentPath.length][set];
+          errorMax = this.maxErrorPerLayer[currentLayer + this.pointer.parentPath.length][set];
+          errorMin = this.minErrorPerLayer[currentLayer + this.pointer.parentPath.length][set];
         }
-      } else if (set && this.maxContentPerLayer[currentLayer][set]) {
-        contentMax = this.maxContentPerLayer[currentLayer][set];
-        contentMin = this.minContentPerLayer[currentLayer][set];
-      } else {
-        contentMax = this.maxContentPerLayer[currentLayer][this.selectedArray];
-        contentMin = this.minContentPerLayer[currentLayer][this.selectedArray];
+
+      } else if (this.selectedArray !== "content" && obj.fArrays) { //array
+        if (this.config.scale.parameter === "fixed") { //array static
+          ({min: contentMin, max: contentMax} =
+            this.minMaxValue[currentLayer + this.pointer.parentPath.length][this.selectedArray].value);
+          ({min: errorMin, max: errorMax} =
+            this.minMaxValue[currentLayer + this.pointer.parentPath.length][this.selectedArray].error);
+          // ({min: contentMin, max: contentMax} =
+          // this.config.scale.parameter.static.layer?.[currentLayer] ??
+          // this.config.scale.parameter.static.default);
+
+          // errorMax = this.maxErrorPerLayer[currentLayer][this.selectedArray];
+          // errorMin = this.minErrorPerLayer[currentLayer][this.selectedArray];
+
+        } else if (this.config.scale.parameter === "relative") {  //array relative
+          const fSumw2Filtered = obj.fArrays[this.selectedArray].errors.filter((v) => v !== 0);
+          const valuesWithoutZero = scaleByValue
+            ? obj.fArrays[this.selectedArray].values.filter((v) => v !== 0)
+            : fSumw2Filtered;
+          contentMin = Math.min(...valuesWithoutZero);
+          contentMax = Math.max(...valuesWithoutZero);
+          errorMax = this.maxErrorPerLayer[currentLayer + this.pointer.parentPath.length][this.selectedArray];
+          errorMin = this.minErrorPerLayer[currentLayer + this.pointer.parentPath.length][this.selectedArray];
+
+        } else {  //array global
+          contentMin = scaleByValue ? this.minContentPerLayer[currentLayer + this.pointer.parentPath.length][this.selectedArray] : -0.1;
+          contentMax = scaleByValue
+            ? this.maxContentPerLayer[currentLayer + this.pointer.parentPath.length][this.selectedArray]
+            : this.maxErrorPerLayer[currentLayer + this.pointer.parentPath.length][this.selectedArray];
+          errorMax = this.maxErrorPerLayer[currentLayer + this.pointer.parentPath.length][this.selectedArray];
+          errorMin = this.minErrorPerLayer[currentLayer + this.pointer.parentPath.length][this.selectedArray];
+        }
+
+      } else {  //content
+        const branch = this.pointer.isOnSet ?? "content";
+        if (this.config.scale.content === "fixed") { //content static
+          ({min: contentMin, max: contentMax} =
+            this.minMaxValue[currentLayer + this.pointer.parentPath.length][branch].value);
+          ({min: errorMin, max: errorMax} =
+            this.minMaxValue[currentLayer + this.pointer.parentPath.length][branch].error);
+          // ({min: contentMin, max: contentMax} =
+          //   this.config.scale.content.static.layer?.[currentLayer] ??
+          //   this.config.scale.content.static.default);
+
+          // errorMax = this.maxErrorPerLayer[currentLayer][branch];
+          // errorMin = this.minErrorPerLayer[currentLayer][branch];
+
+        } else if (this.config.scale.content === "relative") {  //content relative
+          const fSumw2Filtered = obj.fSumw2.filter((v) => v !== 0);
+          const valuesWithoutZero = scaleByValue
+            ? obj.fArray.filter((v) => v !== 0)
+            : fSumw2Filtered;
+          contentMin = Math.min(...valuesWithoutZero);
+          contentMax = Math.max(...valuesWithoutZero);
+          errorMax = this.maxErrorPerLayer[currentLayer + this.pointer.parentPath.length][branch];
+          errorMin = this.minErrorPerLayer[currentLayer + this.pointer.parentPath.length][branch];
+        } else {  //content global
+          contentMin = scaleByValue ? this.minContentPerLayer[currentLayer + this.pointer.parentPath.length][branch] : -0.1;
+          contentMax = scaleByValue
+            ? this.maxContentPerLayer[currentLayer + this.pointer.parentPath.length][branch]
+            : this.maxErrorPerLayer[currentLayer + this.pointer.parentPath.length][branch];
+          errorMax = this.maxErrorPerLayer[currentLayer + this.pointer.parentPath.length][branch];
+          errorMin = this.minErrorPerLayer[currentLayer + this.pointer.parentPath.length][branch];
+        }
       }
 
-      if (contentMin === contentMax) contentMin = contentMax - 1;
+      if (contentMin === contentMax) {
+        contentMin = contentMax - 0.2;
+      }
 
       const isTH3 = obj._typename.substring(0, 3) === "TH3";
       const isTH2 = obj._typename.substring(0, 3) === "TH2";
@@ -385,17 +527,17 @@ export class THnPainter extends TPainter {
 
       let padding =
         !this.config.padding.layer[currentLayer] && isTH1
-          ? { x: sourcePadding.x, y: sourcePadding.y, z: sourcePadding.z }
-          : { ...sourcePadding };
+          ? {x: sourcePadding.x, y: sourcePadding.y, z: sourcePadding.z}
+          : {...sourcePadding};
 
       if (set && this.config.padding.sets && isTH1) {
-        padding = { x: this.config.padding.sets.x, y: 0, z: 0 };
+        padding = {x: this.config.padding.sets.x, y: 0, z: 0};
       }
       if (this.pointer.isOnSet) {
-        padding = { x: 0, y: 0, z: 0 };
+        padding = {x: 0, y: 0, z: 0};
       }
 
-      const { min: minFactor, max: maxFactor } = this.config.scale?.[currentLayer]
+      const {min: minFactor, max: maxFactor} = this.config.scale?.[currentLayer]
         ? this.config.scale?.[currentLayer]
         : this.config.scale.default;
 
@@ -419,15 +561,22 @@ export class THnPainter extends TPainter {
         const content = this.getBinContent(
           obj, relPos.x, relPos.y, relPos.z, this.selectedArray
         );
+        const error = this.getBinError(obj, relPos.x, relPos.y, relPos.z, this.selectedArray);
+        const scaleValue = this.config.scale.scaleBy === "value" ? content : error;
+        let scaleMin = this.config.scale.scaleBy === "value" ? contentMin : errorMin;
+        const scaleMax = this.config.scale.scaleBy === "value" ? contentMax : errorMax;
+        if (scaleMin === scaleMax) scaleMin -= scaleMin * 0.1;
 
         let scaleFactor = 1;
-        if ((content >= contentMin && content <= contentMax) === !outside) {
-          const contentPer = (content - contentMin) / (contentMax - contentMin);
+        if ((scaleValue >= scaleMin) === !outside) {
+          const contentPer = (scaleValue - scaleMin) / (scaleMax - scaleMin);
           if (!outside) {
             scaleFactor =
-              Number.isInteger(content) && content === 0
+              Number.isInteger(scaleValue) && scaleValue === 0 && this.config.scale.scaleBy === "value"
                 ? (scaleFactor = 0)
-                : (maxFactor - minFactor) * contentPer + minFactor;
+                : ((maxFactor - minFactor) * contentPer) + minFactor;
+
+            if (scaleFactor > 1) scaleFactor = 1;
           } else {
             const contentPerOut =
               (content - contentMinOut) / (contentMaxOut - contentMinOut);
@@ -440,10 +589,15 @@ export class THnPainter extends TPainter {
           scaleFactor = 0;
         }
 
-        this.color = getGradientColorInst(
-          this.config.color, this.availableSets,
-          content, 0, contentMax, availableSetIndex, currentLayer
-        );
+        if (this.config.color.scaleBy === "value") {
+          this.color = getGradientColorInst(
+            this.config.color, scaleValue, scaleMin, scaleMax, availableSetIndex, currentLayer
+          );
+        } else {
+          this.color = getGradientColorInst(
+            this.config.color, error, errorMin, errorMax, availableSetIndex, currentLayer
+          );
+        }
 
         const t = binSizePos.y.size * scaleFactor;
 
@@ -476,12 +630,14 @@ export class THnPainter extends TPainter {
         }
 
         if (!set) {
+          let pointerSet = null;
           if (this.pointer.isOnSet) {
             binSizePos.z.size = 0.01;
             binSizePos.z.pos += (selectedSetIndex - (this.selectedSet.length - 1) / 2) * 0.1;
+            pointerSet = this.availableSets.indexOf(this.pointer.isOnSet);
           }
           this.setMatrixCacheAt(
-            currentLayer, null, i / stepFor, binSizePos,
+            currentLayer, pointerSet, i / stepFor, binSizePos,
             (currentLayer === layer && scaleFactor !== 0) ? this.color : -1
           );
         } else {
@@ -522,16 +678,29 @@ export class THnPainter extends TPainter {
       }
     };
 
-    render(startIndex, endIndex, 0, this.pointer.origin, this.limits).then(() => {
+
+    (this.pointer.isOnSet
+      ? Promise.all(this.selectedSet.map(set =>
+        render(startIndex, endIndex, 0,
+          getChildObjectByIndex(this.pointer.rootObj,
+            this.pointer.parentPath.map(v => v.bin[0]), set), this.limits, set)))
+      : render(startIndex, endIndex, 0, this.pointer.origin, this.limits)
+    ).then(() => {
       setTimeout(() => {
-        this.wireframe.pushVisibleInstances(
-          this.matrixCache, this.maxInstancesPerLayer,
-          this.availableSets.indexOf(this.selectedSet[0])
-        );
+        if (!this.pointer.isOnSet) {
+          this.wireframe.pushVisibleInstances(
+            this.matrixCache, this.maxInstancesPerLayer,
+            this.availableSets.indexOf(this.selectedSet[0])
+          );
+        }
         this.pushVisibleInstances();
 
+        const pointerSet = this.availableSets.indexOf(this.pointer.isOnSet) === -1
+          ? null
+          : this.availableSets.indexOf(this.pointer.isOnSet);
         this.BVHTree = createBVHTreeRecursive(
           this.matrixCache, this.pointer.origin, 0, this.selectedSet,
+          pointerSet,
           this.availableSets, this.mesh.matrixWorld, this.maxInstancesPerLayer
         );
 
@@ -539,7 +708,7 @@ export class THnPainter extends TPainter {
     });
   }
 
-  createMaterial () {
+  createMaterial() {
     return new ShaderMaterial({
       vertexShader: `
     attribute vec3 instancePosition;
@@ -575,7 +744,7 @@ export class THnPainter extends TPainter {
     });
   }
 
-  mouseClickDefault (event) {
+  mouseClickDefault(event) {
     this.showChildHistogram(event.index);
     if (event.selectedArray !== "content") {
       event.jsrootObj.fArray = event.jsrootObj.fArrays[event.selectedArray]?.values;
@@ -590,7 +759,7 @@ export class THnPainter extends TPainter {
     });
   }
 
-  mousemoveDefault (event) {
+  mousemoveDefault(event) {
     const areIndexesEqual = (index1, index2) => {
       if (index1.length !== index2.length) return false;
       for (let i = 0; i < index1.length; i++) {
@@ -614,33 +783,33 @@ export class THnPainter extends TPainter {
     });
     event.range = event.range.map((r, i) => {
       const instance = event.jsrootInstance[i];
-      return { ...r, bin: instance };
+      return {...r, bin: instance};
     });
     const merged = {
       ...event,
       level: parentRange.length,
       range: parentRange.concat(event.range)
     };
-    const { range: coords, level, content, error, set, triggerSource, instanceId } = merged;
-    const minimizedEvent = { coords, level, content, error, set, triggerSource, instanceId };
+    const {range: coords, level, content, error, set, triggerSource, instanceId} = merged;
+    const minimizedEvent = {coords, level, content, error, set, triggerSource, instanceId};
     binInfoSubjectGet().next(minimizedEvent);
   }
 
-  shiftMouseClickDefault (event) {
+  shiftMouseClickDefault(event) {
     this.hideChildHistogram(event.index);
   }
 
-  mouseDBClickDefault (event) {
+  mouseDBClickDefault(event) {
     event.set
       ? this.setPointerToChild(event.index, event.set)
       : this.setPointerToChild(event.index, this.selectedSet[0]);
   }
 
-  shiftMouseDBClickDefault (event) {
+  shiftMouseDBClickDefault(event) {
     this.setPointerToParent();
   }
 
-  intersectionHandler (intersection, triggerSource) {
+  intersectionHandler(intersection, triggerSource) {
     this.mouseEvents
       .filter((mouseEvent) => mouseEvent.event === triggerSource)
       .forEach((mouseEvent) => mouseEvent.function(intersection, this));
@@ -648,7 +817,7 @@ export class THnPainter extends TPainter {
     this.dirtyInstance = intersection.index;
   }
 
-  raycastHandler (raycaster) {
+  raycastHandler(raycaster) {
     try {
       const res = this.checkIntersectionBVH(raycaster.ray);
 
@@ -662,7 +831,7 @@ export class THnPainter extends TPainter {
     }
   }
 
-  handleStateChange (state) {
+  handleStateChange(state) {
     if (areArraysEqual(state.sets, this.availableSets) &&
       (!areArraysEqual(state.selectedSet, this.selectedSet) ||
         this.selectedArray !== state.selectedArray)) {
@@ -673,23 +842,31 @@ export class THnPainter extends TPainter {
       parent.remove(this.mesh);
       this.setupInsBufGeom();
       parent.add(this.mesh);
+      this.renderHistogramHistory();
 
-      const renderHistoryCopy = this.renderHistory;
-      this.renderHistory = [];
+    } else if (this.minMaxValue.length !== 0 && areMinMaxValuesEqual(state.minMaxValue, this.minMaxValue)) {
+      this.renderHistogramHistory();
 
-      renderHistoryCopy.forEach((call) => {
-        if (call.procedure === "render") {
-          this.renderHistogram(
-            call.value.startIndex, call.value.endIndex, call.value.layer
-          );
-        } else if (call.procedure === "hide") {
-          this.hideChildHistogram(call.value);
-        }
-      });
     } else {
       this.availableSets = state.sets;
       this.selectedSet = state.selectedSet;
+      this.minMaxValue = state.minMaxValue;
     }
+  }
+
+  renderHistogramHistory() {
+    const renderHistoryCopy = this.renderHistory;
+    this.renderHistory = [];
+
+    renderHistoryCopy.forEach((call) => {
+      if (call.procedure === "render") {
+        this.renderHistogram(
+          call.value.startIndex, call.value.endIndex, call.value.layer
+        );
+      } else if (call.procedure === "hide") {
+        this.hideChildHistogram(call.value);
+      }
+    });
   }
 
   /**
@@ -700,7 +877,7 @@ export class THnPainter extends TPainter {
    * @param set Specifies from which set should child be chosen.
    * If children contains sets, parameter need to be specified.
    * */
-  setPointerToChild (position, set) {
+  setPointerToChild(position, set) {
     const parent = this.mesh.parent;
 
     this.matrixCache = [];
@@ -716,29 +893,43 @@ export class THnPainter extends TPainter {
     this.pointer.setOriginToChild(
       computeJsRootIndexFromPosition(position, this.pointer.origin, this.selectedSet),
       set, range);
-    this.init();
+
+    if (!this.pointer.isHistogramFilled) {
+      this.mesh = createHnotFilledSprite(this.limits, this.setPointerToParent.bind(this));
+      parent.add(this.mesh);
+      return;
+    }
+
+    this.init(false);
     console.log("path: ", this.pointer.path);
     console.log("title: ", this.pointer.title);
-    this.renderHistogram(0, this.totalInstances, 0);
-    parent.add(this.mesh);
-    parent.add(this.wireframe.wireframe);
+    setTimeout(() => {
+      this.renderHistogram(0, this.totalInstances, 0);
+      parent.add(this.mesh);
+      parent.add(this.wireframe.wireframe);
+    }, 0);
+
+    if (this.pointer.isOnSet) {
+      this.wireframe.toggleVisibility(this.matrixCache, this.maxInstancesPerLayer, this.availableSets.indexOf(set));
+    }
   }
 
   /**
    * @desc Method to set pointers origin to its parent.
    * * */
-  setPointerToParent () {
+  setPointerToParent() {
     const parent = this.mesh.parent;
-
-    this.matrixCache = [];
-    this.instGeom.dispose();
-    this.wireframe.dispose();
     parent.remove(this.mesh);
+    if (this.pointer.isHistogramFilled) {
+      this.matrixCache = [];
+      this.instGeom.dispose();
+      this.wireframe.dispose();
+    }
 
     this.pointer.setOriginToParent(1);
     console.log("path: ", this.pointer.path);
     console.log("title: ", this.pointer.title);
-    this.init();
+    this.init(false);
     this.renderHistogram(0, this.totalInstances, 0);
     parent.add(this.mesh);
     parent.add(this.wireframe.wireframe);
@@ -749,7 +940,7 @@ export class THnPainter extends TPainter {
    * @param position – should be array with position for each layer.
    * e.g. ([{x: 1, y: 3, z: 2}, {x: 89, 0, 0}])
    * */
-  showChildHistogram (position) {
+  showChildHistogram(position) {
     const ind = computeIndexFromPosition(
       position, this.pointer.origin,
       this.maxInstancesPerLayer, this.selectedSet
@@ -774,7 +965,7 @@ export class THnPainter extends TPainter {
    * @param position – should be array with position for each layer.
    * e.g. ([{x: 1, y: 3, z: 2}, {x: 89, 0, 0}])
    * */
-  hideChildHistogram (position) {
+  hideChildHistogram(position) {
     if (position.length === 1) return;
 
     const layerDimensions = this.maxInstancesPerLayer.slice(
@@ -820,13 +1011,13 @@ export class THnPainter extends TPainter {
    * @param dimensions Array with number of instances for each layer that will be cleared.
    * @param baseLayerIndex start index of layer from which cache is cleared.
    * */
-  clearMatrixCacheRange (startIndex, multiplier, dimensions, baseLayerIndex) {
+  clearMatrixCacheRange(startIndex, multiplier, dimensions, baseLayerIndex) {
     let currentIndex = startIndex;
     let currentMultiplier = multiplier;
     const zeroVolume = {
-      x: { pos: 0, size: 0 },
-      y: { pos: 0, size: 0 },
-      z: { pos: 0, size: 0 }
+      x: {pos: 0, size: 0},
+      y: {pos: 0, size: 0},
+      z: {pos: 0, size: 0}
     };
 
     for (let i = baseLayerIndex + dimensions.length - 1; i >= baseLayerIndex; i--) {
@@ -860,14 +1051,14 @@ export class THnPainter extends TPainter {
    * @param origin Jsroot histogram object
    * @return is null. Sets that are found are set in stateSubject.
    * */
-  setAvailableSets (origin) {
+  setAvailableSets(origin) {
     if (origin.children?.content) {
       const firstChild = origin.children.content.find((child) => {
         return child;
       });
       this.setAvailableSets(firstChild);
     } else if (origin?.children) {
-      const currentValue = stateSubjectGet().getValue();
+      const currentValue = stateSubjectGet(this.id).getValue();
       currentValue.sets = Object.keys(origin.children);
 
       if (currentValue.selectedSet.length === 0) {
@@ -877,16 +1068,16 @@ export class THnPainter extends TPainter {
         currentValue.sets.find(s => s === set))) {
         currentValue.selectedSet = [currentValue.sets[0]];
       }
-      stateSubjectGet().next(currentValue);
+      stateSubjectGet(this.id).next(currentValue);
     } else {
-      const currentValue = stateSubjectGet().getValue();
+      const currentValue = stateSubjectGet(this.id).getValue();
       currentValue.sets = [];
       currentValue.selectedSet = [];
     }
   }
 
-  setAvailableArrays (origin) {
-    const currentValue = stateSubjectGet().getValue();
+  setAvailableArrays(origin) {
+    const currentValue = stateSubjectGet(this.id).getValue();
     currentValue.arrays = [];
     if (origin.fArrays) currentValue.arrays = Object.keys(origin.fArrays);
     currentValue.arrays.unshift("content");
@@ -900,15 +1091,22 @@ export class THnPainter extends TPainter {
     };
 
     if (origin.children?.content) appendChildArrays(origin.children.content);
+    stateSubjectGet(this.id).next(currentValue);
+  }
 
-    // if (origin.children?.content) {
-    //   console.log(origin.children.content.fArrays);
-    // } else if (origin?.children) {
-    //   origin.children.forEach((child) => {
-    //     console.log(child.fArrays);
-    //   });
-    // }
-    stateSubjectGet().next(currentValue);
+  configSubjectHandler(event) {
+    this.config = configSubjectGet().mergeHistogramConfig(this?.opts?.config);
+    this.keyBindings = ensureDefaultBindings(event.config.bindings);
+    const newLimits = event.config.environment.histogramPads.find(
+      (el) => el.id === this.id
+    );
+    if (newLimits) {
+      if (!areLimitsEqual(this.limits, newLimits) && this.renderHistory.length > 0) {
+        this.limits = {...newLimits};
+        this.renderHistogramHistory();
+      }
+    }
+    this.limits = {...newLimits};
   }
 
   /**
@@ -916,7 +1114,7 @@ export class THnPainter extends TPainter {
    * Creates functionality where user can render each layer at once.
    * @param event Defines incoming event which will be put against regex.
    * */
-  keyDownHandler (event) {
+  keyDownHandler(event) {
     const regex = /^(?:Digit|Numpad)(\d+)$/;
     const match = event.code.match(regex);
     if (match) {
@@ -951,7 +1149,7 @@ export class THnPainter extends TPainter {
     }
   }
 
-  keyUpHandler (event) {
+  keyUpHandler(event) {
     // console.log(event);
   }
 
@@ -975,7 +1173,7 @@ export class THnPainter extends TPainter {
    *     @param {number} obj.value.layer - The layer used in rendering.
    */
 
-  logRender (obj) {
+  logRender(obj) {
     if (obj.procedure === "render") {
       if (
         obj.value.startIndex === 0 &&
@@ -987,7 +1185,7 @@ export class THnPainter extends TPainter {
     this.renderHistory.push(obj);
   }
 
-  getBinContent (obj, posX, posY, posZ, selectedArray) {
+  getBinContent(obj, posX, posY, posZ, selectedArray) {
     if (selectedArray === "content" || !obj.fArrays) {
       return obj.getBinContent(posX + 1, posY + 1, posZ + 1);
     } else {
@@ -996,16 +1194,19 @@ export class THnPainter extends TPainter {
     }
   }
 
-  getBinError (obj, posX, posY, posZ, selectedArray) {
+  getBinError(obj, posX, posY, posZ, selectedArray) {
+    const index = obj.getBin(posX + 1, posY + 1, posZ + 1);
     if (selectedArray === "content" || !obj.fArrays) {
-      return obj.getBinError(posX + 1, posY + 1, posZ + 1);
+      if (obj.fSumw2.length !== 0) {
+        return obj.fSumw2[index];
+      }
+      return obj.getBinError(index);
     } else {
-      const index = obj.getBin(posX + 1, posY + 1, posZ + 1);
       return obj.fArrays?.[selectedArray].errors[index];
     }
   }
 
-  checkIntersectionBVH (ray) {
+  checkIntersectionBVH(ray) {
     const target = new Vector3();
 
     const createBox3 = (layer, index, offset, set) => {
@@ -1025,7 +1226,9 @@ export class THnPainter extends TPainter {
       } else {
         const t =
           set && set !== "content"
-            ? this.BVHTree[layer][this.availableSets.indexOf(set)][offset]
+            ? Array.isArray(this.BVHTree[layer][this.availableSets.indexOf(set)])
+              ? this.BVHTree[layer][this.availableSets.indexOf(set)][offset]
+              : this.BVHTree[layer][this.availableSets.indexOf(set)]
             : this.BVHTree[layer][offset];
         return t
           ? new Box3().setFromCenterAndSize(
@@ -1044,8 +1247,8 @@ export class THnPainter extends TPainter {
       while (curLayer + 1 < this.matrixCache.length) {
         curLayer++;
         const layerData = this.matrixCache[curLayer];
-        if (Array.isArray(layerData)){
-          this.selectedSet.forEach(selSet =>{
+        if (Array.isArray(layerData)) {
+          this.selectedSet.forEach(selSet => {
             const selSetInd = this.availableSets.indexOf(selSet);
             for (let i = curIdx; i < curIdx + this.maxInstancesPerLayer[curLayer]; i++) {
               if (layerData[selSetInd].rendered[i] !== -1) {
@@ -1070,7 +1273,9 @@ export class THnPainter extends TPainter {
 
     const checkAxis = (index, offset, layer, set) => {
       const parent = set && set !== "content"
-        ? this.BVHTree[layer][this.availableSets.indexOf(set)][offset]
+        ? Array.isArray(this.BVHTree[layer][this.availableSets.indexOf(set)])
+          ? this.BVHTree[layer][this.availableSets.indexOf(set)][offset]
+          : this.BVHTree[layer][this.availableSets.indexOf(set)]
         : this.BVHTree[layer][offset];
       const boundaryFirstHalf = createBox3(layer, parent.left[index], offset, set);
       const boundarySecondHalf = createBox3(layer, parent.right[index], offset, set);
@@ -1110,11 +1315,14 @@ export class THnPainter extends TPainter {
         if (firstHalf) traverse(firstHalf);
         if (secondHalf) traverse(secondHalf);
       };
+
       const internalNode = set && set !== "content"
-        ? this.BVHTree[layer][this.availableSets.indexOf(set)][offset]
+        ? Array.isArray(this.BVHTree[layer][this.availableSets.indexOf(set)])
+          ? this.BVHTree[layer][this.availableSets.indexOf(set)][offset]
+          : this.BVHTree[layer][this.availableSets.indexOf(set)]
         : this.BVHTree[layer][offset];
 
-      if (!internalNode) return output;
+      if (!internalNode || internalNode.length === 0) return output;
 
       traverse({
         index: internalNode.left.length - 1,
@@ -1126,8 +1334,7 @@ export class THnPainter extends TPainter {
     };
 
     const recursiveSearch = (
-      node, layer, offset = 0, path = [], set = undefined
-    ) => {
+      node, layer, offset = 0, path = [], set = null) => {
       const result = [];
       const perInstance = this.maxInstancesPerLayer[layer + 1];
       const indexOffset =
@@ -1144,7 +1351,7 @@ export class THnPainter extends TPainter {
         const posZ = Math.floor(
           indexNormalized / (node.fXaxis.fNbins * node.fYaxis.fNbins),
         );
-        const fullPath = [...path, { x: posX, y: posY, z: posZ }];
+        const fullPath = [...path, {x: posX, y: posY, z: posZ}];
 
         if (node.children) {
           const children = Object.entries(node.children);
@@ -1169,7 +1376,7 @@ export class THnPainter extends TPainter {
             );
 
             if (setX !== "content") {
-              r = r.map((res) => ({ ...res, set: setX }));
+              r = r.map((res) => ({...res, set: setX}));
             }
             return r;
           });
@@ -1231,13 +1438,23 @@ export class THnPainter extends TPainter {
       });
     };
 
-    return recursiveSearch(this.pointer.origin, 0);
+    if (this.pointer.isOnSet === null) {
+      return recursiveSearch(this.pointer.origin, 0, 0, [], this.pointer.isOnSet);
+    } else {
+      const results = this.selectedSet.map(set => {
+        return recursiveSearch(getChildObjectByIndex(
+          this.pointer.rootObj, this.pointer.parentPath.map(v => v.bin[0]), set),
+        0, 0, [], set);
+      }).filter(v => v.length !==0);
+      const distanceMin = Math.min(...results.map(v => v[0].distance));
+      return results.find(v => v[0].distance === distanceMin) ?? [];
+    }
   }
 
-  dispatchSubjectHandler (event) {
+  dispatchSubjectHandler(event) {
     console.log("dispatch: ", event);
     const pos = event.event.index.map(v => {
-      return { x: v.x - 1, y: v.y - 1, z: v.z - 1 };
+      return {x: v.x - 1, y: v.y - 1, z: v.z - 1};
     });
 
     const node = this.pointer.getChildByPosition(
