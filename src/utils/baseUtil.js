@@ -107,6 +107,9 @@ export function ensureDefaultBindings(config) {
 }
 
 
+
+
+
 export function parseConfig(json, existingConfig = null) {
   const data = typeof json === "string" ? JSON.parse(json) : json;
 
@@ -278,6 +281,15 @@ export function isObjectEmpty(obj) {
     }
   }
   return true;
+}
+
+export function areLimitsEqual(obj1, obj2) {
+  const props = ["scale", "padding", "position"];
+  return props.every(prop =>
+    obj1[prop]?.x === obj2[prop]?.x &&
+    obj1[prop]?.y === obj2[prop]?.y &&
+    obj1[prop]?.z === obj2[prop]?.z
+  );
 }
 
 export function createHnotFilledSprite(limits, setPointerToParent) {

@@ -1,7 +1,6 @@
 import { functionSubjectGet } from "../rxjs/FunctionSubject.js";
 import { filter } from "rxjs";
 import { configSubjectGet } from "../rxjs/ConfigSubject.js";
-import { stateSubjectGet } from "../rxjs/StateSubject.js";
 import { dispatchSubjectGet } from "../rxjs/DispatchSubject.js";
 import {ensureDefaultBindings} from "../utils/baseUtil.js";
 import {Vector3} from "three";
@@ -15,13 +14,14 @@ export class TPainter {
   rootObj = undefined;
   config = undefined;
   limits = {
-    position: new Vector3(0, 0, 0),
-    scale: new Vector3(10, 10, 10)
+    scale:  { x: 20, y: 10, z: 20 },
+    position: { x: 0,  y: 0,  z: -5 }
   };
   mouseEvents = [];
   keydownEvents = [];
   keyupEvents = [];
   keyBindings = {};
+  renderHistory = [];
   opts = undefined;
   //
   constructor ( rootObj, id, opts) {
@@ -48,19 +48,7 @@ export class TPainter {
           (e) => e.target.id.includes("*") || e.target.id.includes(this.id),
         ),
       )
-      .subscribe((v) => {
-        this.config = configSubjectGet().mergeHistogramConfig(this?.opts?.config);
-        this.keyBindings = ensureDefaultBindings(v.config.bindings);
-        const hasLimits = v.config.environment.histogramPads.find(
-          (el) => el.id === this.id
-        );
-
-        this.limits = hasLimits ?? {
-          scale:  { x: 20, y: 10, z: 20 },
-          padding:{ x: 0,  y: 0,  z: 0  },
-          position: { x: 0,  y: 0,  z: -5 }
-        };
-      });
+      .subscribe((event) => this.configSubjectHandler(event));
 
     this.dispatchSub = dispatchSubjectGet().getObservable()
       .pipe(
@@ -69,7 +57,6 @@ export class TPainter {
       .subscribe((event) => this.dispatchSubjectHandler(event));
 
     this.initDefaultFunctions();
-
   }
 
   remove() {
@@ -98,6 +85,10 @@ export class TPainter {
     this.addEvent("shiftmouseclick", this.shiftMouseClickDefault);
     this.addEvent("mousedbclick", this.mouseDBClickDefault);
     this.addEvent("shiftmousedbclick", this.shiftMouseDBClickDefault);
+  }
+
+  configSubjectHandler(event) {
+    console.log("default configSubjectHandler: ", event);
   }
 
   functionSubjectHandler(event) {

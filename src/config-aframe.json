@@ -1,7 +1,7 @@
 {
   "config": {
     "environment": {
-      "dbClickTimeout": 300,
+      "dbClickTimeout": 200,
       "camera": {
         "position": {
           "x": 0,
@@ -61,9 +61,9 @@
         }
       },
       "scale": {
-        "scaleBy": "error",
-        "content": "global",
-        "parameter": "global",
+        "scaleBy": "value",
+        "content": "fixed",
+        "parameter": "fixed",
         "sets": "global",
         "default": {
           "min": 0.1,
@@ -83,8 +83,8 @@
       },
       "wireframe": {
         "display": {
-          "start": 1,
-          "end": 1
+          "start": 0,
+          "end": 99
         },
         "displaySets": false,
         "layer": [],
