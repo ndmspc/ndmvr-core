@@ -21,7 +21,8 @@ export class HistogramPointerClass {
    * @param index is an index in child mapping.
    * @param set if children contains sets, parameter need to be specified.
    * */
-  setOriginToChild (index, set, range) {
+  setOriginToChild(index, set, range) {
+    console.log(range);
     // console.log('vojde', this.origin, ', set: ', set);
     if (!index) return;
     // console.log(index)

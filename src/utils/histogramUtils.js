@@ -643,6 +643,7 @@ export function computeMinContentPerLayer(obj) {
     });
   }
 
+
   const computation = (children, layer = 1) => {
     if (!min[layer]) {
       min[layer] = {};
