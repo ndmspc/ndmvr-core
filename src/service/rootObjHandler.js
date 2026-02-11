@@ -17,7 +17,6 @@ export default class RootObjHandler {
     }
     this.#ready = this.#handler.computeMaxInstancesPerLayer().then(value => {
       this.#maxInstancesPerLayer = value;
-      console.log(this.#maxInstancesPerLayer);
     });
   }
 
