@@ -37,8 +37,10 @@ class BrokerManager {
     if (!broker) {
       broker = new Broker(url, autoConnect, this.#subject);
       this.#gBrokers.set(url, broker);
+    } else if (autoConnect && !broker.isConnected() && !broker.isConnecting()) {
+      // Only connect if not already connected/connecting
+      broker.connect();
     }
-    if (autoConnect) broker.connect();
     return broker;
   };
 
@@ -58,12 +60,56 @@ class BrokerManager {
    * */
   disconnectWsByUrl = (url) => {
     if (url) {
-      this.#gBrokers.get(url).disconnect();
+      const broker = this.#gBrokers.get(url);
+      if (broker) {
+        broker.disconnect();
+      }
     } else {
       this.#gBrokers.forEach((b) => {
         b.disconnect();
       });
     }
+  };
+
+  /**
+   * Remove broker completely from manager
+   * */
+  removeBrokerByUrl = (url) => {
+    const broker = this.#gBrokers.get(url);
+    if (broker) {
+      broker.disconnect();
+      this.#gBrokers.delete(url);
+    }
+  };
+
+  /**
+   * Get connection status of a broker
+   * */
+  getBrokerStatus = (url) => {
+    const broker = this.#gBrokers.get(url);
+    if (!broker) return { exists: false };
+    return {
+      exists: true,
+      connected: broker.isConnected(),
+      connecting: broker.isConnecting(),
+      state: broker.getState(),
+      url: broker.url
+    };
+  };
+
+  /**
+   * Get all brokers status
+   * */
+  getAllBrokersStatus = () => {
+    const statuses = {};
+    this.#gBrokers.forEach((broker, url) => {
+      statuses[url] = {
+        connected: broker.isConnected(),
+        connecting: broker.isConnecting(),
+        state: broker.getState()
+      };
+    });
+    return statuses;
   };
 
   getSubject = () => {
