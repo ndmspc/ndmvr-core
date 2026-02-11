@@ -420,39 +420,38 @@ binInfoSubjectGet()
   .getObservable()
   .subscribe((event) => {
     console.log(event);
-    // console.log(event.coords.forEach(c => console.log(c.x)));
   });
 
-const tools = {
-  empty: [{
-    target: {
-      entity: "nested-histogram",
-      id: "histogram1"
-    }
-  }],
-  first: [{
-    target: {
-      entity: "nested-histogram",
-      id: "histogram1"
-    }, event: "mousemove"
-  }, {
-    target: {
-      entity: "nested-histogram",
-      id: "histogram1"
-    }, event: "mouseclick",
-    function: function (event, context) {
-      console.log("custom function from set functions: ", event, context);
-    }
-  }]
-};
-
-setTimeout(() => {
-  functionSubjectGet().setFunctions(tools.empty);
-}, 2000);
-
-setTimeout(() => {
-  functionSubjectGet().setFunctions(tools.first);
-}, 5000);
+// const tools = {
+//   empty: [{
+//     target: {
+//       entity: "nested-histogram",
+//       id: "histogram1"
+//     }
+//   }],
+//   first: [{
+//     target: {
+//       entity: "nested-histogram",
+//       id: "histogram1"
+//     }, event: "mousemove"
+//   }, {
+//     target: {
+//       entity: "nested-histogram",
+//       id: "histogram1"
+//     }, event: "mouseclick",
+//     function: function (event, context) {
+//       console.log("custom function from set functions: ", event, context);
+//     }
+//   }]
+// };
+//
+// setTimeout(() => {
+//   functionSubjectGet().setFunctions(tools.empty);
+// }, 2000);
+//
+// setTimeout(() => {
+//   functionSubjectGet().setFunctions(tools.first);
+// }, 5000);
 
 // setTimeout(() => {
 //   dispatchSubjectGet().next({
