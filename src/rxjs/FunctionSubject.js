@@ -88,7 +88,6 @@ class FunctionSubject {
       functions = Array.of(input);
     }
     functions.forEach(func => {
-      console.log(func);
       let id = func.target.id;
       if (!(id instanceof Array)) {
         id = Array.of(id);

@@ -38,11 +38,9 @@ export class CanvasClass {
       .getObservable()
       .pipe(filter((e) => (e.id === this.id) || (e.id === "*")))
       .subscribe((obj) => {
-        console.log("obj: ", obj);
         const object = obj.obj;
         makeImage({ format: "png", option: "pE", object, width: 1200, height: 600 }).then(
           (png) => {
-            console.log("png: ", png);
             this.updateTexture(png);
           },
         );

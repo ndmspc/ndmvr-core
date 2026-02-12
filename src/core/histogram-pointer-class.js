@@ -22,7 +22,6 @@ export class HistogramPointerClass {
    * @param set if children contains sets, parameter need to be specified.
    * */
   setOriginToChild(index, set, range) {
-    console.log(range);
     // console.log('vojde', this.origin, ', set: ', set);
     if (!index) return;
     // console.log(index)
@@ -52,7 +51,6 @@ export class HistogramPointerClass {
     if (index.length > 0) {
       this.setOriginToChild(index, set, range);
     }
-    console.log(this.parentPath);
   }
 
   /**
