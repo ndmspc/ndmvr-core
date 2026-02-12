@@ -18,7 +18,6 @@ class HistogramSubject {
 
   async next (e) {
     if (!e.id) throw new Error("Missing id in event");
-    console.log(e);
 
     // Preprocess histogram
     if (typeof e.obj === "string") {
