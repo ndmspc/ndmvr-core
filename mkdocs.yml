@@ -4,6 +4,28 @@ repo_url: https://gitlab.com/ndmspc/ndmvr-core/docs
 edit_uri: edit/main/docs/
 nav:
   - "Home": index.md
+  - "Tutorial":
+      - "Introduction": components/tutorial/tutorial.md
+      - "First visualization": components/tutorial/firstVisualization/first-visualization.md
+      - "Configuration": components/tutorial/configurationChapter/configuration-chapter.md
+      - "interactions": components/tutorial/interactions/interactions.md
+      - "Canvas": components/tutorial/canvas/canvas.md
+  - "Components":
+          - "Bin info jsroot": components/visualization/bin-info-jsroot.md
+          - "Canvas": components/visualization/canvas.md
+          - "Histogram JSROOT": components/visualization/histogram-jsroot.md
+          - "NDMVR raycaster": components/visualization/ndmvr-raycaster.md
+          - "THnPainter": components/visualization/thnpainter.md
+  - "Communication":
+      - "Bin info subject": components/communication/bin-info-subject.md
+      - "Canvas subject": components/communication/canvas-subject.md
+      - "Config subject": components/communication/config-subject.md
+      - "Dispatch subject": components/communication/dispatch-subject.md
+      - "Function subject": components/communication/function-subject.md
+      - "Histogram subject": components/communication/histogram-subject.md
+      - "Input device subject": components/communication/input-device-subject.md
+      - "State subject": components/communication/state-subject.md
+  - "Configuration": components/configuration/configuration.md
 extra:
   version: v1.0.0
   ndmspc:
