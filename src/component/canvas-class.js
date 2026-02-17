@@ -38,6 +38,7 @@ export class CanvasClass {
       .getObservable()
       .pipe(filter((e) => (e.id === this.id) || (e.id === "*")))
       .subscribe((obj) => {
+        console.log("Caught at: ", this.id);
         const object = obj.obj;
         makeImage({ format: "png", option: "pE", object, width: 1200, height: 600 }).then(
           (png) => {
@@ -54,9 +55,11 @@ export class CanvasClass {
         ),
       )
       .subscribe((v) => {
-        this.position = v.config.environment.canvas.position;
-        this.rotation = v.config.environment.canvas.rotation;
-        this.scale = v.config.environment.canvas.scale;
+        const limits = v.config.environment.canvas.filter(canvas => canvas.id === this.id || canvas.id === "*");
+        if (limits.length === 0) return;
+        this.position = limits[0].limits.position;
+        this.rotation = limits[0].limits.rotation;
+        this.scale = limits[0].limits.scale;
         this.updateMesh();
       });
   }

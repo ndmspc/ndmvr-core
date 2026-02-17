@@ -753,8 +753,8 @@ export class THnPainter extends TPainter {
       event.jsrootObj.fMaximum = event.jsrootObj.fArrays[event.selectedArray]?.max;
     }
     canvasSubjectGet().next({
-      // id: this.id + "-cinema",
-      id: "*",
+      id: this.id + "-cinema",
+      // id: "*",
       obj: event.jsrootObj,
     });
   }

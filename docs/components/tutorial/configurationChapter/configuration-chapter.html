@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>First Visualization - NDMVR</title>
+  <style>
+    body {
+      margin: 0;
+      overflow: hidden;
+      font-family: Arial, sans-serif;
+    }
+
+    canvas {
+      display: block;
+    }
+
+    #info {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      color: white;
+      background: rgba(0, 0, 0, 0.7);
+      padding: 10px;
+      border-radius: 5px;
+    }
+  </style>
+</head>
+<body>
+<div id="info">
+  <h3>First Visualization - THnPainterManager</h3>
+  <p>Use mouse to rotate, scroll to zoom</p>
+</div>
+
+<script type="importmap">
+  {
+      "imports": {
+          "three": "https://cdn.jsdelivr.net/npm/three@0.173.0/build/three.module.js",
+          "three/examples/jsm/": "https://cdn.jsdelivr.net/npm/three@0.173.0/examples/jsm/",
+          "jsroot": "https://root.cern/js/latest/modules/main.mjs",
+          "ndmvr-core": "https://cdn.jsdelivr.net/npm/@ndmspc/ndmvr-core@1.1.0-rc.4/dist/index.es.js",
+          "rxjs": "https://esm.sh/rxjs@7.8.1",
+          "rxjs/": "https://esm.sh/rxjs@7.8.1/"
+      }
+  }
+</script>
+
+<script type="module">
+  import * as THREE from "three";
+  import {histogramSubjectGet, configSubjectGet} from "ndmvr-core";
+  import {parse} from "jsroot";
+  import THnPainterManager from "../THnPainterManager.js";
+  import h3scat from "../h3scat.json" with { type: "json" };
+  import config from "./config.json" with { type: "json" };
+  import initThreeScene from "../three-scene.js";
+
+  // Initialize Three.js scene
+  const { scene, camera } = initThreeScene();
+
+  // Create THnPainterManager instance
+  let painterManager;
+
+  // Load and render histogram
+  async function loadHistogram() {
+    try {
+      // Create a group to hold histogram objects
+      const histogramGroup = new THREE.Group();
+      scene.add(histogramGroup);
+
+      // Initialize THnPainterManager
+      painterManager = new THnPainterManager("histogram1", histogramGroup, camera);
+
+      // Load histogram data using the HistogramSubject
+      await histogramSubjectGet().next({
+        id: "histogram1",
+        obj: parse(h3scat),  // Parse the imported JSON data
+        opts: {
+          // Change to "jsroot" to test jsroot rendering
+          render: "ndmvr"
+        }
+      });
+
+      console.log("Histogram loaded successfully!");
+
+    } catch (error) {
+      console.error("Error loading histogram:", error);
+    }
+  }
+
+  // Cleanup on page unload
+  window.addEventListener("beforeunload", () => {
+    if (painterManager) {
+      painterManager.remove();
+    }
+  });
+
+  configSubjectGet().next(config);
+  console.log(configSubjectGet().getValue());
+
+  setTimeout(() => {
+    configSubjectGet().next({
+      "config": {
+        "environment": {
+          "histogramPads": {
+            "type": "grid1x1x1",
+            "prefix": "histogram",
+            "scale": {
+              "x": 5,
+              "y": 3,
+              "z": 5
+            },
+            "padding": {
+              "x": 0,
+              "y": 0,
+              "z": 0
+            },
+            "origin": {
+              "x": -2.5,
+              "y": 2,
+              "z": 2.5
+            }
+          }
+        }
+      }
+    })
+  }, 4000);
+
+  // Initialize
+  loadHistogram();
+</script>
+</body>
+</html>
