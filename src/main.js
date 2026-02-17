@@ -72,12 +72,19 @@ document.querySelector("#app").appendChild(sceneElm);
 // sceneElm.object3D.add(cube2)
 
 const imageContainer = document.createElement("a-entity");
+const imageContainer2 = document.createElement("a-entity");
 imageContainer.id = "histogram1-cinema";
+imageContainer2.id = "histogram2-cinema";
 imageContainer.setAttribute("canvas-component", "");
-// imageContainer.setAttribute('position', "0 4 -6");
-imageContainer.setAttribute("scale", "10 10 10");
+imageContainer2.setAttribute("canvas-component", "");
+// imageContainer.setAttribute("position", "0 4 -6");
+// imageContainer.setAttribute("rotation", "0 4 -6");
+// imageContainer.setAttribute("scale", "10 10 10");
 
 sceneElm.appendChild(imageContainer);
+sceneElm.appendChild(imageContainer2);
+
+
 
 // const instGeomContainer = document.createElement("a-entity");
 // instGeomContainer.setAttribute("inst-geom-hist", "");
