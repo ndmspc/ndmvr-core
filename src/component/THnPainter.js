@@ -744,6 +744,7 @@ export class THnPainter extends TPainter {
     });
   }
 
+
   mouseClickDefault(event) {
     this.showChildHistogram(event.index);
     if (event.selectedArray !== "content") {
@@ -817,7 +818,7 @@ export class THnPainter extends TPainter {
     this.dirtyInstance = intersection.index;
   }
 
-  raycastHandler(raycaster) {
+  raycastHandler(raycaster, intersects) {
     try {
       const res = this.checkIntersectionBVH(raycaster.ray);
 
@@ -825,6 +826,7 @@ export class THnPainter extends TPainter {
       if (intersection) {
         const triggerSource = raycaster._triggerSource;
         this.intersectionHandler(intersection, triggerSource);
+        intersects.push(intersection);
       }
     } catch (e) {
       console.log(e);
@@ -1427,6 +1429,7 @@ export class THnPainter extends TPainter {
             range: getRangeByPosition(
               fullPath, set, this.pointer.origin, this.wireframe, this.selectedSet),
             origin: this,
+            object: this.mesh,
             jsrootObj: node,
             content: this.getBinContent(node, posX, posY, posZ, this.selectedArray),
             error: this.getBinError(node, posX, posY, posZ, this.selectedArray),
@@ -1452,30 +1455,32 @@ export class THnPainter extends TPainter {
   }
 
   dispatchSubjectHandler(event) {
-    console.log("dispatch: ", event);
-    const pos = event.event.index.map(v => {
-      return {x: v.x - 1, y: v.y - 1, z: v.z - 1};
-    });
+    if (!event.event.jsrootInstance) {
+      const pos = event.event.index.map(v => {
+        return {x: v.x - 1, y: v.y - 1, z: v.z - 1};
+      });
 
-    const node = this.pointer.getChildByPosition(
-      computeJsRootIndexFromPosition([...pos]).slice(0, -1),
-      event.event.set, this.selectedSet
-    );
-    const expandedEvent = {
-      index: pos,
-      set: event.event.set,
-      jsrootInstance: computeJsRootIndexFromPosition(
-        pos, this.pointer.origin, this.selectedSet),
-      range: getRangeByPosition(
-        pos, event.event.set, this.pointer.origin, this.wireframe, this.selectedSet),
-      origin: this,
-      jsrootObj: node,
-      content: this.getBinContent(
-        node, pos[0].x + 1, pos[0].y + 1, pos[0].z + 1,
-        this.selectedArray
-      ),
-      error: node.getBinError(pos[0].x + 1, pos[0].y + 1, pos[0].z + 1)
-    };
-    this.intersectionHandler(expandedEvent, event.event.source);
+      const node = this.pointer.getChildByPosition(
+        computeJsRootIndexFromPosition([...pos]).slice(0, -1),
+        event.event.set, this.selectedSet
+      );
+      event.event = {
+        index: pos,
+        set: event.event.set,
+        jsrootInstance: computeJsRootIndexFromPosition(
+          pos, this.pointer.origin, this.selectedSet),
+        range: getRangeByPosition(
+          pos, event.event.set, this.pointer.origin, this.wireframe, this.selectedSet),
+        origin: this,
+        jsrootObj: node,
+        content: this.getBinContent(
+          node, pos[0].x + 1, pos[0].y + 1, pos[0].z + 1,
+          this.selectedArray
+        ),
+        error: node.getBinError(pos[0].x + 1, pos[0].y + 1, pos[0].z + 1)
+      };
+    }
+
+    this.intersectionHandler(event.event, event.event.source);
   }
 }

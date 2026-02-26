@@ -16,14 +16,12 @@ cache:
     - node_modules/
 
 pages:
-  stage: deploy
-  image: registry.gitlab.com/ndmspc/docs/ndmspc-doc
+  stage: build
   tags:
-    - ndmspc-hosted
+    - gitlab-org-docker
   variables:
     GIT_DEPTH: 0
   script:
-    - mkdocs build -d public/docs
     - npm install
     - npm run build -- --mode pages --base=$PUBLIC_URL
     - cp -a dist/. public/
@@ -31,6 +29,28 @@ pages:
     paths:
       - public
   rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+
+buildzip:
+  stage: build
+  image: registry.gitlab.com/ndmspc/docs/ndmspc-doc
+  tags:
+    - ndmspc-hosted
+  script:
+    - dnf install -y zip
+    - mkdocs build -d public/docs
+    - mkdir public/docs/downloads
+    - cd docs/components/tutorial
+    - zip -r ../../../public/docs/downloads/first-visualization.zip three-scene.js h3scat.json firstVisualization/firstVisualization.html
+    - zip -r ../../../public/docs/downloads/configuration.zip three-scene.js h3scat.json THnPainterManager.js configurationChapter/configuration-chapter.html configurationChapter/config.json
+    - zip -r ../../../public/docs/downloads/interactions.zip three-scene.js test3.json THnPainterManager.js interactions/interactions.html interactions/config.json interactions/custom-functions.js
+    - zip -r ../../../public/docs/downloads/canvas.zip three-scene.js h3scat.json test3.json THnPainterManager.js canvas/canvas.html canvas/config.json canvas/image.json canvas/image.png
+  artifacts:
+    paths:
+      - public
+  rules:
+    - changes:
+      - docs/**/*
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
 
 publish:
