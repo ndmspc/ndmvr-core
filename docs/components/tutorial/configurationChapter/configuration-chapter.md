@@ -10,6 +10,10 @@ visualizations dynamically.
 <iframe src="../configuration-chapter.html" width="100%" height="600px" frameborder="0"></iframe>
 {% endraw %}
 
+## Download the Tutorial Files
+
+[Download Tutorial Files (ZIP)](../../../../downloads/configuration.zip)
+
 ## Understanding RxJS Basics
 
 RxJS (Reactive Extensions for JavaScript) is a library for reactive programming using Observables. In NDMVR, we use RxJS
