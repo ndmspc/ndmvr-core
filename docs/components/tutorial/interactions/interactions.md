@@ -15,9 +15,7 @@ A simple 3D histogram visualization with:
 
 ## Download the Tutorial Files
 
-Download the complete tutorial package that includes:
-- `index.html` - The complete visualization
-- `test3` - 4D histogram sample.
+[Download Tutorial Files (ZIP)](../../../../downloads/interactions.zip)
 
 ## Adding basic interactions
 

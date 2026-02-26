@@ -16,6 +16,7 @@ A simple 3D histogram visualization with:
 
 ## Download the Tutorial Files
 
+[Download Tutorial Files (ZIP)](../../../../downloads/canvas.zip)
 Download the complete tutorial package that includes:
 - `index.html` - The complete visualization
 - `test3` - 4D histogram sample.

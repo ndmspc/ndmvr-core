@@ -26,7 +26,7 @@ Download the complete tutorial package that includes:
 - `index.html` - The complete visualization
 - `h3scat.json` - Sample 3D histogram data from ROOT
 
-[Download Tutorial Files (ZIP)](link-to-your-assets)
+[Download Tutorial Files (ZIP)](../../../../downloads/first-visualization.zip)
 
 ## Key Concepts
 
