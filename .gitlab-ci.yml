@@ -17,26 +17,15 @@ cache:
 
 pages:
   stage: build
+  image: registry.gitlab.com/ndmspc/docs/ndmspc-doc
   tags:
-    - gitlab-org-docker
+    - ndmspc-hosted
   variables:
     GIT_DEPTH: 0
   script:
     - npm install
     - npm run build -- --mode pages --base=$PUBLIC_URL
     - cp -a dist/. public/
-  artifacts:
-    paths:
-      - public
-  rules:
-    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
-
-buildzip:
-  stage: build
-  image: registry.gitlab.com/ndmspc/docs/ndmspc-doc
-  tags:
-    - ndmspc-hosted
-  script:
     - dnf install -y zip
     - mkdocs build -d public/docs
     - mkdir public/docs/downloads
@@ -49,8 +38,6 @@ buildzip:
     paths:
       - public
   rules:
-    - changes:
-      - docs/**/*
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
 
 publish:
