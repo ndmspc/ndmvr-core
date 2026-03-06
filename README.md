@@ -59,7 +59,7 @@ This section is intended to configure the camera's position. Note: This feature 
 >**Scale**: width/height/depth scaling (Three.js units).<br>
 
 ```json
-"canvas": {
+"canvasPads": {
     "position": { "x": 0, "y": 5, "z": -15 },
     "rotation": { "x": 10, "y": 0, "z": 0 },
     "scale":    { "x": 10, "y": 10, "z": 0 }
