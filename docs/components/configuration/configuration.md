@@ -47,50 +47,39 @@ Camera position in 3D space.
 
 ---
 
-### `environment.canvas`
+### `environment.canvasPads`
 
-Settings for the canvas object in the scene.
+Settings for the canvas pads in the scene.  
+Each canvas pad defines a display surface placed in 3D space.
 
-#### `canvas.position`
+**Type:** `array`
 
-**Type:** `object`
-
-Position of the canvas in 3D space.
 ```json
-"position": {
-  "x": 0,
-  "y": 5,
-  "z": -15
-}
+"canvasPads": [
+  {
+    "id": "pad1-cinema",
+    "limits": {
+      "position": {
+        "x": -15,
+        "y": 20,
+        "z": -30
+      },
+      "rotation": {
+        "x": 10,
+        "y": 0,
+        "z": 0
+      },
+      "scale": {
+        "x": 40,
+        "y": 25,
+        "z": 0
+      }
+    }
+  }
+]
 ```
-
-#### `canvas.rotation`
-
-**Type:** `object`
-
-Rotation of the canvas (in degrees).
-```json
-"rotation": {
-  "x": 10,
-  "y": 0,
-  "z": 0
-}
-```
-
-#### `canvas.scale`
-
-**Type:** `object`
-
-Scale of the canvas.
-```json
-"scale": {
-  "x": 20,
-  "y": 10,
-  "z": 0
-}
-```
-
 ---
+
 
 ### `environment.histogramPads`
 

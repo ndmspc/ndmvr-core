@@ -73,16 +73,20 @@ document.querySelector("#app").appendChild(sceneElm);
 
 const imageContainer = document.createElement("a-entity");
 const imageContainer2 = document.createElement("a-entity");
+const imagePad = document.createElement("a-entity");
 imageContainer.id = "histogram1-cinema";
 imageContainer2.id = "histogram2-cinema";
+imagePad.id = "pad1-cinema";
 imageContainer.setAttribute("canvas-component", "");
 imageContainer2.setAttribute("canvas-component", "");
+imagePad.setAttribute("canvas-component", "");
 // imageContainer.setAttribute("position", "0 4 -6");
 // imageContainer.setAttribute("rotation", "0 4 -6");
 // imageContainer.setAttribute("scale", "10 10 10");
 
 sceneElm.appendChild(imageContainer);
 sceneElm.appendChild(imageContainer2);
+sceneElm.appendChild(imagePad);
 
 
 
@@ -116,6 +120,12 @@ histogramContainer.id = "histogram1";
 histogramContainer.setAttribute("thnpainter", "");
 histogramContainer.setAttribute("position", "0 0 0");
 sceneElm.appendChild(histogramContainer);
+
+const padContainer = document.createElement("a-entity");
+padContainer.id = "pad1";
+padContainer.setAttribute("thnpainter", "");
+padContainer.setAttribute("position", "0 0 0");
+sceneElm.appendChild(padContainer);
 
 const histogramContainer2 = document.createElement("a-entity");
 histogramContainer2.id = "histogram2";
@@ -374,7 +384,7 @@ loadButton.addEventListener("click", async () => {
 // histogramSubjectGet().next({ id: "histogram1", opts: { render: "jsroot" }, obj: h3scat });
 //
 
-histogramSubjectGet().next({id: "histogram1", opts: {render: "ndmvr"}, obj: test3});
+histogramSubjectGet().next({id: "pad1", opts: {render: "ndmvr"}, obj: test3});
 // histogramSubjectGet().next({id: 'histogram4', opts: {render: "nested"}, histogram: h3scat});
 // histogramSubjectGet().next({id: 'histogram1', opts: {render: "jsroot"}, histogram: h3scat});
 //
