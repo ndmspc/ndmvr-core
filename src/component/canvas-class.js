@@ -55,7 +55,7 @@ export class CanvasClass {
         ),
       )
       .subscribe((v) => {
-        const limits = v.config.environment.canvas.filter(canvas => canvas.id === this.id || canvas.id === "*");
+        const limits = v.config.environment.canvasPads.filter(canvas => canvas.id === this.id || canvas.id === "*");
         if (limits.length === 0) return;
         this.position = limits[0].limits.position;
         this.rotation = limits[0].limits.rotation;
