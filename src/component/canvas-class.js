@@ -63,6 +63,7 @@ export class CanvasClass {
       });
   }
 
+
   updateMesh () {
     this.plane.scale.set(this.scale.x, this.scale.y, this.scale.z);
     this.plane.position.set(this.position.x, this.position.y, this.position.z);
