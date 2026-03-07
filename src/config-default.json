@@ -11,26 +11,31 @@
           "z": 10
         }
       },
-      "canvas": {
-        "position": {
-          "x": 0,
-          "y": 20,
-          "z": -20
-        },
-        "rotation": {
-          "x": 8,
-          "y": 0,
-          "z": 0
-        },
-        "scale": {
-          "x": 6,
-          "y": 5,
-          "z": 1
+      "canvasPads": [
+        {
+          "id": "pad1-cinema",
+          "limits": {
+            "position": {
+              "x": 0,
+              "y": 25,
+              "z": -35
+            },
+            "rotation": {
+              "x": 8,
+              "y": 0,
+              "z": 0
+            },
+            "scale": {
+              "x": 6,
+              "y": 5,
+              "z": 1
+            }
+          }
         }
-      },
+      ],
       "histogramPads": {
         "type": "grid1x1x1",
-        "prefix": "histogram",
+        "prefix": "pad",
         "scale": {
           "x": 20,
           "y": 10,
