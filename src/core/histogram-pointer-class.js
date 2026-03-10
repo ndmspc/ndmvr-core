@@ -66,9 +66,9 @@ export class HistogramPointerClass {
   /**
    * */
   getChildByPosition(index, set, node = this.origin) {
-    if (!index || index.length === 0) return node;
+    if (!index || index.length === 0) return {...node};
     const currentIndex = index.splice(0,1)[0];
-    if (!node?.children) return node;
+    if (!node?.children) return {...node};
     if (node.children?.content) {
       return this.getChildByPosition(index, set, node.children.content[currentIndex]);
     } else if (Object.keys(node.children).includes(set)) {
