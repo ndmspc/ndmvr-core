@@ -414,7 +414,7 @@ histogramSubjectGet().next({id: "pad1", opts: {render: "ndmvr"}, obj: test3});
 
 // histogramSubjectGet().next({id: 'histogram1', histogram: parse(histo4x3x1)});
 
-configSubjectGet().next(config);
+// configSubjectGet().next(config);
 //
 // setTimeout(() => {
 //   const v = stateSubjectGet("histogram1").getValue();

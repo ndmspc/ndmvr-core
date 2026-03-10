@@ -53,6 +53,15 @@
 
   // Initialize Three.js scene
   const { scene } = initThreeScene();
+  const opts = {config: {
+    enviroment: {
+      histogramPads: [{
+        id: "histogram1",
+        scale: {x: 50, y: 50, z: 50},
+        position: {x: -5, y: 0, z: 0},
+        padding: {x: 0, y: 0, z: 0},
+      }]
+    }}}
 
   // Load and render histogram
   async function loadHistogram() {
@@ -60,7 +69,11 @@
       const histoObj = { obj: parse(h3scat) };
 
       // Create THn painter
-      const painter = new THnPainter(histoObj, "histogram1");
+      const painter = new THnPainter(histoObj, "histogram1", opts);
+      setTimeout(() => {
+        console.log(painter.config)
+      }, 2000)
+
 
       // Add to scene
       scene.add(painter.mesh);
