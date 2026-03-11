@@ -2,6 +2,10 @@
 
 In this tutorial, you'll create a basic 3D histogram visualization using NDMVR-Core's THnPainter with Three.js.
 
+While in this section is visualized 3-Dimensional histogram, THnPainter support up to N-Dimensions histogram, utilizing representation of data, via the [the hypercube](https://en.wikipedia.org/wiki/Hypercube) concept.
+
+For more information about ndmvr-core package itself, please head to: [Home page](../../../index.md)
+
 ## Prerequisites
 
 This tutorial assumes you have basic knowledge of:
@@ -29,6 +33,37 @@ Download the complete tutorial package that includes:
 [Download Tutorial Files (ZIP)](../../../../downloads/first-visualization.zip)
 
 ## Key Concepts
+
+### Understanding THnPainter
+
+The `THnPainter` class is NDMVR-Core's main tool for visualizing ROOT histograms. It automatically:
+- Detects the histogram type (TH1, TH2, TH3...)
+- Creates appropriate 3D geometry
+- Generates materials and textures
+- Provides outlines overlays for clarity
+- Handles coordinate systems and scaling
+- For more details, see the [THnPainter API reference](../../visualization/thnpainter.md).
+
+**Key properties:**
+- `painter.mesh` - The main rendered histogram (THREE.Mesh)
+- `painter.wireframe` - Object containing wireframe visualization
+- `painter.wireframe.wireframe` - The wireframe mesh to add to scene
+
+### Understanding the Data Flow
+
+```
+h3scat.json (ROOT JSON)
+    ↓
+parse(h3scat) - JSROOT parses ROOT format
+    ↓
+{obj: parsedData} - Wrap in required structure
+    ↓
+new THnPainter() - Create painter instance
+    ↓
+painter.mesh + painter.wireframe - Three.js meshes
+    ↓
+scene.add() - Add to Three.js scene
+```
 
 ### Importing Libraries
 
@@ -145,37 +180,6 @@ The visualization is completely self-contained in a single HTML file:
 **Important**: You must use a local server because browsers block ES modules and JSON imports when loaded from `file://` URLs.
 
 **Note**: For more convenient way, you can also use vscode's Live Server extension, or Built-in preview provided in any Jetbrains IDE.
-
-## Understanding THnPainter
-
-The `THnPainter` class is NDMVR-Core's main tool for visualizing ROOT histograms. It automatically:
-- Detects the histogram type (TH1, TH2, TH3...)
-- Creates appropriate 3D geometry
-- Generates materials and textures
-- Provides outlines overlays for clarity
-- Handles coordinate systems and scaling
-- For more details, see the [THnPainter API reference](../../visualization/thnpainter.md).
-
-**Key properties:**
-- `painter.mesh` - The main rendered histogram (THREE.Mesh)
-- `painter.wireframe` - Object containing wireframe visualization
-- `painter.wireframe.wireframe` - The wireframe mesh to add to scene
-
-## Understanding the Data Flow
-
-```
-h3scat.json (ROOT JSON)
-    ↓
-parse(h3scat) - JSROOT parses ROOT format
-    ↓
-{obj: parsedData} - Wrap in required structure
-    ↓
-new THnPainter() - Create painter instance
-    ↓
-painter.mesh + painter.wireframe - Three.js meshes
-    ↓
-scene.add() - Add to Three.js scene
-```
 
 ## Next Steps
 

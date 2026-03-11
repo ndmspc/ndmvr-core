@@ -19,8 +19,9 @@ A simple 3D histogram visualization with:
 
 ## Adding basic interactions
 
-As of now, you will be able to utilize some of the basic interactions done by keys, including =>
-- Navigate to layer of histogram by pressing num keys.
+As of now, you will be able to utilize some of the basic interactions done by keys, including:
+
+- Navigate to layer of histogram by pressing `num keys`.
 - Reset histogram state by pressing `r` key.
 - Hide/Show bin outline by pressing `o` key.
 
@@ -46,7 +47,7 @@ As of now, you will be able to utilize some of the basic interactions done by ke
 - Shift + Double click on bin to navigate to histogram on layer above.
 
 ## Adding custom user functions.
-Now that we have basic interactions, we can add custom user functions to the histogram.
+Now that we have basic interactions, we can add custom user functions to the histogram. Support for custom functions is implemented for cases when default interactions do not provide enough or right functionality. While default and user functions behave the same way, user functions can be used to add custom functionality by e.g interacting with your solution or making HTTP requests.
 
 To add custom user functions, you can use the [function subject](../../communication/function-subject.md).
 
