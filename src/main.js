@@ -84,8 +84,8 @@ imagePad.setAttribute("canvas-component", "");
 // imageContainer.setAttribute("rotation", "0 4 -6");
 // imageContainer.setAttribute("scale", "10 10 10");
 
-sceneElm.appendChild(imageContainer);
-sceneElm.appendChild(imageContainer2);
+// sceneElm.appendChild(imageContainer);
+// sceneElm.appendChild(imageContainer2);
 sceneElm.appendChild(imagePad);
 
 

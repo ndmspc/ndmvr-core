@@ -39,15 +39,7 @@ const registerTHnPainterComponent = () => {
             if (this.nestedHistogram) {
               this.nestedHistogram.updateHistogram(histo, histo?.opts);
             } else {
-              const opts = {config: {
-                environment: {
-                  histogramPads: [{
-                    id: "pad1",
-                    scale: {x: 50, y: 50, z: 50},
-                    position: {x: -5, y: 0, z: 0}
-                  }]
-                }}};
-              this.nestedHistogram = new THnPainter(histo, this.el.id, opts);
+              this.nestedHistogram = new THnPainter(histo, this.el.id);
               // this.el.object3D.add(this.nestedHistogram.instancedMesh);
               this.el.object3D.add(this.nestedHistogram.wireframe.wireframe);
               this.el.object3D.add(this.nestedHistogram.mesh);
