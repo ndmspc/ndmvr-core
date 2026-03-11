@@ -46,10 +46,11 @@
 </script>
 
 <script type="module">
-  import { THnPainter } from "ndmvr-core";
+  import { THnPainter, configSubjectGet } from "ndmvr-core";
   import h3scat from "../h3scat.json" with { type: "json" };
   import { parse } from "jsroot";
   import initThreeScene from "../three-scene.js";
+  import config from "./config.json" with {type: "json"};
 
   // Initialize Three.js scene
   const { scene } = initThreeScene();
@@ -85,6 +86,8 @@
       console.error("Error loading histogram:", error);
     }
   }
+
+  configSubjectGet().next(config);
 
   // Initialize
   loadHistogram();

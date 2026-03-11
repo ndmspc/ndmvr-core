@@ -30,7 +30,7 @@ pages:
     - mkdocs build -d public/docs
     - mkdir public/docs/downloads
     - cd docs/components/tutorial
-    - zip -r ../../../public/docs/downloads/first-visualization.zip three-scene.js h3scat.json firstVisualization/firstVisualization.html
+    - zip -r ../../../public/docs/downloads/first-visualization.zip three-scene.js h3scat.json firstVisualization/firstVisualization.html firstVisualization/config.json
     - zip -r ../../../public/docs/downloads/configuration.zip three-scene.js h3scat.json THnPainterManager.js configurationChapter/configuration-chapter.html configurationChapter/config.json
     - zip -r ../../../public/docs/downloads/interactions.zip three-scene.js test3.json THnPainterManager.js interactions/interactions.html interactions/config.json interactions/custom-functions.js
     - zip -r ../../../public/docs/downloads/canvas.zip three-scene.js h3scat.json test3.json THnPainterManager.js canvas/canvas.html canvas/config.json canvas/image.json canvas/image.png

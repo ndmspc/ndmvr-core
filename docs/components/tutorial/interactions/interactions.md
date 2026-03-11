@@ -47,12 +47,12 @@ As of now, you will be able to utilize some of the basic interactions done by ke
 - Shift + Double click on bin to navigate to histogram on layer above.
 
 ## Adding custom user functions.
-Now that we have basic interactions, we can add custom user functions to the histogram. Support for custom functions is implemented for cases when:
+Now that we have basic interactions, we can add custom user functions to the histogram. Support for custom functions is provided in cases where:
 
-- default interactions do not provide enough or right functionality.
-- custom functionality with your solution, making HTTP requests etc.
+- the default interactions do not offer enough or right functionality.
+- custom behavior is required, such as integrating with your own solution or making HTTP requests etc.
 
-**Note:** User and default functions behaves exactly the same in terms of their context and lifecycle, ensuring developers can easily change them to their liking. default ones are just simply there from the start, as they were identified as most-likely to be used.
+**Note:** User and default functions behave exactly the same in terms of their context and lifecycle, ensuring developers can easily change them to their liking. the default ones are just simply there from the start, as they were identified as most-likely to be used.
 
 To add custom user functions, you can use the [function subject](../../communication/function-subject.md).
 

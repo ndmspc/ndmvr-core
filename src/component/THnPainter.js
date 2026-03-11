@@ -1098,12 +1098,10 @@ export class THnPainter extends TPainter {
 
   configSubjectHandler(event) {
     this.config = configSubjectGet().mergeHistogramConfig(this?.opts?.config);
-    // console.log("config: ", this.opts.config.environment.histogramPads[0].scale);
     this.keyBindings = ensureDefaultBindings(event.config.bindings);
     const newLimits = event.config.environment.histogramPads.find(
       (el) => el.id === this.id
     );
-    console.log("newLimits: ", newLimits.scale);
     if (newLimits) {
       if (!areLimitsEqual(this.limits, newLimits) && this.renderHistory.length > 0) {
         this.limits = {...newLimits};

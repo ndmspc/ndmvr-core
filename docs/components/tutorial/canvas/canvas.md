@@ -1,11 +1,15 @@
 # How to use canvas component
 
-In this section, you will learn how to use a canvas component in your scene. You can use this component to display 2D content onto the 3D Three.Plane object. While you can display anything, format is limited to **HTMLImageElement, Data/URL link or JSROOT objects**.
+In this section, you will learn how to use a canvas component in your scene. This component allows you to render 2D content onto a 3D [Three.Plane](https://threejs.org/docs/#Plane) object. While it can display various types of content, the supported formats are limited to HTMLImageElement, Data/URL links, and JSROOT objects.
 
 This component can be useful in cases when you want to:
-- display 2D content in VR
-- have an additional visualization component
-- display JSROOT primitive, which we don't support
+
+- displaying 2D content inside a VR environment
+- having an additional visualization element that complements existing 3D objects
+- rendering external graphical content such as images loaded from URLs or generated dynamically
+- displaying JSROOT primitives that are not directly supported by our rendering components
+- creating information panels, overlays, or dashboards that remain spatially anchored in the scene
+- presenting charts, plots, or other data visualizations alongside 3D representations
 
 ## What You'll Build
 

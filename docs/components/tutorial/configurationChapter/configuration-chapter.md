@@ -16,10 +16,9 @@ visualizations dynamically.
 
 ## Understanding RxJS Basics
 
-[RxJS (Reactive Extensions for JavaScript)](https://rxjs.dev/guide/overview) is a library for reactive programming using Observables. Using this extension, interface between user and NdmVr-core components themselves is defined.
+[RxJS (Reactive Extensions for JavaScript)](https://rxjs.dev/guide/overview) is a library for reactive programming using Observables. This extension defines the interface between the user and the NdmVr-cores inter-component communication.
 
-This extension is used to improve **reactive and dynamic updates** without worrying about refferences or synchronization, as all the used subjects are using singleton design pattern. This extension also greatly sustains **compatibility** with other solutions. 
-
+It is used to enable **reactive and dynamic updates** without the need to manage references or synchronization manually, since all used Subjects follow the singleton design pattern. Additionally, this extension helps maintain **compatibility** with other solutions.
 In NDMVR, we use RxJS
 to:
 
