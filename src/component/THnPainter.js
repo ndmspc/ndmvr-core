@@ -65,6 +65,7 @@ export class THnPainter extends TPainter {
 
   constructor(histo, id, opts) {
     super(histo, id, opts);
+    console.log("THnPainter constructor start: ");
     this.pointer = new HistogramPointerClass(this.rootObj);
 
     this.handleStateChange = this.handleStateChange.bind(this);
@@ -74,15 +75,19 @@ export class THnPainter extends TPainter {
 
     this.init(true);
     this.renderHistogram(0, this.totalInstances, 0);
+    console.log("THnPainter constructor end, mesh: ", this.mesh, "meshParent: ", this?.mesh?.parent ?? "undefined");
   }
 
   updateHistogram(histo) {
+    console.log("THnPainter updateHistogram start => histo: ", histo, ", mesh: ", this.mesh, "uuid: ", this.mesh.uuid, "mesh.parent: ", this?.mesh?.parent ?? "undefined");
     let raycastHandler = undefined;
     const parent = this.mesh.parent;
-    console.log("UPDATE V CORE_____________", parent, ", mesh: ", this.mesh);
-    if (!parent) return;
-    console.log("UPDATE V CORE_____________ PRESIEL", parent);
+    if (!parent) {
+      console.log("THnPainter updateHistogram parent is undefined", this.mesh, "uuid: ", this.mesh.uuid, "mesh.parent: ", this?.mesh?.parent ?? "undefined");
+      return;
+    }
     parent.remove(this.mesh);
+    console.log("THnPainter updateHistogram parent is defined, removing mesh: ", this.mesh, "uuid: ", this.mesh.uuid, "mesh.parent: ", this?.mesh?.parent ?? "undefined");
     if (this.pointer.isHistogramFilled) {
       raycastHandler = this.mesh.raycast;
       this.mesh.raycast = () => {
@@ -104,11 +109,13 @@ export class THnPainter extends TPainter {
       minMaxValue: []
     });
 
+    console.log("THnPainter re-init in update: ", histo, "mesh.uuid: ", this.mesh.uuid, "mesh.parent: ", this?.mesh?.parent ?? "undefined");
     this.rootObj = histo.obj;
     this.pointer = new HistogramPointerClass(this.rootObj);
     this.init(true);
     this.renderHistogram(0, this.totalInstances, 0);
 
+    console.log("THnPainter re-init in update SUCCESSFULL, now adding mesh to parent: ", histo, "mesh.uuid: ", this.mesh.uuid, "mesh.parent: ", this?.mesh?.parent ?? "undefined");
 
     setTimeout(() => {
       parent.add(this.mesh);
@@ -117,6 +124,7 @@ export class THnPainter extends TPainter {
 
     // parent.add(this.mesh);
     parent.add(this.wireframe.wireframe);
+    console.log("THnPainter mesh successfully added to parent: ", this.mesh, "uuid: ", this.mesh.uuid, "mesh.parent: ", this?.mesh?.parent ?? "undefined");
   }
 
   remove() {
