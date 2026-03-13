@@ -79,7 +79,7 @@ export class THnPainter extends TPainter {
   updateHistogram(histo) {
     let raycastHandler = undefined;
     const parent = this.mesh.parent;
-    console.log("UPDATE V CORE_____________", parent);
+    console.log("UPDATE V CORE_____________", parent, ", mesh: ", this.mesh);
     if (!parent) return;
     console.log("UPDATE V CORE_____________ PRESIEL", parent);
     parent.remove(this.mesh);
