@@ -40,9 +40,10 @@ const registerTHnPainterComponent = () => {
               this.nestedHistogram.updateHistogram(histo, histo?.opts);
             } else {
               this.nestedHistogram = new THnPainter(histo, this.el.id);
-              // this.el.object3D.add(this.nestedHistogram.instancedMesh);
-              this.el.object3D.add(this.nestedHistogram.wireframe.wireframe);
-              this.el.object3D.add(this.nestedHistogram.mesh);
+              this.nestedHistogram.renderHistogram(0, this.nestedHistogram.totalInstances, 0).then(() => {
+                this.el.object3D.add(this.nestedHistogram.wireframe.wireframe);
+                this.el.object3D.add(this.nestedHistogram.mesh);
+              });
             }
           }
         });

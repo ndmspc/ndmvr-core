@@ -4,6 +4,33 @@
 
 The NDMVR configuration file controls the behavior, appearance, and interaction of histogram visualizations in a 3D environment. Configuration is provided as a JSON object with several main sections.
 
+- If one wants to change only the specific part of the configuration, it is possible to send partial config and the rest will be merged from current config.
+- **Note** If partial config is sent, it needs to be wrapped in its hierarchy ensuring the correct attribute is set.
+
+<div class="grid cards" markdown>
+
+- ❌ **Wrong approach**
+
+    ```js
+    configSubjectGet().next({
+      dbClickTimeout: 250
+    });
+    ```
+
+- ✅ **Correct approach**
+
+    ```js
+    configSubjectGet().next({
+      config: {
+        environment: {
+          dbClickTimeout: 250
+        }
+      }
+    });
+    ```
+
+</div>
+
 ---
 
 ## Environment Configuration
@@ -78,6 +105,7 @@ Each canvas pad defines a display surface placed in 3D space.
   }
 ]
 ```
+
 ---
 
 
@@ -90,6 +118,7 @@ Defines the layout and positioning of histogram pads. Can be configured in two m
 Automatically arranges histograms in a 3D grid pattern.
 
 **Type:** `object`
+
 ```json
 "histogramPads": {
   "type": "grid1x1x1",

@@ -46,13 +46,23 @@
 </script>
 
 <script type="module">
-  import { THnPainter } from "ndmvr-core";
+  import { THnPainter, configSubjectGet } from "ndmvr-core";
   import h3scat from "../h3scat.json" with { type: "json" };
   import { parse } from "jsroot";
   import initThreeScene from "../three-scene.js";
+  import config from "./config.json" with {type: "json"};
 
   // Initialize Three.js scene
   const { scene } = initThreeScene();
+  const opts = {config: {
+    enviroment: {
+      histogramPads: [{
+        id: "histogram1",
+        scale: {x: 50, y: 50, z: 50},
+        position: {x: -5, y: 0, z: 0},
+        padding: {x: 0, y: 0, z: 0},
+      }]
+    }}}
 
   // Load and render histogram
   async function loadHistogram() {
@@ -60,7 +70,11 @@
       const histoObj = { obj: parse(h3scat) };
 
       // Create THn painter
-      const painter = new THnPainter(histoObj, "histogram1");
+      const painter = new THnPainter(histoObj, "histogram1", opts);
+      setTimeout(() => {
+        console.log(painter.config)
+      }, 2000)
+
 
       // Add to scene
       scene.add(painter.mesh);
@@ -72,6 +86,8 @@
       console.error("Error loading histogram:", error);
     }
   }
+
+  configSubjectGet().next(config);
 
   // Initialize
   loadHistogram();
