@@ -539,6 +539,7 @@ export function computeMinErrorPerLayer(obj, minContentPerLayer) {
     let min = Infinity;
     for (let i = 0; i < arr.length; i++) {
       const v = arr[i];
+      if (v === 0) continue;
       if (v < min) min = v;
     }
     return min;
@@ -602,7 +603,6 @@ export function computeMinErrorPerLayer(obj, minContentPerLayer) {
         // console.log("BERIE SQRT Z ", key, " ", maxContentPerLayer[i][key], "");
         min[i][key] = Math.sqrt(minContentPerLayer[i][key]);
       }
-      ;
     });
   }
   return min;

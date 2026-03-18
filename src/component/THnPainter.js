@@ -64,7 +64,12 @@ export class THnPainter extends TPainter {
   colorArray = undefined;
 
   constructor(histo, id, opts) {
+    if (!histo || !histo.obj) {
+      console.error("THnPainter constructor: histo or histo.obj is undefined", histo);
+      throw new Error("THnPainter: histo or histo.obj is undefined");
+    }
     super(histo, id, opts);
+    console.log("THnPainter constructor start: ");
     this.pointer = new HistogramPointerClass(this.rootObj);
 
     this.handleStateChange = this.handleStateChange.bind(this);
@@ -73,13 +78,20 @@ export class THnPainter extends TPainter {
       .subscribe(this.handleStateChange);
 
     this.init(true);
-    this.renderHistogram(0, this.totalInstances, 0);
+    // this.renderHistogram(0, this.totalInstances, 0);
+    console.log("THnPainter constructor end, mesh: ", this.mesh, "meshParent: ", this?.mesh?.parent ?? "undefined");
   }
 
-  updateHistogram(histo) {
+  async updateHistogram(histo) {
+    if (!histo || !histo.obj) {
+      console.error("THnPainter constructor: histo or histo.obj is undefined", histo);
+      throw new Error("THnPainter: histo or histo.obj is undefined");
+    }
+    console.log("THnPainter updateHistogram start => histo: ", histo, ", mesh: ", this.mesh, "uuid: ", this.mesh.uuid, "mesh.parent: ", this?.mesh?.parent ?? "undefined");
     let raycastHandler = undefined;
     const parent = this.mesh.parent;
-    parent.remove(this.mesh);
+
+    console.log("THnPainter updateHistogram parent is defined, removing mesh: ", this.mesh, "uuid: ", this.mesh.uuid, "mesh.parent: ", this?.mesh?.parent ?? "undefined");
     if (this.pointer.isHistogramFilled) {
       raycastHandler = this.mesh.raycast;
       this.mesh.raycast = () => {
@@ -101,19 +113,27 @@ export class THnPainter extends TPainter {
       minMaxValue: []
     });
 
+    if (parent) {
+      console.log("THnPainter updateHistogram parent is undefined", this.mesh, "uuid: ", this.mesh.uuid, "mesh.parent: ", this?.mesh?.parent ?? "undefined");
+      parent.remove(this.mesh);
+    }
+
+    console.log("THnPainter re-init in update: ", histo, "mesh.uuid: ", this.mesh.uuid, "mesh.parent: ", this?.mesh?.parent ?? "undefined");
     this.rootObj = histo.obj;
     this.pointer = new HistogramPointerClass(this.rootObj);
     this.init(true);
-    this.renderHistogram(0, this.totalInstances, 0);
+    await this.renderHistogram(0, this.totalInstances, 0);
+    this.mesh.raycast = raycastHandler;
 
+    console.log("THnPainter re-init in update SUCCESSFULL, now adding mesh to parent: ", histo, "mesh.uuid: ", this.mesh.uuid, "mesh.parent: ", this?.mesh?.parent ?? "undefined");
 
-    setTimeout(() => {
+    if (parent) {
       parent.add(this.mesh);
-      this.mesh.raycast = raycastHandler;
-    }, 0);
-
-    // parent.add(this.mesh);
-    parent.add(this.wireframe.wireframe);
+      parent.add(this.wireframe.wireframe);
+      console.log("THnPainter mesh successfully added to parent: ", this.mesh, "uuid: ", this.mesh.uuid, "mesh.parent: ", this?.mesh?.parent ?? "undefined");
+    } else {
+      throw new ReferenceError("THnPainter: parent is undefined");
+    }
   }
 
   remove() {
@@ -357,7 +377,7 @@ export class THnPainter extends TPainter {
    *  Bins of the deepest layer are offset by 1.
    *  Bins from each upward layer are offset by maximum number of layer beneath.
    * */
-  renderHistogram(startIndex, endIndex, layer) {
+  async renderHistogram(startIndex, endIndex, layer) {
     if (!this.pointer || layer >= this.maxInstancesPerLayer.length - 1) return;
     this.logRender({
       procedure: "render",
@@ -537,8 +557,8 @@ export class THnPainter extends TPainter {
         padding = {x: 0, y: 0, z: 0};
       }
 
-      const {min: minFactor, max: maxFactor} = this.config.scale?.[currentLayer]
-        ? this.config.scale?.[currentLayer]
+      const {min: minFactor, max: maxFactor} = this.config.scale?.layer?.[currentLayer]
+        ? this.config.scale?.layer[currentLayer]
         : this.config.scale.default;
 
       for (let i = startIndex; i < endIndex; i += stepFor) {
@@ -678,34 +698,47 @@ export class THnPainter extends TPainter {
       }
     };
 
+    if (this.pointer.isOnSet) {
+      await Promise.all(
+        this.selectedSet.map(set =>
+          render(startIndex, endIndex, 0,
+            getChildObjectByIndex(
+              this.pointer.rootObj,
+              this.pointer.parentPath.map(v => v.bin[0]),
+              set
+            ), this.limits, set)
+        ));
+    } else {
+      await render(startIndex, endIndex, 0, this.pointer.origin, this.limits);
+    }
 
-    (this.pointer.isOnSet
-      ? Promise.all(this.selectedSet.map(set =>
-        render(startIndex, endIndex, 0,
-          getChildObjectByIndex(this.pointer.rootObj,
-            this.pointer.parentPath.map(v => v.bin[0]), set), this.limits, set)))
-      : render(startIndex, endIndex, 0, this.pointer.origin, this.limits)
-    ).then(() => {
-      setTimeout(() => {
-        if (!this.pointer.isOnSet) {
-          this.wireframe.pushVisibleInstances(
-            this.matrixCache, this.maxInstancesPerLayer,
-            this.availableSets.indexOf(this.selectedSet[0])
-          );
-        }
-        this.pushVisibleInstances();
+    if (!this.pointer.isOnSet) {
+      this.wireframe.pushVisibleInstances(
+        this.matrixCache,
+        this.maxInstancesPerLayer,
+        this.availableSets.indexOf(this.selectedSet[0])
+      );
+    }
 
-        const pointerSet = this.availableSets.indexOf(this.pointer.isOnSet) === -1
-          ? null
-          : this.availableSets.indexOf(this.pointer.isOnSet);
-        this.BVHTree = createBVHTreeRecursive(
-          this.matrixCache, this.pointer.origin, 0, this.selectedSet,
-          pointerSet,
-          this.availableSets, this.mesh.matrixWorld, this.maxInstancesPerLayer
-        );
+    this.pushVisibleInstances();
 
-      }, 0);
-    });
+    const pointerSet =
+      this.availableSets.indexOf(this.pointer.isOnSet) === -1
+        ? null
+        : this.availableSets.indexOf(this.pointer.isOnSet);
+
+    this.BVHTree = createBVHTreeRecursive(
+      this.matrixCache,
+      this.pointer.origin,
+      0,
+      this.selectedSet,
+      pointerSet,
+      this.availableSets,
+      this.mesh.matrixWorld,
+      this.maxInstancesPerLayer
+    );
+
+    return this.mesh;
   }
 
   createMaterial() {
@@ -856,19 +889,19 @@ export class THnPainter extends TPainter {
     }
   }
 
-  renderHistogramHistory() {
+  async renderHistogramHistory() {
     const renderHistoryCopy = this.renderHistory;
     this.renderHistory = [];
 
-    renderHistoryCopy.forEach((call) => {
+    for (const call of renderHistoryCopy) {
       if (call.procedure === "render") {
-        this.renderHistogram(
+        await this.renderHistogram(
           call.value.startIndex, call.value.endIndex, call.value.layer
         );
       } else if (call.procedure === "hide") {
         this.hideChildHistogram(call.value);
       }
-    });
+    }
   }
 
   /**
@@ -879,7 +912,7 @@ export class THnPainter extends TPainter {
    * @param set Specifies from which set should child be chosen.
    * If children contains sets, parameter need to be specified.
    * */
-  setPointerToChild(position, set) {
+  async setPointerToChild(position, set) {
     const parent = this.mesh.parent;
 
     this.matrixCache = [];
@@ -905,21 +938,21 @@ export class THnPainter extends TPainter {
     this.init(false);
     console.log("path: ", this.pointer.path);
     console.log("title: ", this.pointer.title);
-    setTimeout(() => {
-      this.renderHistogram(0, this.totalInstances, 0);
-      parent.add(this.mesh);
-      parent.add(this.wireframe.wireframe);
-    }, 0);
+    await this.renderHistogram(0, this.totalInstances, 0);
+    parent.add(this.mesh);
+    parent.add(this.wireframe.wireframe);
 
     if (this.pointer.isOnSet) {
-      this.wireframe.toggleVisibility(this.matrixCache, this.maxInstancesPerLayer, this.availableSets.indexOf(set));
+      this.wireframe.toggleVisibility(
+        this.matrixCache, this.maxInstancesPerLayer, this.availableSets.indexOf(set)
+      );
     }
   }
 
   /**
    * @desc Method to set pointers origin to its parent.
    * * */
-  setPointerToParent() {
+  async setPointerToParent() {
     const parent = this.mesh.parent;
     parent.remove(this.mesh);
     if (this.pointer.isHistogramFilled) {
@@ -932,7 +965,7 @@ export class THnPainter extends TPainter {
     console.log("path: ", this.pointer.path);
     console.log("title: ", this.pointer.title);
     this.init(false);
-    this.renderHistogram(0, this.totalInstances, 0);
+    await this.renderHistogram(0, this.totalInstances, 0);
     parent.add(this.mesh);
     parent.add(this.wireframe.wireframe);
   }
@@ -1448,7 +1481,7 @@ export class THnPainter extends TPainter {
         return recursiveSearch(getChildObjectByIndex(
           this.pointer.rootObj, this.pointer.parentPath.map(v => v.bin[0]), set),
         0, 0, [], set);
-      }).filter(v => v.length !==0);
+      }).filter(v => v.length !== 0);
       const distanceMin = Math.min(...results.map(v => v[0].distance));
       return results.find(v => v[0].distance === distanceMin) ?? [];
     }

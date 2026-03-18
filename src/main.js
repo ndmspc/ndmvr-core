@@ -84,8 +84,8 @@ imagePad.setAttribute("canvas-component", "");
 // imageContainer.setAttribute("rotation", "0 4 -6");
 // imageContainer.setAttribute("scale", "10 10 10");
 
-sceneElm.appendChild(imageContainer);
-sceneElm.appendChild(imageContainer2);
+// sceneElm.appendChild(imageContainer);
+// sceneElm.appendChild(imageContainer2);
 sceneElm.appendChild(imagePad);
 
 
@@ -115,11 +115,11 @@ sceneElm.appendChild(imagePad);
 // }, 13000);
 
 
-const histogramContainer = document.createElement("a-entity");
-histogramContainer.id = "histogram1";
-histogramContainer.setAttribute("thnpainter", "");
-histogramContainer.setAttribute("position", "0 0 0");
-sceneElm.appendChild(histogramContainer);
+// const histogramContainer = document.createElement("a-entity");
+// histogramContainer.id = "histogram1";
+// histogramContainer.setAttribute("thnpainter", "");
+// histogramContainer.setAttribute("position", "0 0 0");
+// sceneElm.appendChild(histogramContainer);
 
 const padContainer = document.createElement("a-entity");
 padContainer.id = "pad1";
@@ -127,23 +127,23 @@ padContainer.setAttribute("thnpainter", "");
 padContainer.setAttribute("position", "0 0 0");
 sceneElm.appendChild(padContainer);
 
-const histogramContainer2 = document.createElement("a-entity");
-histogramContainer2.id = "histogram2";
-histogramContainer2.setAttribute("histogram", "");
-histogramContainer2.setAttribute("position", "0 0 0");
-sceneElm.appendChild(histogramContainer2);
-
-const histogramContainer3 = document.createElement("a-entity");
-histogramContainer3.id = "histogram3";
-histogramContainer3.setAttribute("histogram", "");
-histogramContainer3.setAttribute("position", "0 0 0");
-sceneElm.appendChild(histogramContainer3);
-
-const histogramContainer4 = document.createElement("a-entity");
-histogramContainer4.id = "histogram4";
-histogramContainer4.setAttribute("histogram", "");
-histogramContainer4.setAttribute("position", "0 0 0");
-sceneElm.appendChild(histogramContainer4);
+// const histogramContainer2 = document.createElement("a-entity");
+// histogramContainer2.id = "histogram2";
+// histogramContainer2.setAttribute("histogram", "");
+// histogramContainer2.setAttribute("position", "0 0 0");
+// sceneElm.appendChild(histogramContainer2);
+//
+// const histogramContainer3 = document.createElement("a-entity");
+// histogramContainer3.id = "histogram3";
+// histogramContainer3.setAttribute("histogram", "");
+// histogramContainer3.setAttribute("position", "0 0 0");
+// sceneElm.appendChild(histogramContainer3);
+//
+// const histogramContainer4 = document.createElement("a-entity");
+// histogramContainer4.id = "histogram4";
+// histogramContainer4.setAttribute("histogram", "");
+// histogramContainer4.setAttribute("position", "0 0 0");
+// sceneElm.appendChild(histogramContainer4);
 
 const options = new Map();
 options.set("h3scat", h3scat);
@@ -187,7 +187,7 @@ histogramSelect.addEventListener("change", (event) => {
     urlInput.style.display = "none";
     loadButton.style.display = "none";
     histogramSubjectGet().next({
-      id: "histogram1",
+      id: "pad1",
       opts: { render: "ndmvr" },
       obj: options.get(selectedValue),
       config: {
@@ -228,7 +228,7 @@ arrayDiv.innerHTML = `
 document.querySelector("#app").appendChild(arrayDiv);
 const arraySelect = document.getElementById("arraySelect");
 
-stateSubjectGet("histogram1")
+stateSubjectGet("pad1")
   .getObservable()
   .subscribe((state) => {
     const newOptions = state.sets || [];
@@ -275,14 +275,14 @@ stateSubjectGet("histogram1")
 arraySelect.addEventListener("change", (event) => {
   // console.log(event);
   console.log(arraySelect.value);
-  const currentValue = stateSubjectGet("histogram1").getValue();
+  const currentValue = stateSubjectGet("pad1").getValue();
   currentValue.selectedArray = arraySelect.value;
-  stateSubjectGet("histogram1").next(currentValue);
+  stateSubjectGet("pad1").next(currentValue);
 });
 
 checkboxContainer.addEventListener("change", (event) => {
   if (event.target.type === "checkbox") {
-    const currentValue = stateSubjectGet("histogram1").getValue();
+    const currentValue = stateSubjectGet("pad1").getValue();
 
     // Collect all checked values
     const checkedValues = Array.from(
@@ -294,7 +294,7 @@ checkboxContainer.addEventListener("change", (event) => {
       JSON.stringify(currentValue.selectedSet) !== JSON.stringify(checkedValues)
     ) {
       currentValue.selectedSet = checkedValues;
-      stateSubjectGet("histogram1").next(currentValue);
+      stateSubjectGet("pad1").next(currentValue);
     }
   }
 });
@@ -314,7 +314,7 @@ loadButton.addEventListener("click", async () => {
     // delete data.children;
 
     histogramSubjectGet().next({
-      id: "histogram1",
+      id: "pad1",
       opts: { render: "ndmvr" },
       obj: data,
     });

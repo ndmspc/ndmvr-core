@@ -19,8 +19,9 @@ A simple 3D histogram visualization with:
 
 ## Adding basic interactions
 
-As of now, you will be able to utilize some of the basic interactions done by keys, including =>
-- Navigate to layer of histogram by pressing num keys.
+As of now, you will be able to utilize some of the basic interactions done by keys, including:
+
+- Navigate to layer of histogram by pressing `num keys`.
 - Reset histogram state by pressing `r` key.
 - Hide/Show bin outline by pressing `o` key.
 
@@ -46,14 +47,20 @@ As of now, you will be able to utilize some of the basic interactions done by ke
 - Shift + Double click on bin to navigate to histogram on layer above.
 
 ## Adding custom user functions.
-Now that we have basic interactions, we can add custom user functions to the histogram.
+Now that we have basic interactions, we can add custom user functions to the histogram. Support for custom functions is provided in cases where:
+
+- the default interactions do not offer enough or right functionality.
+- custom behavior is required, such as integrating with your own solution or making HTTP requests etc.
+
+**Note:** User and default functions behave exactly the same in terms of their context and lifecycle, ensuring developers can easily change them to their liking. the default ones are just simply there from the start, as they were identified as most-likely to be used.
 
 To add custom user functions, you can use the [function subject](../../communication/function-subject.md).
 
 ### Manipulating functions
 - Here we provide examples for basic use cases on how one can manipulate functions.
 - You can try these examples in the interactions.html file, by simply copy pasting below codes to the script (e.g. at line 92).
-- **Note:** If you want to set functions right away, it is stronly recommended to set them in block of setTimeout with timeout of 0. This is done for ensuring al of the components are initialized, thus the event will be recorded. (See example at line 99 of interactions.html) 
+
+**Note:** If you want to set functions right away, it is stronly recommended to set them in block of setTimeout with timeout of 0. This is done for ensuring all the components are initialized, thus the event will be recorded. (See example at line 99 of interactions.html) 
 
 #### How to utilize custom functions
 - To fully utilize custom functions one need to understand what is provided and what is possible.
