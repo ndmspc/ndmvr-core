@@ -4,6 +4,33 @@
 
 The NDMVR configuration file controls the behavior, appearance, and interaction of histogram visualizations in a 3D environment. Configuration is provided as a JSON object with several main sections.
 
+- If one wants to change only the specific part of the configuration, it is possible to send partial config and the rest will be merged from current config.
+- **Note** If partial config is sent, it needs to be wrapped in its hierarchy ensuring the correct attribute is set.
+
+<div class="grid cards" markdown>
+
+- ❌ **Wrong approach**
+
+    ```js
+    configSubjectGet().next({
+      dbClickTimeout: 250
+    });
+    ```
+
+- ✅ **Correct approach**
+
+    ```js
+    configSubjectGet().next({
+      config: {
+        environment: {
+          dbClickTimeout: 250
+        }
+      }
+    });
+    ```
+
+</div>
+
 ---
 
 ## Environment Configuration
@@ -47,50 +74,40 @@ Camera position in 3D space.
 
 ---
 
-### `environment.canvas`
+### `environment.canvasPads`
 
-Settings for the canvas object in the scene.
+Settings for the canvas pads in the scene.  
+Each canvas pad defines a display surface placed in 3D space.
 
-#### `canvas.position`
+**Type:** `array`
 
-**Type:** `object`
-
-Position of the canvas in 3D space.
 ```json
-"position": {
-  "x": 0,
-  "y": 5,
-  "z": -15
-}
-```
-
-#### `canvas.rotation`
-
-**Type:** `object`
-
-Rotation of the canvas (in degrees).
-```json
-"rotation": {
-  "x": 10,
-  "y": 0,
-  "z": 0
-}
-```
-
-#### `canvas.scale`
-
-**Type:** `object`
-
-Scale of the canvas.
-```json
-"scale": {
-  "x": 20,
-  "y": 10,
-  "z": 0
-}
+"canvasPads": [
+  {
+    "id": "pad1-cinema",
+    "limits": {
+      "position": {
+        "x": -15,
+        "y": 20,
+        "z": -30
+      },
+      "rotation": {
+        "x": 10,
+        "y": 0,
+        "z": 0
+      },
+      "scale": {
+        "x": 40,
+        "y": 25,
+        "z": 0
+      }
+    }
+  }
+]
 ```
 
 ---
+
 
 ### `environment.histogramPads`
 
@@ -101,6 +118,7 @@ Defines the layout and positioning of histogram pads. Can be configured in two m
 Automatically arranges histograms in a 3D grid pattern.
 
 **Type:** `object`
+
 ```json
 "histogramPads": {
   "type": "grid1x1x1",
