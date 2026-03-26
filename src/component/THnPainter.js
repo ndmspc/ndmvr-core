@@ -38,6 +38,7 @@ import {
 import {areLimitsEqual, createHnotFilledSprite, ensureDefaultBindings} from "../utils/baseUtil.js";
 import {configSubjectGet} from "../rxjs/ConfigSubject.js";
 
+
 export class THnPainter extends TPainter {
   stateSub = undefined;
   pointer = undefined;
