@@ -11,15 +11,18 @@
 import { generate_AFrame_blank_scene_html } from "./utils/htmlGenerators.js";
 import { functionSubjectGet } from "./rxjs/FunctionSubject.js";
 import { initNdmvrAframe } from "./core/ndmvr-aframe-core.js";
-import histogramRecursive from "./assets/histograms/THrecursive.json";
+// import histogramRecursive from "./assets/histograms/THrecursive.json";
 
 import config from "./config-aframe.json";
 
 import histo125 from "./assets/histograms/nested/test_125.json";
 import histo12_5 from "./assets/histograms/nested/test_12_5.json";
+// import rsn from "./assets/histograms/nested/rsn.json";
 import histo1_25 from "./assets/histograms/nested/test_1_25.json";
 import histo1_2_5 from "./assets/histograms/nested/test_1_2_5.json";
 import histo5_2_1 from "./assets/histograms/nested/test_5_2_1.json";
+import test3 from "./assets/histograms/nested/test3.json";
+// import test3f from "./assets/histograms/nested/test3f.json";
 import nav from "./assets/histograms/nested/nav.json";
 import h3scat from "./assets/histograms/h3scat.json";
 import labelH from "./assets/histograms/wLabel/label.json";
@@ -42,6 +45,7 @@ import { stateSubjectGet } from "./rxjs/StateSubject.js";
 import { configSubjectGet } from "./rxjs/ConfigSubject.js";
 import { binInfoSubjectGet } from "./rxjs/BinInfoSubject.js";
 import {registerComponents} from "./core/registerComponents.js";
+import {Vector3} from "three";
 
 initNdmvrAframe();
 registerComponents();
@@ -68,12 +72,23 @@ document.querySelector("#app").appendChild(sceneElm);
 // sceneElm.object3D.add(cube2)
 
 const imageContainer = document.createElement("a-entity");
+const imageContainer2 = document.createElement("a-entity");
+const imagePad = document.createElement("a-entity");
 imageContainer.id = "histogram1-cinema";
+imageContainer2.id = "histogram2-cinema";
+imagePad.id = "pad1-cinema";
 imageContainer.setAttribute("canvas-component", "");
-// imageContainer.setAttribute('position', "0 4 -6");
-imageContainer.setAttribute("scale", "10 10 10");
+imageContainer2.setAttribute("canvas-component", "");
+imagePad.setAttribute("canvas-component", "");
+// imageContainer.setAttribute("position", "0 4 -6");
+// imageContainer.setAttribute("rotation", "0 4 -6");
+// imageContainer.setAttribute("scale", "10 10 10");
 
-sceneElm.appendChild(imageContainer);
+// sceneElm.appendChild(imageContainer);
+// sceneElm.appendChild(imageContainer2);
+sceneElm.appendChild(imagePad);
+
+
 
 // const instGeomContainer = document.createElement("a-entity");
 // instGeomContainer.setAttribute("inst-geom-hist", "");
@@ -100,29 +115,35 @@ sceneElm.appendChild(imageContainer);
 // }, 13000);
 
 
-const histogramContainer = document.createElement("a-entity");
-histogramContainer.id = "histogram1";
-histogramContainer.setAttribute("thnpainter", "");
-histogramContainer.setAttribute("position", "0 0 0");
-sceneElm.appendChild(histogramContainer);
+// const histogramContainer = document.createElement("a-entity");
+// histogramContainer.id = "histogram1";
+// histogramContainer.setAttribute("thnpainter", "");
+// histogramContainer.setAttribute("position", "0 0 0");
+// sceneElm.appendChild(histogramContainer);
 
-const histogramContainer2 = document.createElement("a-entity");
-histogramContainer2.id = "histogram2";
-histogramContainer2.setAttribute("histogram", "");
-histogramContainer2.setAttribute("position", "0 0 0");
-sceneElm.appendChild(histogramContainer2);
+const padContainer = document.createElement("a-entity");
+padContainer.id = "pad1";
+padContainer.setAttribute("thnpainter", "");
+padContainer.setAttribute("position", "0 0 0");
+sceneElm.appendChild(padContainer);
 
-const histogramContainer3 = document.createElement("a-entity");
-histogramContainer3.id = "histogram3";
-histogramContainer3.setAttribute("histogram", "");
-histogramContainer3.setAttribute("position", "0 0 0");
-sceneElm.appendChild(histogramContainer3);
-
-const histogramContainer4 = document.createElement("a-entity");
-histogramContainer4.id = "histogram4";
-histogramContainer4.setAttribute("histogram", "");
-histogramContainer4.setAttribute("position", "0 0 0");
-sceneElm.appendChild(histogramContainer4);
+// const histogramContainer2 = document.createElement("a-entity");
+// histogramContainer2.id = "histogram2";
+// histogramContainer2.setAttribute("histogram", "");
+// histogramContainer2.setAttribute("position", "0 0 0");
+// sceneElm.appendChild(histogramContainer2);
+//
+// const histogramContainer3 = document.createElement("a-entity");
+// histogramContainer3.id = "histogram3";
+// histogramContainer3.setAttribute("histogram", "");
+// histogramContainer3.setAttribute("position", "0 0 0");
+// sceneElm.appendChild(histogramContainer3);
+//
+// const histogramContainer4 = document.createElement("a-entity");
+// histogramContainer4.id = "histogram4";
+// histogramContainer4.setAttribute("histogram", "");
+// histogramContainer4.setAttribute("position", "0 0 0");
+// sceneElm.appendChild(histogramContainer4);
 
 const options = new Map();
 options.set("h3scat", h3scat);
@@ -166,7 +187,7 @@ histogramSelect.addEventListener("change", (event) => {
     urlInput.style.display = "none";
     loadButton.style.display = "none";
     histogramSubjectGet().next({
-      id: "histogram1",
+      id: "pad1",
       opts: { render: "ndmvr" },
       obj: options.get(selectedValue),
       config: {
@@ -207,7 +228,7 @@ arrayDiv.innerHTML = `
 document.querySelector("#app").appendChild(arrayDiv);
 const arraySelect = document.getElementById("arraySelect");
 
-stateSubjectGet()
+stateSubjectGet("pad1")
   .getObservable()
   .subscribe((state) => {
     const newOptions = state.sets || [];
@@ -254,14 +275,14 @@ stateSubjectGet()
 arraySelect.addEventListener("change", (event) => {
   // console.log(event);
   console.log(arraySelect.value);
-  const currentValue = stateSubjectGet().getValue();
+  const currentValue = stateSubjectGet("pad1").getValue();
   currentValue.selectedArray = arraySelect.value;
-  stateSubjectGet().next(currentValue);
+  stateSubjectGet("pad1").next(currentValue);
 });
 
 checkboxContainer.addEventListener("change", (event) => {
   if (event.target.type === "checkbox") {
-    const currentValue = stateSubjectGet().getValue();
+    const currentValue = stateSubjectGet("pad1").getValue();
 
     // Collect all checked values
     const checkedValues = Array.from(
@@ -273,7 +294,7 @@ checkboxContainer.addEventListener("change", (event) => {
       JSON.stringify(currentValue.selectedSet) !== JSON.stringify(checkedValues)
     ) {
       currentValue.selectedSet = checkedValues;
-      stateSubjectGet().next(currentValue);
+      stateSubjectGet("pad1").next(currentValue);
     }
   }
 });
@@ -293,7 +314,7 @@ loadButton.addEventListener("click", async () => {
     // delete data.children;
 
     histogramSubjectGet().next({
-      id: "histogram1",
+      id: "pad1",
       opts: { render: "ndmvr" },
       obj: data,
     });
@@ -362,7 +383,8 @@ loadButton.addEventListener("click", async () => {
 
 // histogramSubjectGet().next({ id: "histogram1", opts: { render: "jsroot" }, obj: h3scat });
 //
-histogramSubjectGet().next({id: "histogram1", opts: {render: "ndmvr"}, obj: histo1_2_5});
+
+histogramSubjectGet().next({id: "pad1", opts: {render: "ndmvr"}, obj: test3});
 // histogramSubjectGet().next({id: 'histogram4', opts: {render: "nested"}, histogram: h3scat});
 // histogramSubjectGet().next({id: 'histogram1', opts: {render: "jsroot"}, histogram: h3scat});
 //
@@ -393,13 +415,60 @@ histogramSubjectGet().next({id: "histogram1", opts: {render: "ndmvr"}, obj: hist
 // histogramSubjectGet().next({id: 'histogram1', histogram: parse(histo4x3x1)});
 
 configSubjectGet().next(config);
+//
+// setTimeout(() => {
+//   const v = stateSubjectGet("histogram1").getValue();
+//   v.minMaxValue[1]["ComBg"].value.max  = 50000;
+//   stateSubjectGet("histogram1").next(v);
+// }, 5000);
 
+// let conf;
+//
+// configSubjectGet().getObservable().subscribe((config) => {
+//   conf = config;
+// });
+//
+// setTimeout(() => {
+//   conf.config.environment.histogramPads[0].scale = new Vector3(15, 15, 15);
+//   configSubjectGet().next(conf);
+// }, 5000);
+//
 binInfoSubjectGet()
   .getObservable()
   .subscribe((event) => {
     console.log(event);
-    // console.log(event.coords.forEach(c => console.log(c.x)));
   });
+
+// const tools = {
+//   empty: [{
+//     target: {
+//       entity: "nested-histogram",
+//       id: "histogram1"
+//     }
+//   }],
+//   first: [{
+//     target: {
+//       entity: "nested-histogram",
+//       id: "histogram1"
+//     }, event: "mousemove"
+//   }, {
+//     target: {
+//       entity: "nested-histogram",
+//       id: "histogram1"
+//     }, event: "mouseclick",
+//     function: function (event, context) {
+//       console.log("custom function from set functions: ", event, context);
+//     }
+//   }]
+// };
+//
+// setTimeout(() => {
+//   functionSubjectGet().setFunctions(tools.empty);
+// }, 2000);
+//
+// setTimeout(() => {
+//   functionSubjectGet().setFunctions(tools.first);
+// }, 5000);
 
 // setTimeout(() => {
 //   dispatchSubjectGet().next({
@@ -430,45 +499,45 @@ binInfoSubjectGet()
 //   });
 // }, 6000);
 
-setTimeout(() => {
-  //REMOVE ALL FUNCTIONS
-  // functionSubjectGet().removeFunctions({
-  //   target: {
-  //     entity: "nested-histogram",
-  //     id: "*"
-  //   }
-  // });
+// setTimeout(() => {
+//REMOVE ALL FUNCTIONS
+// functionSubjectGet().removeFunctions({
+//   target: {
+//     entity: "nested-histogram",
+//     id: "*"
+//   }
+// });
 
-  // REMOVE ALL FUNCTIONS ON EVENT
-  // functionSubjectGet().removeFunctions({
-  //   event: "mousemove",
-  //   target: {
-  //     entity: "nested-histogram",
-  //     id: "*"
-  //   }
-  // });
+// REMOVE ALL FUNCTIONS ON EVENT
+// functionSubjectGet().removeFunctions({
+//   event: "mousemove",
+//   target: {
+//     entity: "nested-histogram",
+//     id: "*"
+//   }
+// });
 
-  //ADD DEFAULT FUNCTION
-  // functionSubjectGet().addFunctions({
-  //   event: "mousemove",
-  //   target: {
-  //     entity: "nested-histogram",
-  //     id: "*"
-  //   },
-  // });
+//ADD DEFAULT FUNCTION
+// functionSubjectGet().addFunctions({
+//   event: "mousemove",
+//   target: {
+//     entity: "nested-histogram",
+//     id: "*"
+//   },
+// });
 
-  //ADD CUSTOM FUNCTION
-  functionSubjectGet().addFunctions({
-    event: "mouseclick",
-    target: {
-      entity: "nested-histogram",
-      id: "*"
-    },
-    function: function (event, context) {
-      console.log("my-custom-function: ", event);
-    }
-  });
-}, 3000);
+//ADD CUSTOM FUNCTION
+//   functionSubjectGet().addFunctions({
+//     event: "mouseclick",
+//     target: {
+//       entity: "nested-histogram",
+//       id: "*"
+//     },
+//     function: function (event, context) {
+//       console.log("my-custom-function: ", event);
+//     }
+//   });
+// }, 3000);
 
 // const functions = [
 //     {

@@ -12,13 +12,13 @@ class HistogramSubject {
     if (!this.#subjects.has(id)) {
       this.#subjects.set(id, new ReplaySubject(1));
     }
-
+    console.log("histogramSubjectGet with id: ", id);
     return this.#subjects.get(id).asObservable();
   }
 
   async next (e) {
+    console.log("histogramSubjectNext with id: ", e.id, " and event: ", e);
     if (!e.id) throw new Error("Missing id in event");
-    console.log(e);
 
     // Preprocess histogram
     if (typeof e.obj === "string") {

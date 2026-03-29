@@ -8,4 +8,24 @@ some_url: https://ndmspc.gitlab.io/ndmvr-core/docs
 ---
 ## Introduction
 
-TODO
+`ndmvr-core` is the foundational library of the NDMVR project. It provides a collection of reusable Three.js-based components that form the basis for 3D object visualization and inter-component communication using RxJS.
+
+The main object of visualization is an N-Dimensional histogram. It is a multi-dimensional representation of data using [the hypercube](https://en.wikipedia.org/wiki/Hypercube) concept.
+
+The library is designed to be modular and extensible, allowing developers to customize and integrate specific features as needed.
+
+The library is framework-agnostic. Each component is implemented as a plain JavaScript class and can be used independently of NDMVR in any Three.js-based project or framework.
+
+## Features
+
+* 3D objects capable of representing multi-dimensional data
+* Reactive communication between components powered by RxJS
+* High performance through optimized rendering and raycasting techniques
+* Seamless integration with any Three.js-based application
+
+## Getting Started
+
+If you are new to the NDMSPC project, see the [Getting Started](quickstart.md) guide for installation and basic usage instructions.
+
+This section of the documentation focuses specifically on the core library, its components, and the communication interfaces they provide.
+

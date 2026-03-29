@@ -2,7 +2,7 @@ import { canvasSubjectGet } from "../rxjs/CanvasSubject.js";
 import { filter } from "rxjs";
 import { makeImage } from "jsroot";
 import { configSubjectGet } from "../rxjs/ConfigSubject.js";
-import {Vector3, PlaneGeometry, MeshBasicMaterial, Color, DoubleSide, Mesh, TextureLoader} from "three";
+import {Vector3, PlaneGeometry, MeshBasicMaterial, Color, DoubleSide, Mesh, TextureLoader, Texture} from "three";
 
 
 export class CanvasClass {
@@ -38,9 +38,9 @@ export class CanvasClass {
       .getObservable()
       .pipe(filter((e) => (e.id === this.id) || (e.id === "*")))
       .subscribe((obj) => {
-        console.log("obj: ", obj);
+        console.log("Caught at: ", this.id);
         const object = obj.obj;
-        makeImage({ format: "png", object, width: 1200, height: 600 }).then(
+        makeImage({ format: "png", option: "pE", object, width: 1200, height: 600 }).then(
           (png) => {
             this.updateTexture(png);
           },
@@ -55,12 +55,15 @@ export class CanvasClass {
         ),
       )
       .subscribe((v) => {
-        this.position = v.config.environment.canvas.position;
-        this.rotation = v.config.environment.canvas.rotation;
-        this.scale = v.config.environment.canvas.scale;
+        const limits = v.config.environment.canvasPads.filter(canvas => canvas.id === this.id || canvas.id === "*");
+        if (limits.length === 0) return;
+        this.position = limits[0].limits.position;
+        this.rotation = limits[0].limits.rotation;
+        this.scale = limits[0].limits.scale;
         this.updateMesh();
       });
   }
+
 
   updateMesh () {
     this.plane.scale.set(this.scale.x, this.scale.y, this.scale.z);

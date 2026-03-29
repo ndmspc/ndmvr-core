@@ -1,4 +1,5 @@
-import { Vector3, Color } from "three";
+import {Vector3, Color, TextureLoader, SRGBColorSpace, SpriteMaterial, Sprite} from "three";
+import hnotFilledUrl from "../assets/HnotFilled.png";
 
 export function appendPads(subjectValue, ids, disp_kind, { scale, padding, origin }) {
   // The raw config is inside subjectValue.config
@@ -104,6 +105,9 @@ export function ensureDefaultBindings(config) {
 
   return config;
 }
+
+
+
 
 
 export function parseConfig(json, existingConfig = null) {
@@ -268,4 +272,41 @@ export function parseConfig(json, existingConfig = null) {
 
   const transformedData = transform(data);
   return deepMerge(existingConfig, transformedData);
+}
+
+export function isObjectEmpty(obj) {
+  for (const key in obj) {
+    if (Object.prototype.hasOwnProperty.call(obj, key)) {
+      return false;
+    }
+  }
+  return true;
+}
+
+export function areLimitsEqual(obj1, obj2) {
+  const props = ["scale", "padding", "position"];
+  return props.every(prop =>
+    obj1[prop]?.x === obj2[prop]?.x &&
+    obj1[prop]?.y === obj2[prop]?.y &&
+    obj1[prop]?.z === obj2[prop]?.z
+  );
+}
+
+export function createHnotFilledSprite(limits, setPointerToParent) {
+  const texture = new TextureLoader().load(hnotFilledUrl);
+  texture.colorSpace = SRGBColorSpace;
+
+  const material = new SpriteMaterial({map: texture, transparent: true});
+
+
+  const sprite = new Sprite(material);
+
+  sprite.scale.set(...limits.scale);
+  sprite.position.set(...limits.position);
+
+  sprite.raycast = (e) => {
+    if (e._triggerSource === "shiftmousedbclick") setPointerToParent();
+  };
+
+  return sprite;
 }

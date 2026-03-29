@@ -32,14 +32,14 @@ class ConfigSubject {
     this.#subject.next(updated);
   }
 
-  mergeHistogramConfig (partialConfig, defaultConfig = this.#subject.value.config.histogram) {
+  mergeHistogramConfig (partialConfig, currentConfig = this.#subject.value.config.histogram) {
     // If partialConfig is undefined/null, return defaultConfig
     if (partialConfig === undefined || partialConfig === null) {
-      return defaultConfig;
+      return currentConfig;
     }
 
     // If defaultConfig is not an object, return partialConfig
-    if (typeof defaultConfig !== "object" || defaultConfig === null) {
+    if (typeof currentConfig !== "object" || currentConfig === null) {
       return partialConfig;
     }
 
@@ -60,12 +60,12 @@ class ConfigSubject {
     };
 
     // Handle arrays and special objects - replace entirely
-    if (isValueObject(defaultConfig)) {
-      return isValueObject(partialConfig) ? partialConfig : defaultConfig;
+    if (isValueObject(currentConfig)) {
+      return isValueObject(partialConfig) ? partialConfig : currentConfig;
     }
 
     // Handle objects - deep merge
-    const merged = { ...defaultConfig };
+    const merged = { ...currentConfig };
 
     for (const key in partialConfig) {
       if (partialConfig.hasOwnProperty(key)) {

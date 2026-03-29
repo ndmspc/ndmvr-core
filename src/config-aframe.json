@@ -1,7 +1,7 @@
 {
   "config": {
     "environment": {
-      "dbClickTimeout": 190,
+      "dbClickTimeout": 200,
       "camera": {
         "position": {
           "x": 0,
@@ -9,30 +9,53 @@
           "z": 0
         }
       },
-      "canvas": {
-        "position": {
-          "x": 0,
-          "y": 5,
-          "z": -15
-        },
-        "rotation": {
-          "x": 10,
-          "y": 0,
-          "z": 0
-        },
-        "scale": {
-          "x": 20,
-          "y": 10,
-          "z": 0
+      "canvas": [{
+          "id": "histogram1-cinema",
+          "limits": {
+            "position": {
+              "x": -15,
+              "y": 20,
+              "z": -30
+            },
+            "rotation": {
+              "x": 10,
+              "y": 0,
+              "z": 0
+            },
+            "scale": {
+              "x": 40,
+              "y": 25,
+              "z": 0
+            }
+          }
+        }, {
+        "id": "histogram2-cinema",
+        "limits": {
+          "position": {
+            "x": 25,
+            "y": 20,
+            "z": -30
+          },
+          "rotation": {
+            "x": 10,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 40,
+            "y": 25,
+            "z": 0
+          }
         }
-      },
+      }
+      ],
       "histogramPads": {
         "type": "grid1x1x1",
         "prefix": "histogram",
         "scale": {
           "x": 10,
           "y": 10,
-          "z": 2
+          "z": 10
         },
         "padding": {
           "x": 0,
@@ -61,16 +84,15 @@
         }
       },
       "scale": {
+        "scaleBy": "value",
+        "content": "global",
+        "parameter": "fixed",
+        "sets": "relative",
         "default": {
-          "min": 0,
+          "min": 0.1,
           "max": 1
         },
         "layer": []
-      },
-      "sets": {
-        "scale": {
-          "maximum": "relative"
-        }
       },
       "TH1ZScale": {
         "default": 0.8,
@@ -84,8 +106,8 @@
       },
       "wireframe": {
         "display": {
-          "start": 1,
-          "end": 1
+          "start": 0,
+          "end": 99
         },
         "displaySets": false,
         "layer": [],
@@ -93,7 +115,7 @@
           "default": "0x00FF00",
           "layer": [
             "0x000000",
-            "0x0000FF",
+            "0x0B3D91",
             "0x00FF00",
             "0x00FFFF"
           ],
@@ -101,6 +123,7 @@
         }
       },
       "color": {
+        "colorBy": "error",
         "default": {
           "min": "0x0000ff",
           "max": "0xff0000"

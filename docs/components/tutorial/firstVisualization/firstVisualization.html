@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>First Visualization - NDMVR</title>
+  <style>
+    body {
+      margin: 0;
+      overflow: hidden;
+      font-family: Arial, sans-serif;
+    }
+
+    canvas {
+      display: block;
+    }
+
+    #info {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      color: white;
+      background: rgba(0, 0, 0, 0.7);
+      padding: 10px;
+      border-radius: 5px;
+    }
+  </style>
+</head>
+<body>
+<div id="info">
+  <h3>First Visualization</h3>
+  <p>Use mouse to rotate, scroll to zoom</p>
+</div>
+
+<script type="importmap">
+  {
+      "imports": {
+          "three": "https://cdn.jsdelivr.net/npm/three@0.173.0/build/three.module.js",
+          "three/examples/jsm/": "https://cdn.jsdelivr.net/npm/three@0.173.0/examples/jsm/",
+          "jsroot": "https://root.cern/js/latest/modules/main.mjs",
+          "ndmvr-core": "https://cdn.jsdelivr.net/npm/@ndmspc/ndmvr-core@1.0.1/dist/index.es.js",
+          "rxjs": "https://esm.sh/rxjs@7.8.1",
+          "rxjs/": "https://esm.sh/rxjs@7.8.1/"
+      }
+  }
+</script>
+
+<script type="module">
+  import { THnPainter, configSubjectGet } from "ndmvr-core";
+  import h3scat from "../h3scat.json" with { type: "json" };
+  import { parse } from "jsroot";
+  import initThreeScene from "../three-scene.js";
+  import config from "./config.json" with {type: "json"};
+
+  // Initialize Three.js scene
+  const { scene } = initThreeScene();
+  const opts = {config: {
+    enviroment: {
+      histogramPads: [{
+        id: "histogram1",
+        scale: {x: 50, y: 50, z: 50},
+        position: {x: -5, y: 0, z: 0},
+        padding: {x: 0, y: 0, z: 0},
+      }]
+    }}}
+
+  // Load and render histogram
+  async function loadHistogram() {
+    try {
+      const histoObj = { obj: parse(h3scat) };
+
+      // Create THn painter
+      const painter = new THnPainter(histoObj, "histogram1", opts);
+      setTimeout(() => {
+        console.log(painter.config)
+      }, 2000)
+
+
+      // Add to scene
+      scene.add(painter.mesh);
+      scene.add(painter.wireframe.wireframe);
+
+      console.log("Histogram loaded successfully!");
+
+    } catch (error) {
+      console.error("Error loading histogram:", error);
+    }
+  }
+
+  configSubjectGet().next(config);
+
+  // Initialize
+  loadHistogram();
+</script>
+</body>
+</html>

@@ -6,9 +6,10 @@ export class HistogramPointerClass {
   path = undefined;
   title = undefined;
   range = [];
-  isOnSet = false;
+  isOnSet = null;
+  isHistogramFilled = true;
 
-  constructor (rootObj) {
+  constructor(rootObj) {
     this.rootObj = rootObj;
     this.origin = this.rootObj;
     this.title = this.origin.fTitle;
@@ -20,20 +21,26 @@ export class HistogramPointerClass {
    * @param index is an index in child mapping.
    * @param set if children contains sets, parameter need to be specified.
    * */
-  setOriginToChild (index, set, range) {
+  setOriginToChild(index, set, range) {
     // console.log('vojde', this.origin, ', set: ', set);
     if (!index) return;
     // console.log(index)
     const currentIndex = index.splice(0, 1);
     if (!this.origin?.children) return;
     if (this.origin.children?.content) {
-      this.parentPath.push({ origin: this.origin, range: range, bin: currentIndex });
+      this.parentPath.push({origin: this.origin, range: range.splice(0, 1), bin: currentIndex});
       this.origin = this.origin.children.content[currentIndex];
-      this.isOnSet = false;
+      this.isOnSet = null;
     } else if (Object.keys(this.origin.children).includes(set)) {
-      this.parentPath.push({ origin: this.origin, range: range, bin: currentIndex });
+      this.parentPath.push({origin: this.origin, range: range.splice(0, 1), bin: currentIndex});
+      if (!this.origin.children[set][currentIndex]) {
+        this.isHistogramFilled = false;
+        this.path = this.path + "/empty";
+        this.origin = null;
+        return;
+      }
       this.origin = this.origin.children[set][currentIndex];
-      this.isOnSet = true;
+      this.isOnSet = set;
     } else {
       console.error("Bad set or index specified.");
       return;
@@ -42,9 +49,10 @@ export class HistogramPointerClass {
     this.title = this.origin.fTitle;
     this.path = this.path + "/" + this.origin.fName;
     if (index.length > 0) {
-      this.setOriginToChild(index, set);
+      this.setOriginToChild(index, set, range);
     }
   }
+
   /**
    * Method to get child (jsroot object) by position
    * @warning for @param position only supply shallow copy of value,
@@ -57,10 +65,10 @@ export class HistogramPointerClass {
    * */
   /**
    * */
-  getChildByPosition (index, set, node = this.origin) {
-    if (!index || index.length === 0) return node;
-    const currentIndex = index.pop();
-    if (!node?.children) return node;
+  getChildByPosition(index, set, node = this.origin) {
+    if (!index || index.length === 0) return {...node};
+    const currentIndex = index.splice(0,1)[0];
+    if (!node?.children) return {...node};
     if (node.children?.content) {
       return this.getChildByPosition(index, set, node.children.content[currentIndex]);
     } else if (Object.keys(node.children).includes(set)) {
@@ -75,7 +83,7 @@ export class HistogramPointerClass {
    * sets origin of pointer to one of parent nodes.
    * @param steps (optional, default = 1) defines how many steps in path should pointer go upwards.
    * */
-  setOriginToParent (steps = 1) {
+  setOriginToParent(steps = 1) {
     if (steps <= 0 || this.parentPath.length === 0) return;
     const pathIndex = this.path.lastIndexOf("/");
     this.path = this.path.slice(0, pathIndex);
@@ -85,7 +93,8 @@ export class HistogramPointerClass {
     }
     this.title = this.origin.fTitle;
     this.setOriginToParent(steps - 1);
-    this.isOnSet = false;
+    this.isOnSet = null;
+    this.isHistogramFilled = true;
   }
 
 }

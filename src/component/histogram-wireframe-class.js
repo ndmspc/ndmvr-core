@@ -1,5 +1,5 @@
-import { configSubjectGet } from "../rxjs/ConfigSubject.js";
-import { filter } from "rxjs";
+import {configSubjectGet} from "../rxjs/ConfigSubject.js";
+import {filter} from "rxjs";
 import {
   BoxGeometry, Color,
   EdgesGeometry,
@@ -8,7 +8,7 @@ import {
   InstancedBufferGeometry,
   LineSegments, ShaderMaterial
 } from "three";
-import { stateSubjectGet } from "../rxjs/StateSubject.js";
+import {stateSubjectGet} from "../rxjs/StateSubject.js";
 
 export default class HistogramWireframeClass {
 
@@ -26,10 +26,12 @@ export default class HistogramWireframeClass {
   config = undefined;
   numOfavailableSets = undefined;
   visibility = true;
+  id = undefined;
 
-  constructor (maxInstancesPerLayer, matrixCache, config) {
+  constructor(maxInstancesPerLayer, matrixCache, config, id) {
     this.config = config;
     this.maxInstancesPerLayer = maxInstancesPerLayer;
+    this.id = id;
 
     const baseBox = new BoxGeometry(1, 1, 1);
     const baseEdges = new EdgesGeometry(baseBox);
@@ -66,20 +68,23 @@ export default class HistogramWireframeClass {
     this.wireframe = new LineSegments(this.instGeom, this.material);
     this.wireframe.frustumCulled = false;
 
-    this.stateSub = stateSubjectGet().getObservable().subscribe(v => {
+    this.stateSub = stateSubjectGet(this.id).getObservable().subscribe(v => {
       this.numOfavailableSets = v.sets.length;
     });
   }
 
-  pushVisibleInstances (matrixCache, maxInstancesPerLayer, setIndex) {
+  pushVisibleInstances(matrixCache, maxInstancesPerLayer, setIndex) {
     let parent = this.wireframe.parent;
     if (parent) {
       parent.remove(this.wireframe);
       this.instGeom.dispose();
     }
 
+    const startLayer = this.config.display.start ?? 0;
+    const endLayer = this.config.display.end ?? matrixCache.length - 1;
+
     const visibilityCache = [];
-    const lastLayer = matrixCache.length - 1;
+    let lastLayer = matrixCache.length - 1;
 
     {
       const inst = Array.isArray(matrixCache[lastLayer])
@@ -117,7 +122,10 @@ export default class HistogramWireframeClass {
       visibilityCache[layer] = vis;
     }
 
-    const isVisible = (layer, i) => visibilityCache[layer][i] === 1;
+    const isVisible = (layer, i) => {
+      if (layer < startLayer || layer > endLayer) return false;
+      return visibilityCache[layer][i] === 1;
+    };
 
     const computeNumOfInstBeneath = (layer, i) => {
       let num = 0;
@@ -128,7 +136,7 @@ export default class HistogramWireframeClass {
         curIdx *= maxInstancesPerLayer[curLayer];
         const layerData = matrixCache[curLayer];
         const inst = Array.isArray(layerData)
-          ? layerData[setIndex]
+          ? layerData[setIndex === -1 ? 0 : setIndex]
           : layerData;
         for (let x = curIdx; x < curIdx + maxInstancesPerLayer[curLayer]; x++) {
           if (inst.rendered[x] !== -1) {
@@ -201,7 +209,7 @@ export default class HistogramWireframeClass {
 
 
   //TODO cool
-  toggleVisibility (matrixCache, maxInstancesPerLayer, setIndex) {
+  toggleVisibility(matrixCache, maxInstancesPerLayer, setIndex) {
     this.visibility = !this.visibility;
     if (!this.visibility) {
       this.clearWireframe();
@@ -211,7 +219,7 @@ export default class HistogramWireframeClass {
   }
 
   //TODO cool
-  dispose () {
+  dispose() {
     this.instancePositions = [];
     this.instanceScales = [];
     this.wireframe.parent.remove(this.wireframe);
@@ -219,7 +227,7 @@ export default class HistogramWireframeClass {
   }
 
   //TODO cool
-  clearWireframe () {
+  clearWireframe() {
     this.instancePositions = new Float32Array(3);
     this.instanceScales = new Float32Array(3);
     this.instanceColors = new Float32Array(1);
@@ -230,7 +238,7 @@ export default class HistogramWireframeClass {
   }
 
   //TODO cool
-  fillColorArray () {
+  fillColorArray() {
     new Color(this.config.color.default).toArray(this.colorArray, 0);
     let currentIndex = 1;
 
@@ -250,12 +258,12 @@ export default class HistogramWireframeClass {
         currentIndex++;
       });
 
-    this.material.uniforms.colorArray = { value: this.colorArray };
+    this.material.uniforms.colorArray = {value: this.colorArray};
     this.material.uniformsNeedUpdate = true;
   }
 
   //TODO cool
-  createMaterial () {
+  createMaterial() {
     return new ShaderMaterial({
       vertexShader: `
                 attribute vec3 instancePosition;
@@ -285,7 +293,7 @@ export default class HistogramWireframeClass {
   }
 
   //TODO cool
-  getColorIndex (layer, set) {
+  getColorIndex(layer, set) {
     if (this.config.color.set[set]) {
       return this.config.color.layer.length + 1;
     } else if (this.config.color.layer[layer]) {
@@ -296,7 +304,7 @@ export default class HistogramWireframeClass {
   }
 
   //TODO cool
-  getColorAt (layer, set) {
+  getColorAt(layer, set) {
     if (this.config.color.set[set]) {
       return this.config.color.set[set];
     } else if (this.config.color.layer[layer]) {

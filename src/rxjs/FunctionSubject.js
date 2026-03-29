@@ -41,6 +41,42 @@ class FunctionSubject {
   }
 
   /**
+   * Method to take functions and proposes them to histogram with set flag.
+   * @param input can be Array of objects with appropriate flags and functions, or single object with flag and function.
+   * */
+  setFunctions (input) {
+    if (!input) return;
+    let functions;
+    if ((input instanceof Array)) {
+      functions = input;
+    } else {
+      functions = Array.of(input);
+    }
+    functions.forEach(func => {
+      this.#subject.next({
+        flag: "removeAll",
+        target: func.target,
+      });
+    });
+
+    functions.forEach(func => {
+      let id = func.target.id;
+      if (!(id instanceof Array)) {
+        id = Array.of(id);
+      }
+      this.#subject.next({
+        flag: "add",
+        target: {
+          entity: func.target.entity,
+          id: id
+        },
+        event: func.event,
+        function: func.function
+      });
+    });
+  }
+
+  /**
    * Function that takes array of functions and proposes them to histogram with delete flag.
    * */
   removeFunctions (input) {
@@ -52,7 +88,6 @@ class FunctionSubject {
       functions = Array.of(input);
     }
     functions.forEach(func => {
-      console.log(func);
       let id = func.target.id;
       if (!(id instanceof Array)) {
         id = Array.of(id);
