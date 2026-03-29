@@ -1,6 +1,7 @@
 variables:
   PUBLIC_URL: "/ndmvr-core/" # slash is important
-  IMAGE: node:22.11.0
+  IMAGE: node:24
+
 image: ${IMAGE}
 
 stages:
