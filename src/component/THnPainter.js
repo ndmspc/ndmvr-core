@@ -794,6 +794,79 @@ export class THnPainter extends TPainter {
     });
   }
 
+  /**
+   * @desc Returns the bin position and scale
+   * for a given index and set from matrix cache(scaled to content/error).
+   * @returns {Object} - {position: {x, y, z}, scale: {x, y, z}}
+   * */
+  getBinPosScaleByIndexMC(index, set) {
+    const layer = set && set !== "content"
+      ? this.matrixCache[index.length - 1][this.availableSets.indexOf(set)]
+      : this.matrixCache[index.length - 1];
+
+    const cacheIndex = (index.at(-1) /   //instance index
+        this.maxInstancesPerLayer.slice(index.length).reduce((acc, value) => acc * value, 1)) //divider
+      * 3;  //match array
+
+    return {
+      position: layer.pos.slice(cacheIndex, cacheIndex + 3),
+      scale: layer.scale.slice(cacheIndex, cacheIndex + 3)
+    };
+  }
+
+  /**
+   * @desc Returns the bin position and scale (whole available/not scaled)
+   * for a given index and set(scaled to content/error).
+   * @returns {Object} - {position: {x, y, z}, scale: {x, y, z}}
+   * */
+  getBinPosScaleByIndex(index, set, obj, relPos) {
+    const toXYZ = ({ scale, position }) => ({
+      scale: { x: scale[0], y: scale[1], z: scale[2] },
+      position: { x: position[0], y: position[1], z: position[2] }
+    });
+
+    const currentLayer = index.length - 1;
+    const limits = currentLayer === 0 //get limits of previous bin layer
+      ? this.limits
+      : toXYZ(this.getBinPosScaleByIndexMC(index.slice(0, -1), null));
+    const _binSizePos = {
+      x: {size: 0, pos: 0},
+      y: {size: 0, pos: 0},
+      z: {size: 0, pos: 0}
+    };
+
+    const isTH1 = obj._typename.substring(0, 3) === "TH1";
+    const sourcePadding = this.config.padding.layer[currentLayer]
+      ?? this.config.padding.default;
+
+    let padding =
+      !this.config.padding.layer[currentLayer] && isTH1
+        ? {x: sourcePadding.x, y: sourcePadding.y, z: sourcePadding.z}
+        : {...sourcePadding};
+
+    if (set && this.config.padding.sets && isTH1) {
+      padding = {x: this.config.padding.sets.x, y: 0, z: 0};
+    }
+    if (this.pointer.isOnSet) {
+      padding = {x: 0, y: 0, z: 0};
+    }
+
+    flipLocalZAxis(
+      limits.position.z,
+      limits.scale.z,
+      rootSizePosToAFrame(computeAFrameBinSizePos(
+        obj, relPos, padding, limits?.scale, limits?.position,
+        currentLayer, _binSizePos
+      )),
+    );
+
+    return {
+      position: [_binSizePos.x.pos, _binSizePos.y.pos, _binSizePos.z.pos],
+      scale: [_binSizePos.x.size, _binSizePos.y.size, _binSizePos.z.size]
+    };
+  }
+
+
   mousemoveDefault(event) {
     const areIndexesEqual = (index1, index2) => {
       if (index1.length !== index2.length) return false;
@@ -826,7 +899,13 @@ export class THnPainter extends TPainter {
       range: parentRange.concat(event.range)
     };
     const {range: coords, level, content, error, set, triggerSource, instanceId} = merged;
-    const minimizedEvent = {coords, level, content, error, set, triggerSource, instanceId};
+    const minimizedEvent = {
+      coords, level, content, error, set, triggerSource, instanceId,
+      binPosSize: this.getBinPosScaleByIndexMC(merged.instanceId, merged.set),
+      binWholePosSize: this.getBinPosScaleByIndex(
+        merged.instanceId, merged.set, merged.jsrootObj, merged.index.at(-1)
+      )
+    };
     binInfoSubjectGet().next(minimizedEvent);
   }
 

@@ -433,9 +433,19 @@ configSubjectGet().next(config);
 //   configSubjectGet().next(conf);
 // }, 5000);
 //
+
+const geometry = new THREE.BoxGeometry(1, 1, 1);
+const material = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
+const cube = new THREE.Mesh(geometry, material);
+
 binInfoSubjectGet()
   .getObservable()
   .subscribe((event) => {
+    sceneElm.object3D.remove(cube);
+    cube.position.set(event.binPosSize.position[0], event.binPosSize.position[1], event.binPosSize.position[2]);
+    cube.scale.set(event.binPosSize.scale[0], event.binPosSize.scale[1], event.binPosSize.scale[2]);
+    sceneElm.object3D.add(cube);
+    // console.log(sceneElm.object3D);
     console.log(event);
   });
 
