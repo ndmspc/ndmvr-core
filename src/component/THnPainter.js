@@ -413,6 +413,7 @@ export class THnPainter extends TPainter {
       const outside = obj.fArrays?.[this.selectedArray]?.outside ?? false;
       const selectedSetIndex = this.selectedSet.indexOf(set);
       const availableSetIndex = this.availableSets.indexOf(set);
+      const fArrayValuesAvailable = obj.fArrays[Object.keys(obj.fArrays)[0]].values;
 
       //PRIKLAD NA static CONFIG
       // {
@@ -464,12 +465,14 @@ export class THnPainter extends TPainter {
           errorMin = this.minErrorPerLayer[currentLayer + this.pointer.parentPath.length][set];
         }
 
-      } else if (this.selectedArray !== "content" && obj.fArrays) { //array
+      } else if (this.selectedArray !== "content" && obj.fArrays && fArrayValuesAvailable) { //array
         if (this.config.scale.parameter === "fixed") { //array static
           ({min: contentMin, max: contentMax} =
-            this.minMaxValue[currentLayer + this.pointer.parentPath.length][this.selectedArray].value);
+            // this.minMaxValue[0][this.selectedArray].value);
+          this.minMaxValue[currentLayer + this.pointer.parentPath.length][this.selectedArray].value);
           ({min: errorMin, max: errorMax} =
-            this.minMaxValue[currentLayer + this.pointer.parentPath.length][this.selectedArray].error);
+            // this.minMaxValue[0][this.selectedArray].error);
+          this.minMaxValue[currentLayer + this.pointer.parentPath.length][this.selectedArray].error);
           // ({min: contentMin, max: contentMax} =
           // this.config.scale.parameter.static.layer?.[currentLayer] ??
           // this.config.scale.parameter.static.default);
@@ -488,12 +491,17 @@ export class THnPainter extends TPainter {
           errorMin = this.minErrorPerLayer[currentLayer + this.pointer.parentPath.length][this.selectedArray];
 
         } else {  //array global
-          contentMin = scaleByValue ? this.minContentPerLayer[currentLayer + this.pointer.parentPath.length][this.selectedArray] : -0.1;
+          contentMin = scaleByValue ? this.minContentPerLayer[0][this.selectedArray] : -0.1;
+          // contentMin = scaleByValue ? this.minContentPerLayer[currentLayer + this.pointer.parentPath.length][this.selectedArray] : -0.1;
           contentMax = scaleByValue
-            ? this.maxContentPerLayer[currentLayer + this.pointer.parentPath.length][this.selectedArray]
-            : this.maxErrorPerLayer[currentLayer + this.pointer.parentPath.length][this.selectedArray];
-          errorMax = this.maxErrorPerLayer[currentLayer + this.pointer.parentPath.length][this.selectedArray];
-          errorMin = this.minErrorPerLayer[currentLayer + this.pointer.parentPath.length][this.selectedArray];
+            ? this.maxContentPerLayer[0][this.selectedArray]
+            // ? this.maxContentPerLayer[currentLayer + this.pointer.parentPath.length][this.selectedArray]
+            : this.maxErrorPerLayer[0][this.selectedArray];
+          // : this.maxErrorPerLayer[currentLayer + this.pointer.parentPath.length][this.selectedArray];
+          // errorMax = this.maxErrorPerLayer[currentLayer + this.pointer.parentPath.length][this.selectedArray];
+          errorMax = this.maxErrorPerLayer[0][this.selectedArray];
+          // errorMin = this.minErrorPerLayer[currentLayer + this.pointer.parentPath.length][this.selectedArray];
+          errorMin = this.minErrorPerLayer[0][this.selectedArray];
         }
 
       } else {  //content
@@ -562,6 +570,9 @@ export class THnPainter extends TPainter {
         ? this.config.scale?.layer[currentLayer]
         : this.config.scale.default;
 
+      //-----------------------------------------------------------------
+      //----------------MAIN FOR CYCLE-----------------------------------
+      //-----------------------------------------------------------------
       for (let i = startIndex; i < endIndex; i += stepFor) {
         const relPos = {
           x: counter.getValueAt(0),
@@ -578,11 +589,12 @@ export class THnPainter extends TPainter {
           )),
         );
 
-        //-------------ODTADIAL---------
         const content = this.getBinContent(
-          obj, relPos.x, relPos.y, relPos.z, this.selectedArray
+          obj, relPos.x, relPos.y, relPos.z, fArrayValuesAvailable ? this.selectedArray : "content"
         );
-        const error = this.getBinError(obj, relPos.x, relPos.y, relPos.z, this.selectedArray);
+        const error = this.getBinError(
+          obj, relPos.x, relPos.y, relPos.z, fArrayValuesAvailable ? this.selectedArray : "content"
+        );
         const scaleValue = this.config.scale.scaleBy === "value" ? content : error;
         let scaleMin = this.config.scale.scaleBy === "value" ? contentMin : errorMin;
         const scaleMax = this.config.scale.scaleBy === "value" ? contentMax : errorMax;
@@ -781,7 +793,7 @@ export class THnPainter extends TPainter {
 
   mouseClickDefault(event) {
     this.showChildHistogram(event.index);
-    if (event.selectedArray !== "content") {
+    if (event.selectedArray !== "content" && event.jsrootObj?.fArrays[event.selectedArray]?.values) {
       event.jsrootObj.fArray = event.jsrootObj.fArrays[event.selectedArray]?.values;
       event.jsrootObj.fSumw2 = event.jsrootObj.fArrays[event.selectedArray]?.errors;
       event.jsrootObj.fMinimum = event.jsrootObj.fArrays[event.selectedArray]?.min;
@@ -1206,6 +1218,7 @@ export class THnPainter extends TPainter {
     };
 
     if (origin.children?.content) appendChildArrays(origin.children.content);
+    currentValue.arrays = [...new Set(currentValue.arrays)];
     stateSubjectGet(this.id).next(currentValue);
   }
 
@@ -1454,6 +1467,7 @@ export class THnPainter extends TPainter {
       const perInstance = this.maxInstancesPerLayer[layer + 1];
       const indexOffset =
         this.maxInstancesPerLayer[layer] * this.maxInstancesPerLayer[layer + 1];
+      const fArrayValuesAvailable = node.fArrays[Object.keys(node.fArrays)[0]].values;
 
       dfs(layer, offset, set).forEach((intersect) => {
         const indexNormalized =
@@ -1523,8 +1537,12 @@ export class THnPainter extends TPainter {
                   fullPath, set, this.pointer.origin, this.wireframe, this.selectedSet),
                 origin: this,
                 jsrootObj: node,
-                content: this.getBinContent(node, posX, posY, posZ, this.selectedArray),
-                error: this.getBinError(node, posX, posY, posZ, this.selectedArray),
+                content: this.getBinContent(
+                  node, posX, posY, posZ, fArrayValuesAvailable ? this.selectedArray : "content"
+                ),
+                error: this.getBinError(
+                  node, posX, posY, posZ, fArrayValuesAvailable ? this.selectedArray : "content"
+                ),
               });
           }
         } else {
@@ -1544,8 +1562,12 @@ export class THnPainter extends TPainter {
             origin: this,
             object: this.mesh,
             jsrootObj: node,
-            content: this.getBinContent(node, posX, posY, posZ, this.selectedArray),
-            error: this.getBinError(node, posX, posY, posZ, this.selectedArray),
+            content: this.getBinContent(
+              node, posX, posY, posZ, fArrayValuesAvailable ? this.selectedArray : "content"
+            ),
+            error: this.getBinError(
+              node, posX, posY, posZ, fArrayValuesAvailable ? this.selectedArray : "content"
+            ),
           });
         }
       });
@@ -1588,7 +1610,7 @@ export class THnPainter extends TPainter {
         jsrootObj: node,
         content: this.getBinContent(
           node, pos[0].x + 1, pos[0].y + 1, pos[0].z + 1,
-          this.selectedArray
+          node.fArrays[Object.keys(node.fArrays)[0]].values ? this.selectedArray : "content"
         ),
         error: node.getBinError(pos[0].x + 1, pos[0].y + 1, pos[0].z + 1)
       };
