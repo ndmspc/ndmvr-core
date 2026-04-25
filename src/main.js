@@ -21,6 +21,7 @@ import histo12_5 from "./assets/histograms/nested/test_12_5.json";
 import histo1_25 from "./assets/histograms/nested/test_1_25.json";
 import histo1_2_5 from "./assets/histograms/nested/test_1_2_5.json";
 import histo5_2_1 from "./assets/histograms/nested/test_5_2_1.json";
+import testNested from "./assets/histograms/nested/test_nested.json";
 import test3 from "./assets/histograms/nested/test3.json";
 // import test3f from "./assets/histograms/nested/test3f.json";
 import nav from "./assets/histograms/nested/nav.json";
@@ -384,7 +385,7 @@ loadButton.addEventListener("click", async () => {
 // histogramSubjectGet().next({ id: "histogram1", opts: { render: "jsroot" }, obj: h3scat });
 //
 
-histogramSubjectGet().next({id: "pad1", opts: {render: "ndmvr"}, obj: test3});
+histogramSubjectGet().next({id: "pad1", opts: {render: "ndmvr"}, obj: testNested});
 // histogramSubjectGet().next({id: 'histogram4', opts: {render: "nested"}, histogram: h3scat});
 // histogramSubjectGet().next({id: 'histogram1', opts: {render: "jsroot"}, histogram: h3scat});
 //
