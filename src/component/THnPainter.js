@@ -594,26 +594,23 @@ export class THnPainter extends TPainter {
 
         let scaleMin = this.config.scale.scaleBy === "value" ? contentMin : errorMin;
         const scaleMax = this.config.scale.scaleBy === "value" ? contentMax : errorMax;
-        if (scaleMin === scaleMax) scaleMin -= scaleMin * 0.1;
-        // const content = this.getBinContent(
-        //   obj, relPos.x, relPos.y, relPos.z, fArrayValuesAvailable ? this.selectedArray : "content"
-        // );
-        // const error = this.getBinError(
-        //   obj, relPos.x, relPos.y, relPos.z, fArrayValuesAvailable ? this.selectedArray : "content"
-        // );
-        const content = fArrayValuesAvailable || this.selectedArray === "content"
+
+        let content = fArrayValuesAvailable || this.selectedArray === "content"
           ? this.getBinContent( obj, relPos.x, relPos.y, relPos.z, this.selectedArray)
           : scaleMax;
         const error = fArrayValuesAvailable || this.selectedArray === "content"
           ? this.getBinError( obj, relPos.x, relPos.y, relPos.z, this.selectedArray)
           : 0;
+        console.log("scaleMin", scaleMin, "scaleMax", scaleMax, "content", content);
 
         const scaleValue = this.config.scale.scaleBy === "value" ? content : error;
 
         // console.log("content", content, "error", error, "scaleValue: ", scaleValue, "outside?: ", outside, "scaleMin", scaleMin, "scaleMax", scaleMax );
 
         let scaleFactor = 1;
-        if ((scaleValue >= scaleMin) === !outside) {
+        if (scaleMin === scaleMax) {
+          scaleFactor = 1;
+        } else if ((scaleValue >= scaleMin) === !outside) {
           const contentPer = scaleType[0].scaleType === "log10"
             ? Math.log(1 + (scaleValue - scaleMin)) / Math.log(1 + (scaleMax - scaleMin))
             : (scaleValue - scaleMin) / (scaleMax - scaleMin);
