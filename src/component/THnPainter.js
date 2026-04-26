@@ -415,7 +415,7 @@ export class THnPainter extends TPainter {
       const outside = obj.fArrays?.[this.selectedArray]?.outside ?? false;
       const selectedSetIndex = this.selectedSet.indexOf(set);
       const availableSetIndex = this.availableSets.indexOf(set);
-      const fArrayValuesAvailable = obj.fArrays ? obj.fArrays[Object.keys(obj.fArrays)[0]].values : false;
+      const fArrayValuesAvailable = obj.fArrays ? obj.fArrays[Object.keys(obj.fArrays)[0]].values ?? false : false;
       const scaleType = this.availableAxes[currentLayer];
 
       //PRIKLAD NA static CONFIG
@@ -618,11 +618,11 @@ export class THnPainter extends TPainter {
             ? Math.log(1 + (scaleValue - scaleMin)) / Math.log(1 + (scaleMax - scaleMin))
             : (scaleValue - scaleMin) / (scaleMax - scaleMin);
           if (!outside) {
-            scaleFactor =
-              Number.isInteger(scaleValue) && scaleValue === 0 && this.config.scale.scaleBy === "value"
-                ? (scaleFactor = 0)
-                : ((maxFactor - minFactor) * contentPer) + minFactor;
-            // scaleFactor = ((maxFactor - minFactor) * contentPer) + minFactor;
+            // scaleFactor =
+            //   Number.isInteger(scaleValue) && scaleValue === 0 && this.config.scale.scaleBy === "value"
+            //     ? (scaleFactor = 0)
+            //     : ((maxFactor - minFactor) * contentPer) + minFactor;
+            scaleFactor = ((maxFactor - minFactor) * contentPer) + minFactor;
 
             if (scaleFactor > 1) scaleFactor = 1;
           } else {
@@ -1193,6 +1193,7 @@ export class THnPainter extends TPainter {
   /**
    * @desc Method to set available axes based on origin.
    * @param origin Jsroot histogram object
+   * @note size/color can either be linear or log10
    * @return is null. Sets that are found are set in stateSubject.
    * */
   setAvailableAxes(origin) {
@@ -1202,7 +1203,7 @@ export class THnPainter extends TPainter {
 
     const setAxesForObj = (obj) => {
       const layerAxes = [];
-      layerAxes.push({scaleType: "linear", errorType: "linear"});
+      layerAxes.push({size: "linear", color: "linear"});
       const nAxes = Number.parseInt(obj._typename.substring(2, 3), 10);
       for (let i = 0; i < nAxes; i++) {
         const axisKey = axisNames[i]; // "x", "y", or "z"
@@ -1211,8 +1212,8 @@ export class THnPainter extends TPainter {
           axis: axisKey,
           fTitle: axisObj.fTitle,
           fName: axisObj.fName,
-          scaleType: "linear",
-          errorType: "linear",
+          size: "linear",
+          color: "linear",
           fXmax: axisObj.fXmax,
           fXmin: axisObj.fXmin
         });
