@@ -11,7 +11,8 @@ class StateSubject {
       selectedSet: [],
       arrays: ["content"],
       selectedArray: "content",
-      minMaxValue: []
+      minMaxValue: [],
+      availableAxes: []
     });
   }
 
@@ -25,6 +26,7 @@ class StateSubject {
 
   next (e) {
     this.#subject.next(e);
+    console.log("STATE: ", e);
   }
 }
 
