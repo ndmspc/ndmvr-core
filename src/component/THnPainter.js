@@ -105,6 +105,7 @@ export class THnPainter extends TPainter {
     this.BVHTree = [];
     this.availableSets = [];
     this.selectedSet = [];
+    this.availableAxes = [];
     this.minMaxValue = [];
     stateSubjectGet(this.id).next({
       sets: [],
@@ -160,6 +161,7 @@ export class THnPainter extends TPainter {
       this.minErrorPerLayer = computeMinErrorPerLayer(this.pointer.origin, this.minContentPerLayer);
       this.setAvailableSets(this.pointer.origin);
       this.setAvailableArrays(this.pointer.origin);
+      this.setAvailableAxes(this.pointer.origin);
 
       const minMaxValues = new Array(this.maxContentPerLayer.length);
       for (let i = 0; i < this.maxContentPerLayer.length; i++) {
@@ -414,6 +416,7 @@ export class THnPainter extends TPainter {
       const selectedSetIndex = this.selectedSet.indexOf(set);
       const availableSetIndex = this.availableSets.indexOf(set);
       const fArrayValuesAvailable = obj.fArrays ? obj.fArrays[Object.keys(obj.fArrays)[0]].values : false;
+      const scaleType = this.availableAxes[currentLayer];
 
       //PRIKLAD NA static CONFIG
       // {
@@ -589,25 +592,37 @@ export class THnPainter extends TPainter {
           )),
         );
 
-        const content = this.getBinContent(
-          obj, relPos.x, relPos.y, relPos.z, fArrayValuesAvailable ? this.selectedArray : "content"
-        );
-        const error = this.getBinError(
-          obj, relPos.x, relPos.y, relPos.z, fArrayValuesAvailable ? this.selectedArray : "content"
-        );
-        const scaleValue = this.config.scale.scaleBy === "value" ? content : error;
         let scaleMin = this.config.scale.scaleBy === "value" ? contentMin : errorMin;
         const scaleMax = this.config.scale.scaleBy === "value" ? contentMax : errorMax;
         if (scaleMin === scaleMax) scaleMin -= scaleMin * 0.1;
+        // const content = this.getBinContent(
+        //   obj, relPos.x, relPos.y, relPos.z, fArrayValuesAvailable ? this.selectedArray : "content"
+        // );
+        // const error = this.getBinError(
+        //   obj, relPos.x, relPos.y, relPos.z, fArrayValuesAvailable ? this.selectedArray : "content"
+        // );
+        const content = fArrayValuesAvailable || this.selectedArray === "content"
+          ? this.getBinContent( obj, relPos.x, relPos.y, relPos.z, this.selectedArray)
+          : scaleMax;
+        const error = fArrayValuesAvailable || this.selectedArray === "content"
+          ? this.getBinError( obj, relPos.x, relPos.y, relPos.z, this.selectedArray)
+          : 0;
+
+        const scaleValue = this.config.scale.scaleBy === "value" ? content : error;
+
+        // console.log("content", content, "error", error, "scaleValue: ", scaleValue, "outside?: ", outside, "scaleMin", scaleMin, "scaleMax", scaleMax );
 
         let scaleFactor = 1;
         if ((scaleValue >= scaleMin) === !outside) {
-          const contentPer = (scaleValue - scaleMin) / (scaleMax - scaleMin);
+          const contentPer = scaleType[0].scaleType === "log10"
+            ? Math.log(1 + (scaleValue - scaleMin)) / Math.log(1 + (scaleMax - scaleMin))
+            : (scaleValue - scaleMin) / (scaleMax - scaleMin);
           if (!outside) {
             scaleFactor =
               Number.isInteger(scaleValue) && scaleValue === 0 && this.config.scale.scaleBy === "value"
                 ? (scaleFactor = 0)
                 : ((maxFactor - minFactor) * contentPer) + minFactor;
+            // scaleFactor = ((maxFactor - minFactor) * contentPer) + minFactor;
 
             if (scaleFactor > 1) scaleFactor = 1;
           } else {
@@ -621,14 +636,15 @@ export class THnPainter extends TPainter {
         } else {
           scaleFactor = 0;
         }
+        // console.log("scaleFactor", scaleFactor);
 
         if (this.config.color.scaleBy === "value") {
           this.color = getGradientColorInst(
-            this.config.color, scaleValue, scaleMin, scaleMax, availableSetIndex, currentLayer
+            this.config.color, scaleValue, scaleMin, scaleMax, availableSetIndex, currentLayer, scaleType[0].errorType
           );
         } else {
           this.color = getGradientColorInst(
-            this.config.color, error, errorMin, errorMax, availableSetIndex, currentLayer
+            this.config.color, error, errorMin, errorMax, availableSetIndex, currentLayer, scaleType[0].errorType
           );
         }
 
@@ -978,6 +994,7 @@ export class THnPainter extends TPainter {
       this.availableSets = state.sets;
       this.selectedSet = state.selectedSet;
       this.minMaxValue = state.minMaxValue;
+      this.availableAxes = state.availableAxes;
     }
   }
 
@@ -1171,6 +1188,43 @@ export class THnPainter extends TPainter {
         currentMultiplier /= dimensions[i - baseLayerIndex];
       }
     }
+  }
+
+  /**
+   * @desc Method to set available axes based on origin.
+   * @param origin Jsroot histogram object
+   * @return is null. Sets that are found are set in stateSubject.
+   * */
+  setAvailableAxes(origin) {
+    const currentValue = stateSubjectGet(this.id).getValue();
+    const axes = [];
+    const axisNames = ["x", "y", "z"];
+
+    const setAxesForObj = (obj) => {
+      const layerAxes = [];
+      layerAxes.push({scaleType: "linear", errorType: "linear"});
+      const nAxes = Number.parseInt(obj._typename.substring(2, 3), 10);
+      for (let i = 0; i < nAxes; i++) {
+        const axisKey = axisNames[i]; // "x", "y", or "z"
+        const axisObj = obj[`f${axisKey.toUpperCase()}axis`];
+        layerAxes.push({
+          axis: axisKey,
+          fTitle: axisObj.fTitle,
+          fName: axisObj.fName,
+          scaleType: "linear",
+          errorType: "linear",
+          fXmax: axisObj.fXmax,
+          fXmin: axisObj.fXmin
+        });
+      }
+      axes.push(layerAxes);
+      if (obj.children) {
+        setAxesForObj(obj.children[Object.keys(obj.children)[0]].find(x => x !== null));
+      }
+    };
+    setAxesForObj(origin);
+    currentValue.availableAxes = axes;
+    stateSubjectGet(this.id).next(currentValue);
   }
 
   /**
