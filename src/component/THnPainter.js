@@ -413,7 +413,7 @@ export class THnPainter extends TPainter {
       const outside = obj.fArrays?.[this.selectedArray]?.outside ?? false;
       const selectedSetIndex = this.selectedSet.indexOf(set);
       const availableSetIndex = this.availableSets.indexOf(set);
-      const fArrayValuesAvailable = obj.fArrays[Object.keys(obj.fArrays)[0]].values;
+      const fArrayValuesAvailable = obj.fArrays ? obj.fArrays[Object.keys(obj.fArrays)[0]].values : false;
 
       //PRIKLAD NA static CONFIG
       // {
@@ -1467,7 +1467,9 @@ export class THnPainter extends TPainter {
       const perInstance = this.maxInstancesPerLayer[layer + 1];
       const indexOffset =
         this.maxInstancesPerLayer[layer] * this.maxInstancesPerLayer[layer + 1];
-      const fArrayValuesAvailable = node.fArrays[Object.keys(node.fArrays)[0]].values;
+      const fArrayValuesAvailable = node.fArrays
+        ? node.fArrays[Object.keys(node.fArrays)[0]].values
+        : false;
 
       dfs(layer, offset, set).forEach((intersect) => {
         const indexNormalized =
