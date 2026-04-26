@@ -664,12 +664,13 @@ export function computeMinContentPerLayer(obj) {
 
         if (child.fArrays) {
           Object.keys(child.fArrays).forEach((array) => {
-            if (!(array in min[layer]) || temp > min[layer][array]) {
+            const temp = child.fArrays[array].min;
+            if (!(array in min[layer]) || temp < min[layer][array]) {
               min[layer][array] = temp;
             }
             min[layer][array] = Math.min(
               min[layer][array],
-              obj.fArrays[array].min ??
+              child.fArrays[array].min ??
               getMin(child.fArrays[array]?.values?.filter((v) => v !== 0)));
           });
         }
@@ -753,16 +754,19 @@ export function fillColorArray(config, material, colorArray) {
   material.uniformsNeedUpdate = true;
 }
 
-export function getGradientColorInst(colorConfig, value, min, max, availableSetIndex, layer) {
+export function getGradientColorInst(colorConfig, value, min, max, availableSetIndex, layer, scaleType) {
   const normalize = (value, min, max) => {
-    let val = (value - min) / (max - min);
+    let val;
+    if (scaleType === "log10") {
+      val = Math.log(1 + (value - min)) / Math.log(1 + (max - min));
+    } else {
+      val = (value - min) / (max - min);
+    }
     if (val > 1) val = 1;
     return isNaN(val) || val === Infinity ? 0 : val;
-    // return (value - min) / (max - min);
   };
+
   const t = normalize(value, min, max);
-  // console.log(t, "value: ", colorConfig.colorBy === "value" ? value : error, "min: ", min, "max: ", colorConfig.colorBy === "value" ? max : errorMax);
-  // const t = normalize(value, min, max);
 
   let colorPairIndex = 0;
 
