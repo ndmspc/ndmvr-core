@@ -23,6 +23,7 @@ import histo1_2_5 from "./assets/histograms/nested/test_1_2_5.json";
 import histo5_2_1 from "./assets/histograms/nested/test_5_2_1.json";
 import testNested from "./assets/histograms/nested/test_nested.json";
 // import rsnNested from "./assets/histograms/nested/rsn_nested.json";
+// import veronika from "./assets/histograms/nested/veronika.json";
 // import cernstaff from "./assets/histograms/nested/cernstaff_145_369.json";
 import test3 from "./assets/histograms/nested/test3.json";
 // import test3f from "./assets/histograms/nested/test3f.json";

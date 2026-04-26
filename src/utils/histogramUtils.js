@@ -412,13 +412,13 @@ export function computeMaxContentPerLayer(obj) {
 
   const max = [];
 
-  max[0] = {content: getMax(obj.fArray)};
+  max[0] = {content: getMax(obj.fArray?.filter((v) => v !== 0))};
 
   if (obj.fArrays) {
     Object.keys(obj?.fArrays).forEach((array) => {
       max[0] = {
         ...max[0],
-        [array]: obj.fArrays[array].max ?? getMax(obj.fArrays[array].values),
+        [array]: obj.fArrays[array].max ?? getMax(obj.fArrays[array].values?.filter((v) => v !== 0)),
       };
     });
   }
@@ -432,7 +432,7 @@ export function computeMaxContentPerLayer(obj) {
       childArray.forEach((child) => {
         if (!child) return;
 
-        const temp = getMax(child.fArray);
+        const temp = getMax(child.fArray?.filter((v) => v !== 0));
 
         if (!(key in max[layer]) || temp > max[layer][key]) {
           max[layer][key] = temp;
@@ -444,7 +444,11 @@ export function computeMaxContentPerLayer(obj) {
             if (!(array in max[layer]) || temp > max[layer][array]) {
               max[layer][array] = temp;
             }
-            max[layer][array] = Math.max(max[layer][array], child.fArrays[array].max ?? getMax(child.fArrays[array].values));
+            max[layer][array] = Math.max(
+              max[layer][array],
+              child.fArrays[array].max ??
+              getMax(child.fArrays[array].values?.filter((v) => v !== 0))
+            );
           });
         }
 
