@@ -1,4 +1,5 @@
-import {Box3, DoubleSide, Group, Mesh, MeshBasicMaterial, PlaneGeometry, Vector3} from "three";
+import {DoubleSide, Group, Mesh, MeshBasicMaterial, PlaneGeometry, Vector3} from "three";
+// import {Box3, DoubleSide, Group, Mesh, MeshBasicMaterial, PlaneGeometry, Vector3} from "three";
 import { TextGeometry } from "three/addons/geometries/TextGeometry.js";
 import { FontLoader } from "three/addons/loaders/FontLoader.js";
 import { canvasSubjectGet } from "../rxjs/CanvasSubject.js";
@@ -81,9 +82,12 @@ export class BinInfoVisualizer {
       data.coords.forEach(coord => {
         Object.entries(coord)
           .forEach(([key, value]) => {
-            if (value && typeof value === "object" && !("isColor" in value)) {
+            // if (value && typeof value === "object" && !("isColor" in value)) {
+            if (value && typeof value === "object" && !("isColor" in value) && value.min !== undefined && value.max !== undefined) {
               const rangeText = `${key} = [${value.min.toFixed(2)}, ${value.max.toFixed(2)})`;
               lines.push({ text: rangeText, isTitle: false });
+              const halfWidth = (value.max - value.min) / 2;
+              lines.push({ text: `error ${key} = ${halfWidth.toFixed(5)}`, isTitle: false });
             }
           });
       });
@@ -102,17 +106,23 @@ export class BinInfoVisualizer {
 
     // Add content value
     if (data.content !== undefined) {
+      // const contentText = Number.isInteger(data.content)
+      //   ? `content = ${data.content}`
+      //   : `content = ${data.content.toFixed(2)}`;
       const contentText = Number.isInteger(data.content)
-        ? `content = ${data.content}`
-        : `content = ${data.content.toFixed(2)}`;
+        ? `y = ${data.content}`
+        : `y = ${data.content.toFixed(2)}`;
       lines.push({ text: contentText, isTitle: false });
     }
 
     // Add error value if it exists
     if (data.error !== undefined) {
+      // const errorText = Number.isInteger(data.error)
+      //   ? `error = ${data.error}`
+      //   : `error = ${data.error.toFixed(2)}`;
       const errorText = Number.isInteger(data.error)
-        ? `error = ${data.error}`
-        : `error = ${data.error.toFixed(2)}`;
+        ? `error y = ${data.error}`
+        : `error y = ${data.error.toFixed(2)}`;
       lines.push({ text: errorText, isTitle: false });
     }
 
@@ -140,7 +150,7 @@ export class BinInfoVisualizer {
    * @important DO NOT CALL THIS! Should only be called by queue subject!
    */
   async updateVisualization (data) {
-    if (data === null) this.clear();
+    if (data === null) { this.clear(); return; }
     // this.currentData = data;
 
     while (this.group.children.length > 0) {
@@ -157,6 +167,22 @@ export class BinInfoVisualizer {
     const { padding, lineHeight, textSize, textColor, titleColor, width } = this.options;
 
     const panelHeight = lines.length * lineHeight + padding * 2;
+
+    // Position the panel immediately before the async text loop so clicking
+    // another cross moves the panel right away instead of waiting for build3d.
+    const worldPos = new Vector3(data.point.x, data.point.y, data.point.z);
+    this.camera.worldToLocal(worldPos);
+    const dir = new Vector3()
+      .subVectors(worldPos, this.camera.position)
+      .normalize();
+
+    const distance = 0.1;
+    const pos = new Vector3()
+      .copy(this.camera.position)
+      .addScaledVector(dir, distance);
+
+    this.group.position.copy(pos);
+    this.camera.add(this.group);
 
     const panel = this.createBackgroundPanel(panelHeight);
     this.group.add(panel);
@@ -210,26 +236,26 @@ export class BinInfoVisualizer {
         console.error("Error creating text line:", error);
       }
     }
-    const worldPos = new Vector3(data.point.x, data.point.y, data.point.z);
-    this.camera.worldToLocal(worldPos);
-    const dir = new Vector3()
-      .subVectors(worldPos, this.camera.position)
-      .normalize();
+    // const worldPos = new Vector3(data.point.x, data.point.y, data.point.z);
+    // this.camera.worldToLocal(worldPos);
+    // const dir = new Vector3()
+    //   .subVectors(worldPos, this.camera.position)
+    //   .normalize();
 
-    const distance = 0.1;
-    const pos = new Vector3()
-      .copy(this.camera.position)
-      .addScaledVector(dir, distance);
+    // const distance = 0.1;
+    // const pos = new Vector3()
+    //   .copy(this.camera.position)
+    //   .addScaledVector(dir, distance);
 
-    const box = new Box3().setFromObject(this.group);
-    const size = new Vector3();
-    box.getSize(size);
+    // const box = new Box3().setFromObject(this.group);
+    // const size = new Vector3();
+    // box.getSize(size);
 
-    const halfSize = size.clone().multiplyScalar(0.5);
-    pos.add(new Vector3(halfSize.x, halfSize.y, 0));
-    this.group.position.copy(pos);
+    // const halfSize = size.clone().multiplyScalar(0.5);
+    // pos.add(new Vector3(halfSize.x, halfSize.y, 0));
+    // this.group.position.copy(pos);
 
-    this.camera.add(this.group);
+    // this.camera.add(this.group);
   }
 
   /**

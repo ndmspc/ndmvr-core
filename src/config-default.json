@@ -128,10 +128,20 @@
         ]
       }
     },
+    "errorCross": {
+        "enabled": true,
+        "display": {
+          "start": 0,
+          "end": 99
+        },
+        "color": "0x00ffff",
+        "showZArm": false,
+        "margin": 0.05
+      }
+    },
     "bindings": {
       "resetHistogram": "r",
       "goToPreviousLayer": "z",
       "hideOutlines": "o"
     }
-  }
 }
