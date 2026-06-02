@@ -131,6 +131,10 @@ padContainer.setAttribute("thnpainter", "");
 padContainer.setAttribute("position", "0 0 0");
 sceneElm.appendChild(padContainer);
 
+const binInfoEl = document.createElement("a-entity");
+binInfoEl.setAttribute("bininfo-jsroot", "");
+sceneElm.appendChild(binInfoEl);
+
 // const histogramContainer2 = document.createElement("a-entity");
 // histogramContainer2.id = "histogram2";
 // histogramContainer2.setAttribute("histogram", "");
@@ -182,6 +186,7 @@ const histogramSelect = document.getElementById("histogram-select");
 const urlInput = document.getElementById("custom-url-input");
 const loadButton = document.getElementById("load-custom-url");
 
+
 histogramSelect.addEventListener("change", (event) => {
   const selectedValue = event.target.value;
   if (selectedValue === "custom") {
@@ -208,6 +213,7 @@ histogramSelect.addEventListener("change", (event) => {
         }
       }
     });
+    
   }
 });
 
@@ -231,6 +237,37 @@ arrayDiv.innerHTML = `
 `;
 document.querySelector("#app").appendChild(arrayDiv);
 const arraySelect = document.getElementById("arraySelect");
+
+// Error cross toggle
+const errorCrossDiv = document.createElement("div");
+errorCrossDiv.innerHTML = `
+  <div style="position: absolute; top: 20px; right: 50px;">
+    <div style="display: flex; flex-direction: column; align-items: flex-start;">
+      <label style="color: white; font-family: Arial, sans-serif; font-size: 13px; cursor: pointer; display: flex; align-items: center;">
+        <input type="checkbox" id="error-cross"
+               style="accent-color: #00ffff; vertical-align: middle; margin-right: 4px;" />
+        Error cross
+      </label>
+      <span style="color: #999; font-family: Arial, sans-serif; font-size: 11px; margin-top: 2px;">Error cross display</span>
+    </div>
+  </div>
+`;
+document.querySelector("#app").appendChild(errorCrossDiv);
+
+document.getElementById("error-cross").addEventListener("change", (e) => {
+  configSubjectGet().next({
+    config: {
+      histogram: {
+        errorCross: { enabled: e.target.checked }
+      }
+    }
+  });
+  
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+
+
 
 stateSubjectGet("pad1")
   .getObservable()
@@ -282,6 +319,7 @@ arraySelect.addEventListener("change", (event) => {
   const currentValue = stateSubjectGet("pad1").getValue();
   currentValue.selectedArray = arraySelect.value;
   stateSubjectGet("pad1").next(currentValue);
+  
 });
 
 checkboxContainer.addEventListener("change", (event) => {
@@ -299,6 +337,7 @@ checkboxContainer.addEventListener("change", (event) => {
     ) {
       currentValue.selectedSet = checkedValues;
       stateSubjectGet("pad1").next(currentValue);
+      
     }
   }
 });

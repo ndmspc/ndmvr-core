@@ -4,6 +4,7 @@ import { THnPainter } from "./THnPainter.js";
 import { HistogramJsrootClass } from "./histogram-jsroot-class.js";
 import { getCameraComponent } from "./camera.component.js";
 
+
 const registerTHnPainterComponent = () => {
   AFRAME.registerComponent("thnpainter", {
     schema: {
@@ -43,6 +44,10 @@ const registerTHnPainterComponent = () => {
               this.nestedHistogram.renderHistogram(0, this.nestedHistogram.totalInstances, 0).then(() => {
                 this.el.object3D.add(this.nestedHistogram.wireframe.wireframe);
                 this.el.object3D.add(this.nestedHistogram.mesh);
+                if (this.nestedHistogram.errorCross) {
+                  this.el.object3D.add(this.nestedHistogram.errorCross.lines);
+                  this.el.object3D.add(this.nestedHistogram.errorCross.linesTick);
+                }
               });
             }
           }

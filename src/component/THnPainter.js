@@ -37,12 +37,13 @@ import {
 } from "three";
 import {areLimitsEqual, createHnotFilledSprite, ensureDefaultBindings} from "../utils/baseUtil.js";
 import {configSubjectGet} from "../rxjs/ConfigSubject.js";
-
+import {ErrorCrossClass} from "./ErrorCrossClass.js";
 
 export class THnPainter extends TPainter {
   stateSub = undefined;
   pointer = undefined;
   wireframe = undefined;
+  errorCross = undefined;
   BVHTree = [];
   minMaxValue = [];
   maxInstancesPerLayer = undefined;
@@ -65,12 +66,7 @@ export class THnPainter extends TPainter {
   colorArray = undefined;
 
   constructor(histo, id, opts) {
-    if (!histo || !histo.obj) {
-      console.error("THnPainter constructor: histo or histo.obj is undefined", histo);
-      throw new Error("THnPainter: histo or histo.obj is undefined");
-    }
     super(histo, id, opts);
-    console.log("THnPainter constructor start: ");
     this.pointer = new HistogramPointerClass(this.rootObj);
 
     this.handleStateChange = this.handleStateChange.bind(this);
@@ -80,25 +76,23 @@ export class THnPainter extends TPainter {
 
     this.init(true);
     // this.renderHistogram(0, this.totalInstances, 0);
-    console.log("THnPainter constructor end, mesh: ", this.mesh, "meshParent: ", this?.mesh?.parent ?? "undefined");
   }
 
   async updateHistogram(histo) {
-    if (!histo || !histo.obj) {
-      console.error("THnPainter constructor: histo or histo.obj is undefined", histo);
-      throw new Error("THnPainter: histo or histo.obj is undefined");
-    }
-    console.log("THnPainter updateHistogram start => histo: ", histo, ", mesh: ", this.mesh, "uuid: ", this.mesh.uuid, "mesh.parent: ", this?.mesh?.parent ?? "undefined");
     let raycastHandler = undefined;
     const parent = this.mesh.parent;
-
-    console.log("THnPainter updateHistogram parent is defined, removing mesh: ", this.mesh, "uuid: ", this.mesh.uuid, "mesh.parent: ", this?.mesh?.parent ?? "undefined");
+    parent.remove(this.mesh);
     if (this.pointer.isHistogramFilled) {
       raycastHandler = this.mesh.raycast;
       this.mesh.raycast = () => {
       };
       this.wireframe.dispose();
       this.instGeom.dispose();
+    }
+
+    if (this.errorCross) {
+      this.errorCross.dispose();
+      this.errorCross = undefined;
     }
 
     this.matrixCache = [];
@@ -115,26 +109,17 @@ export class THnPainter extends TPainter {
       minMaxValue: []
     });
 
-    if (parent) {
-      console.log("THnPainter updateHistogram parent is undefined", this.mesh, "uuid: ", this.mesh.uuid, "mesh.parent: ", this?.mesh?.parent ?? "undefined");
-      parent.remove(this.mesh);
-    }
-
-    console.log("THnPainter re-init in update: ", histo, "mesh.uuid: ", this.mesh.uuid, "mesh.parent: ", this?.mesh?.parent ?? "undefined");
     this.rootObj = histo.obj;
     this.pointer = new HistogramPointerClass(this.rootObj);
     this.init(true);
     await this.renderHistogram(0, this.totalInstances, 0);
     this.mesh.raycast = raycastHandler;
 
-    console.log("THnPainter re-init in update SUCCESSFULL, now adding mesh to parent: ", histo, "mesh.uuid: ", this.mesh.uuid, "mesh.parent: ", this?.mesh?.parent ?? "undefined");
-
-    if (parent) {
-      parent.add(this.mesh);
-      parent.add(this.wireframe.wireframe);
-      console.log("THnPainter mesh successfully added to parent: ", this.mesh, "uuid: ", this.mesh.uuid, "mesh.parent: ", this?.mesh?.parent ?? "undefined");
-    } else {
-      throw new ReferenceError("THnPainter: parent is undefined");
+    parent.add(this.mesh);
+    parent.add(this.wireframe.wireframe);
+    if (this.errorCross) {
+      parent.add(this.errorCross.lines);
+      if (this.errorCross.linesTick) parent.add(this.errorCross.linesTick);
     }
   }
 
@@ -145,6 +130,10 @@ export class THnPainter extends TPainter {
     if (this.mesh.parent) {
       this.mesh.parent.remove(this.mesh);
       this.wireframe.dispose();
+    }
+    if (this.errorCross) {
+      this.errorCross.dispose();
+      this.errorCross = undefined;
     }
     this.stateSub.unsubscribe();
   }
@@ -190,6 +179,10 @@ export class THnPainter extends TPainter {
       this.config.wireframe,
       this.id
     );
+
+    if (this.config?.errorCross?.enabled === true) {
+      this.errorCross = new ErrorCrossClass(this.config, this.id);
+    }
   }
 
   setupMatrixCache() {
@@ -204,7 +197,8 @@ export class THnPainter extends TPainter {
       this.matrixCache[i] = {
         pos: new Float32Array(multiplier * 3),
         scale: new Float32Array(multiplier * 3),
-        rendered: new Float32Array(multiplier).fill(-1)
+        rendered: new Float32Array(multiplier).fill(-1),
+        error: new Float32Array(multiplier)
       };
       multiplier *= this.maxInstancesPerLayer[i + 1];
     }
@@ -214,7 +208,8 @@ export class THnPainter extends TPainter {
       target[i] = {
         pos: new Float32Array(multiplier * 3),
         scale: new Float32Array(multiplier * 3),
-        rendered: new Float32Array(multiplier).fill(-1)
+        rendered: new Float32Array(multiplier).fill(-1),
+        error: new Float32Array(multiplier)
       };
     }
   }
@@ -355,10 +350,25 @@ export class THnPainter extends TPainter {
     this.mesh = new Mesh(this.instGeom, this.material);
     this.mesh.raycast = this.raycastHandler;
     this.mesh.frustumCulled = false;
+    if (this.errorCross && this.errorCross.config.enabled) {
+      this.mesh.material.colorWrite = false;
+      this.mesh.material.depthWrite = false;
+    }
     if (parent) parent.add(this.mesh);
+
+    if (this.errorCross) {
+      this.errorCross.pushVisibleInstances(
+        this.pointer.origin,
+        this.matrixCache,
+        this.maxInstancesPerLayer,
+        this.availableSets.indexOf(this.selectedSet[0]),
+        this.limits.scale,
+        count
+      );
+    }
   }
 
-  setMatrixCacheAt(layer, setIndex, index, binSizePos, rendered) {
+  setMatrixCacheAt(layer, setIndex, index, binSizePos, rendered, error) {
     const inst = setIndex !== null
       ? this.matrixCache[layer][setIndex]
       : this.matrixCache[layer];
@@ -369,6 +379,7 @@ export class THnPainter extends TPainter {
     inst.scale[(index * 3) + 1] = binSizePos.y.size;
     inst.scale[(index * 3) + 2] = binSizePos.z.size;
     inst.rendered[index] = rendered;
+    inst.error[index] = error || 0;
   }
 
   /**
@@ -684,14 +695,16 @@ export class THnPainter extends TPainter {
           }
           this.setMatrixCacheAt(
             currentLayer, pointerSet, i / stepFor, binSizePos,
-            (currentLayer === layer && scaleFactor !== 0) ? this.color : -1
+            (currentLayer === layer && scaleFactor !== 0) ? this.color : -1,
+            error
           );
         } else {
           binSizePos.z.size = 0.01;
           binSizePos.z.pos += (selectedSetIndex - (this.selectedSet.length - 1) / 2) * 0.1;
           this.setMatrixCacheAt(
             currentLayer, availableSetIndex, i / stepFor, binSizePos,
-            (currentLayer === layer && scaleFactor !== 0) ? this.color : -1
+            (currentLayer === layer && scaleFactor !== 0) ? this.color : -1,
+            error
           );
         }
 
@@ -724,47 +737,31 @@ export class THnPainter extends TPainter {
       }
     };
 
-    if (this.pointer.isOnSet) {
-      await Promise.all(
-        this.selectedSet.map(set =>
-          render(startIndex, endIndex, 0,
-            getChildObjectByIndex(
-              this.pointer.rootObj,
-              this.pointer.parentPath.map(v => v.bin[0]),
-              set
-            ), this.limits, set)
-        ));
-    } else {
-      await render(startIndex, endIndex, 0, this.pointer.origin, this.limits);
-    }
 
-    if (!this.pointer.isOnSet) {
-      this.wireframe.pushVisibleInstances(
-        this.matrixCache,
-        this.maxInstancesPerLayer,
-        this.availableSets.indexOf(this.selectedSet[0])
-      );
-    }
+    return (this.pointer.isOnSet
+      ? Promise.all(this.selectedSet.map(set =>
+        render(startIndex, endIndex, 0,
+          getChildObjectByIndex(this.pointer.rootObj,
+            this.pointer.parentPath.map(v => v.bin[0]), set), this.limits, set)))
+      : render(startIndex, endIndex, 0, this.pointer.origin, this.limits)
+    ).then(() => {
+      if (!this.pointer.isOnSet) {
+        this.wireframe.pushVisibleInstances(
+          this.matrixCache, this.maxInstancesPerLayer,
+          this.availableSets.indexOf(this.selectedSet[0])
+        );
+      }
+      this.pushVisibleInstances();
 
-    this.pushVisibleInstances();
-
-    const pointerSet =
-      this.availableSets.indexOf(this.pointer.isOnSet) === -1
+      const pointerSet = this.availableSets.indexOf(this.pointer.isOnSet) === -1
         ? null
         : this.availableSets.indexOf(this.pointer.isOnSet);
-
-    this.BVHTree = createBVHTreeRecursive(
-      this.matrixCache,
-      this.pointer.origin,
-      0,
-      this.selectedSet,
-      pointerSet,
-      this.availableSets,
-      this.mesh.matrixWorld,
-      this.maxInstancesPerLayer
-    );
-
-    return this.mesh;
+      this.BVHTree = createBVHTreeRecursive(
+        this.matrixCache, this.pointer.origin, 0, this.selectedSet,
+        pointerSet,
+        this.availableSets, this.mesh.matrixWorld, this.maxInstancesPerLayer
+      );
+    });
   }
 
   createMaterial() {
@@ -805,6 +802,21 @@ export class THnPainter extends TPainter {
 
 
   mouseClickDefault(event) {
+    const parentRange = this.pointer.parentPath.map(p => {
+      const range = p.range[0];
+      return {bin: p.bin[0], ...range};
+    });
+    const rangeWithBin = (event.range || []).map((r, i) => ({...r, bin: event.jsrootInstance?.[i]}));
+    binInfoSubjectGet().next({
+      coords: parentRange.concat(rangeWithBin),
+      level: parentRange.length,
+      content: event.content,
+      error: event.error,
+      set: event.set,
+      instanceId: event.instanceId,
+      point: event.target,
+    });
+
     this.showChildHistogram(event.index);
     if (event.selectedArray !== "content" && event.jsrootObj?.fArrays[event.selectedArray]?.values) {
       event.jsrootObj.fArray = event.jsrootObj.fArrays[event.selectedArray]?.values;
@@ -924,13 +936,7 @@ export class THnPainter extends TPainter {
       range: parentRange.concat(event.range)
     };
     const {range: coords, level, content, error, set, triggerSource, instanceId} = merged;
-    const minimizedEvent = {
-      coords, level, content, error, set, triggerSource, instanceId,
-      binPosSize: this.getBinPosScaleByIndexMC(merged.instanceId, merged.set),
-      binWholePosSize: this.getBinPosScaleByIndex(
-        merged.instanceId, merged.set, merged.jsrootObj, merged.index.at(-1)
-      )
-    };
+    const minimizedEvent = {coords, level, content, error, set, triggerSource, instanceId, point: event.target};
     binInfoSubjectGet().next(minimizedEvent);
   }
 
@@ -962,6 +968,7 @@ export class THnPainter extends TPainter {
 
       const intersection = res[0];
       if (intersection) {
+        intersection.isHistogramBin = true;
         const triggerSource = raycaster._triggerSource;
         this.intersectionHandler(intersection, triggerSource);
         intersects.push(intersection);
@@ -981,6 +988,10 @@ export class THnPainter extends TPainter {
       this.instGeom.dispose();
       parent.remove(this.mesh);
       this.setupInsBufGeom();
+      if (this.errorCross && this.errorCross.config.enabled) {
+        this.mesh.material.colorWrite = false;
+        this.mesh.material.depthWrite = false;
+      }
       parent.add(this.mesh);
       this.renderHistogramHistory();
 
@@ -1026,6 +1037,11 @@ export class THnPainter extends TPainter {
     this.wireframe.dispose();
     parent.remove(this.mesh);
 
+    if (this.errorCross) {
+      this.errorCross.dispose();
+      this.errorCross = undefined;
+    }
+
     const range = getRangeByPosition(
       position, set, this.pointer.origin,
       this.wireframe, this.selectedSet
@@ -1047,11 +1063,13 @@ export class THnPainter extends TPainter {
     await this.renderHistogram(0, this.totalInstances, 0);
     parent.add(this.mesh);
     parent.add(this.wireframe.wireframe);
+    if (this.errorCross) {
+      parent.add(this.errorCross.lines);
+      if (this.errorCross.linesTick) parent.add(this.errorCross.linesTick);
+    }
 
     if (this.pointer.isOnSet) {
-      this.wireframe.toggleVisibility(
-        this.matrixCache, this.maxInstancesPerLayer, this.availableSets.indexOf(set)
-      );
+      this.wireframe.toggleVisibility(this.matrixCache, this.maxInstancesPerLayer, this.availableSets.indexOf(set));
     }
   }
 
@@ -1067,6 +1085,11 @@ export class THnPainter extends TPainter {
       this.wireframe.dispose();
     }
 
+    if (this.errorCross) {
+      this.errorCross.dispose();
+      this.errorCross = undefined;
+    }
+
     this.pointer.setOriginToParent(1);
     console.log("path: ", this.pointer.path);
     console.log("title: ", this.pointer.title);
@@ -1074,6 +1097,10 @@ export class THnPainter extends TPainter {
     await this.renderHistogram(0, this.totalInstances, 0);
     parent.add(this.mesh);
     parent.add(this.wireframe.wireframe);
+    if (this.errorCross) {
+      parent.add(this.errorCross.lines);
+      if (this.errorCross.linesTick) parent.add(this.errorCross.linesTick);
+    }
   }
 
   /**
@@ -1274,9 +1301,67 @@ export class THnPainter extends TPainter {
     stateSubjectGet(this.id).next(currentValue);
   }
 
+  _handleErrorCrossConfig(ec) {
+    if (ec.enabled === true && !this.errorCross) {
+      this.errorCross = new ErrorCrossClass(this.config, this.id);
+      if (this.mesh.parent) this.mesh.parent.add(this.errorCross.lines);
+    }
+
+    if (!this.errorCross) return;
+
+    if (ec.color !== undefined) this.errorCross.setColor(ec.color);
+
+    if (ec.enabled === false) {
+      // Hide without disposing — geometry stays on GPU for instant re-show
+      this.errorCross.config.enabled = false;
+      this.errorCross.setVisible(false);
+      this.mesh.material.colorWrite = true;
+      this.mesh.material.depthWrite = true;
+    }
+
+    if (ec.enabled === true) {
+      this.errorCross.config.enabled = true;
+      this.errorCross.setVisible(true);
+      // Hide cubes visually but keep mesh in scene so raycasting (hover) still works
+      this.mesh.material.colorWrite = false;
+      this.mesh.material.depthWrite = false;
+      // If geometry was never built, build it now
+      if (this.errorCross.instGeom && this.errorCross.instGeom.instanceCount === 0) {
+        let ecCount = 0;
+        for (let i = 0; i < this.matrixCache.length; i++) {
+          const layer = this.matrixCache[i];
+          if (Array.isArray(layer)) {
+            for (let k = 0; k < layer.length; k++) {
+              for (let j = 0; j < layer[k].rendered.length; j++) {
+                if (layer[k].rendered[j] !== -1) ecCount++;
+              }
+            }
+          } else {
+            for (let j = 0; j < layer.rendered.length; j++) {
+              if (layer.rendered[j] !== -1) ecCount++;
+            }
+          }
+        }
+        this.errorCross.pushVisibleInstances(
+          this.pointer.origin,
+          this.matrixCache,
+          this.maxInstancesPerLayer,
+          this.availableSets.indexOf(this.selectedSet[0]),
+          this.limits.scale,
+          ecCount
+        );
+      }
+    }
+  }
+
   configSubjectHandler(event) {
     this.config = configSubjectGet().mergeHistogramConfig(this?.opts?.config);
-    this.keyBindings = ensureDefaultBindings(event.config.bindings);
+    this.keyBindings = ensureDefaultBindings(event.config).bindings;
+
+    if (event?.config?.histogram?.errorCross) {
+      this._handleErrorCrossConfig(event.config.histogram.errorCross);
+    }
+
     const newLimits = event.config.environment.histogramPads.find(
       (el) => el.id === this.id
     );
@@ -1637,7 +1722,7 @@ export class THnPainter extends TPainter {
         return recursiveSearch(getChildObjectByIndex(
           this.pointer.rootObj, this.pointer.parentPath.map(v => v.bin[0]), set),
         0, 0, [], set);
-      }).filter(v => v.length !== 0);
+      }).filter(v => v.length !==0);
       const distanceMin = Math.min(...results.map(v => v[0].distance));
       return results.find(v => v[0].distance === distanceMin) ?? [];
     }
