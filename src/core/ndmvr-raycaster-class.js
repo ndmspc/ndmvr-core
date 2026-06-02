@@ -1,4 +1,5 @@
 import { configSubjectGet } from "../rxjs/ConfigSubject.js";
+import { binInfoSubjectGet } from "../rxjs/BinInfoSubject.js";
 import { Raycaster, Vector2 } from "three";
 
 /**
@@ -118,5 +119,8 @@ export class NdmvrRaycaster {
     this.raycaster.setFromCamera(this.mouse, this.cameraElement);
     this.raycaster._triggerSource = "mousemove";
     const hits = this.raycaster.intersectObjects(this.sceneElement.children, true);
+    if (!hits.some(h => h.isHistogramBin)) {
+      binInfoSubjectGet().next(null);
+    }
   }
 }

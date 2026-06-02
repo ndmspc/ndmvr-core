@@ -10,6 +10,7 @@ nav:
       - "Configuration": components/tutorial/configurationChapter/configuration-chapter.md
       - "interactions": components/tutorial/interactions/interactions.md
       - "Canvas": components/tutorial/canvas/canvas.md
+      - "Error Cross": components/tutorial/error-cross-tutorial.md
   - "Components":
           - "Bin info jsroot": components/visualization/bin-info-jsroot.md
           - "Canvas": components/visualization/canvas.md
