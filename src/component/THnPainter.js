@@ -612,7 +612,6 @@ export class THnPainter extends TPainter {
         const error = fArrayValuesAvailable || this.selectedArray === "content"
           ? this.getBinError( obj, relPos.x, relPos.y, relPos.z, this.selectedArray)
           : 0;
-        console.log("scaleMin", scaleMin, "scaleMax", scaleMax, "content", content);
 
         const scaleValue = this.config.scale.scaleBy === "value" ? content : error;
 
@@ -981,9 +980,10 @@ export class THnPainter extends TPainter {
   handleStateChange(state) {
     if (areArraysEqual(state.sets, this.availableSets) &&
       (!areArraysEqual(state.selectedSet, this.selectedSet) ||
-        this.selectedArray !== state.selectedArray)) {
+        this.selectedArray !== state.selectedArray) || (this.minMaxValue.length !== 0 && !areMinMaxValuesEqual(state.minMaxValue, this.minMaxValue))) {
       this.selectedArray = state.selectedArray;
       this.selectedSet = state.selectedSet;
+      this.minMaxValue = state.minMaxValue;
       const parent = this.mesh.parent;
       this.instGeom.dispose();
       parent.remove(this.mesh);

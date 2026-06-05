@@ -69,11 +69,11 @@
       },
       "scale": {
         "scaleBy": "value",
-        "content": "global",
+        "content": "fixed",
         "parameter": "fixed",
         "sets": "relative",
         "default": {
-          "min": 0.1,
+          "min": 0.001,
           "max": 1
         },
         "layer": []
