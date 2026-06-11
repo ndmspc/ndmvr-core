@@ -313,4 +313,8 @@ export default class HistogramWireframeClass {
       return this.config.color.default;
     }
   }
+
+  updateConfig(config) {
+    this.config = config;
+  }
 }
