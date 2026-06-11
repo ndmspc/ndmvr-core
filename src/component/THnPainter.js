@@ -151,6 +151,7 @@ export class THnPainter extends TPainter {
       this.setAvailableSets(this.pointer.origin);
       this.setAvailableArrays(this.pointer.origin);
       this.setAvailableAxes(this.pointer.origin);
+      // this.setCorrectWireframeEnd();
 
       const minMaxValues = new Array(this.maxContentPerLayer.length);
       for (let i = 0; i < this.maxContentPerLayer.length; i++) {
@@ -645,7 +646,7 @@ export class THnPainter extends TPainter {
         }
         // console.log("scaleFactor", scaleFactor);
 
-        if (this.config.color.scaleBy === "value") {
+        if (this.config.color.colorBy === "value") {
           this.color = getGradientColorInst(
             this.config.color, scaleValue, scaleMin, scaleMax, availableSetIndex, currentLayer, scaleType[0].errorType
           );
@@ -1368,10 +1369,12 @@ export class THnPainter extends TPainter {
     if (newLimits) {
       if (!areLimitsEqual(this.limits, newLimits) && this.renderHistory.length > 0) {
         this.limits = {...newLimits};
-        this.renderHistogramHistory();
+        // this.renderHistogramHistory();
       }
     }
     this.limits = {...newLimits};
+    if (this.wireframe) this.wireframe.updateConfig(this.config.wireframe);
+    this.renderHistogramHistory();
   }
 
   /**
