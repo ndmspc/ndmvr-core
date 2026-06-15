@@ -126,22 +126,22 @@
             "max": "0xff0000"
           }
         ]
-      }
-    },
-    "errorCross": {
+      },
+      "errorCross": {
         "enabled": true,
         "display": {
           "start": 0,
           "end": 99
         },
-        "color": "0x00ffff",
+        "color": "0xFF0000",
         "showZArm": false,
-        "margin": 0.05
+        "minArmLength": 0.05
       }
-    },
-    "bindings": {
-      "resetHistogram": "r",
-      "goToPreviousLayer": "z",
-      "hideOutlines": "o"
     }
+  },
+  "bindings": {
+    "resetHistogram": "r",
+    "goToPreviousLayer": "z",
+    "hideOutlines": "o"
+  }
 }
