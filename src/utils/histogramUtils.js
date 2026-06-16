@@ -466,6 +466,7 @@ export function computeMaxContentPerLayer(obj) {
   return max;
 }
 
+//TODO druha funkcia ak bude maxE beriem fixne computeMaxError nemusim pocitat
 export function computeMaxErrorPerLayer(obj, maxContentPerLayer) {
   if (!obj) return;
 
@@ -482,11 +483,17 @@ export function computeMaxErrorPerLayer(obj, maxContentPerLayer) {
 
   const max = [];
 
-  max[0] = {content: getMax(obj.fSumw2)};
+  max[0] = {content: obj.fSumw2.length === 0 ? Math.sqrt(Math.abs(maxContentPerLayer[0].content)) : getMax(obj.fSumw2)};
 
   if (obj.fArrays) {
     Object.keys(obj?.fArrays).forEach((array) => {
-      if (obj.fArrays[array].errors) {
+      if (obj.fArrays[array].maxE){
+        max[0] = {
+          ...max[0],
+          [array]: obj.fArrays[array].maxE,
+        };
+      }
+      else {
         max[0] = {
           ...max[0],
           [array]: getMax(obj.fArrays[array].errors) ?? Math.sqrt(obj.fArrays[array].max),
@@ -512,11 +519,17 @@ export function computeMaxErrorPerLayer(obj, maxContentPerLayer) {
         if (child.fArrays) {
           // const temp = getMax(child.fArray)
           Object.keys(child.fArrays).forEach((array) => {
-            if (!child.fArrays[array].errors) return;
             if (!(array in max[layer]) || temp > max[layer][array]) {
               max[layer][array] = temp;
             }
-            max[layer][array] = Math.max(max[layer][array], getMax(child.fArrays[array].errors) ?? Math.sqrt(child.fArrays[array].max));
+            if (child.fArrays[array].maxE) {
+              max[layer][array] = Math.max(max[layer][array], child.fArrays[array].maxE);
+            } else {
+              max[layer][array] = Math.max(
+                max[layer][array],
+                getMax(child.fArrays[array].errors) ?? Math.sqrt(child.fArrays[array].max)
+              );
+            }
           });
         }
 
@@ -554,14 +567,20 @@ export function computeMinErrorPerLayer(obj, minContentPerLayer) {
 
   const min = [];
 
-  min[0] = {content: getMin(obj.fSumw2)};
+  min[0] = {content: obj.fSumw2.length === 0 ? Math.sqrt(Math.abs(minContentPerLayer[0].content)) : getMin(obj.fSumw2)};
 
   if (obj.fArrays) {
     Object.keys(obj?.fArrays).forEach((array) => {
-      if (obj.fArrays[array].errors) {
+      if (obj.fArrays[array].minE){
         min[0] = {
           ...min[0],
-          [array]: getMin(obj.fArrays[array].errors) ?? Math.sqrt(obj.fArrays[array].min)
+          [array]: obj.fArrays[array].minE,
+        };
+      }
+      else {
+        min[0] = {
+          ...min[0],
+          [array]: getMin(obj.fArrays[array].errors) ?? Math.sqrt(obj.fArrays[array].min),
         };
       }
     });
@@ -583,14 +602,18 @@ export function computeMinErrorPerLayer(obj, minContentPerLayer) {
         }
         if (child.fArrays) {
           Object.keys(child.fArrays).forEach((array) => {
-            if (!child.fArrays[array].errors) return;
             if (!(array in min[layer]) || temp < min[layer][array]) {
               min[layer][array] = temp;
             }
-            min[layer][array] = Math.min(min[layer][array],
-              getMin(child.fArrays[array]?.errors?.filter((v) => v > 0))
-              ?? Math.sqrt(obj.fArrays[array].min)
-            );
+            if (child.fArrays[array].minE) {
+              min[layer][array] = Math.min(min[layer][array], child.fArrays[array].minE);
+            } else {
+              min[layer][array] = Math.min(
+                min[layer][array],
+                getMin(child.fArrays[array]?.errors?.filter((v) => v > 0))
+                ?? Math.sqrt(obj.fArrays[array].min)
+              );
+            }
           });
         }
 

@@ -163,7 +163,7 @@ export class THnPainter extends TPainter {
           };
         });
       }
-      console.log("minMaxValues: ", minMaxValues);
+      console.log("minMaxValues: ", minMaxValues, this.minErrorPerLayer, this.maxErrorPerLayer);
       stateSubjectGet(this.id).next(
         {...stateSubjectGet(this.id).getValue(), minMaxValue: minMaxValues});
     }
@@ -481,7 +481,7 @@ export class THnPainter extends TPainter {
         }
 
       } else if (this.selectedArray !== "content" && obj.fArrays && fArrayValuesAvailable) { //array
-        if (this.config.scale.parameter === "fixed") { //array static
+        if (this.config.scale.parameter === "fixed") { //array fixed
           ({min: contentMin, max: contentMax} =
             // this.minMaxValue[0][this.selectedArray].value);
           this.minMaxValue[currentLayer + this.pointer.parentPath.length][this.selectedArray].value);
@@ -521,7 +521,7 @@ export class THnPainter extends TPainter {
 
       } else {  //content
         const branch = this.pointer.isOnSet ?? "content";
-        if (this.config.scale.content === "fixed") { //content static
+        if (this.config.scale.content === "fixed") { //content fixed
           ({min: contentMin, max: contentMax} =
             this.minMaxValue[currentLayer + this.pointer.parentPath.length][branch].value);
           ({min: errorMin, max: errorMax} =
@@ -612,7 +612,7 @@ export class THnPainter extends TPainter {
           : scaleMax;
         const error = fArrayValuesAvailable || this.selectedArray === "content"
           ? this.getBinError( obj, relPos.x, relPos.y, relPos.z, this.selectedArray)
-          : 0;
+          : scaleMax;
 
         const scaleValue = this.config.scale.scaleBy === "value" ? content : error;
 
@@ -644,7 +644,6 @@ export class THnPainter extends TPainter {
         } else {
           scaleFactor = 0;
         }
-        // console.log("scaleFactor", scaleFactor);
 
         if (this.config.color.colorBy === "value") {
           this.color = getGradientColorInst(
