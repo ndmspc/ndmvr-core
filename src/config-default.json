@@ -128,7 +128,7 @@
         ]
       },
       "errorCross": {
-        "enabled": true,
+        "enabled": false,
         "display": {
           "start": 0,
           "end": 99
