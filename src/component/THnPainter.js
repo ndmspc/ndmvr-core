@@ -647,7 +647,7 @@ export class THnPainter extends TPainter {
 
         if (this.config.color.colorBy === "value") {
           this.color = getGradientColorInst(
-            this.config.color, scaleValue, scaleMin, scaleMax, availableSetIndex, currentLayer, scaleType[0].errorType
+            this.config.color, content, contentMin, contentMax, availableSetIndex, currentLayer, scaleType[0].errorType
           );
         } else {
           this.color = getGradientColorInst(
