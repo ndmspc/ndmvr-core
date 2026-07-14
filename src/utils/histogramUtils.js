@@ -18,18 +18,22 @@ function GetBinUpperEdge(axis, bin) {
  * @param size defines size of dimension on axis.
  * @param padding defines padding on axis.
  * */
-function getRootBinSizePosByAxis(axis, binRelPos, size, padding, offset, layer, target) {
+function getRootBinSizePosByAxis(axis, binRelPos, size, padding, offset, layer, ignoreVarBinning, target) {
   const bin = binRelPos + 1;
-  const binLow = axis.GetBinLowEdge(bin);
-  const binUpper = GetBinUpperEdge(axis, bin);
+  const binSizeTotal = axis.fXmax - axis.fXmin;
+  const binLow = ignoreVarBinning
+    ? axis.fXmin + (binRelPos * (binSizeTotal / axis.fNbins))
+    : axis.GetBinLowEdge(bin);
+  const binUpper = ignoreVarBinning
+    ? axis.fXmin + ((binRelPos + 1) * (binSizeTotal / axis.fNbins))
+    : GetBinUpperEdge(axis, bin);
   const binSize = Math.abs(binUpper - binLow);
 
   target.size = binSize;
   target.pos = binLow + (binSize * 0.5) - axis.fXmin;
 
   if (size) {
-    const binSize = axis.fXmax - axis.fXmin;
-    const scale = (binSize * axis.fNbins) / (size * axis.fNbins);
+    const scale = (binSizeTotal * axis.fNbins) / (size * axis.fNbins);
 
     target.pos /= scale;
     target.size /= scale;
@@ -42,13 +46,15 @@ function getRootBinSizePosByAxis(axis, binRelPos, size, padding, offset, layer, 
 /**
  * Get bin's size and position relative to histogram axis.
  * */
-function getRootBinSizePos(rootObj, rootBinRelPos, size, padding, offset, layer, target) {
-  getRootBinSizePosByAxis(rootObj.fXaxis, rootBinRelPos.x, size?.x, padding?.x, offset?.x, layer, target.x);
-  getRootBinSizePosByAxis(rootObj.fYaxis, rootBinRelPos.y, size?.z, padding?.y, offset?.z, layer, target.y);
-  getRootBinSizePosByAxis(rootObj.fZaxis, rootBinRelPos.z, size?.y, padding?.z, offset?.y, layer, target.z);
+export function getRootBinSizePos(rootObj, rootBinRelPos, padding, size, offset, layer, ignoreVarBinning, target) {
+  getRootBinSizePosByAxis(rootObj.fXaxis, rootBinRelPos.x, size?.x, padding?.x, offset?.x, layer, ignoreVarBinning, target.x);
+  getRootBinSizePosByAxis(rootObj.fYaxis, rootBinRelPos.y, size?.z, padding?.y, offset?.z, layer, ignoreVarBinning, target.y);
+  getRootBinSizePosByAxis(rootObj.fZaxis, rootBinRelPos.z, size?.y, padding?.z, offset?.y, layer, ignoreVarBinning, target.z);
+
+  return target;
 }
 
-export function rootSizePosToAFrame(jsrootSizePos) {
+export function rootSizePosToThreeCoords(jsrootSizePos) {
   const sizeY = jsrootSizePos.y.size;
   const posY = jsrootSizePos.y.pos;
 
@@ -65,8 +71,8 @@ export function rootSizePosToAFrame(jsrootSizePos) {
  * - bins start at 0 in all axes
  * - 1 is the smallest bin dimension in all axes
  */
-export function computeAFrameBinSizePos(rootObj, rootBinRelPos, padding, size, offset, layer, target) {
-  getRootBinSizePos(rootObj, rootBinRelPos, size, padding, offset, layer, target);
+export function computeAFrameBinSizePos(rootObj, rootBinRelPos, padding, size, offset, layer, ignoreVarBinning, target) {
+  getRootBinSizePos(rootObj, rootBinRelPos, padding, size, offset, layer, ignoreVarBinning, target);
 
   // if (!size) {
   //   target.x.pos += padding.x * (rootBinRelPos.x - 1);

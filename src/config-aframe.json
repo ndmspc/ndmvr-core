@@ -87,6 +87,7 @@
         "scaleBy": "value",
         "content": "global",
         "parameter": "fixed",
+        "ignoreVarBinning": false,
         "sets": "relative",
         "default": {
           "min": 0.1,
