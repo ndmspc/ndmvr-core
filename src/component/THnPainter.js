@@ -2,7 +2,6 @@ import RadixCounter from "../utils/radixCounter.js";
 import {
   areArraysEqual, areMinMaxValuesEqual,
   calculateHierarchicalIndex,
-  computeAFrameBinSizePos,
   computeIndexFromPosition,
   computeJsRootIndexFromPosition,
   computeMaxContentPerLayer,
@@ -16,7 +15,7 @@ import {
   getGradientColorInst,
   getRangeByPosition,
   getChildObjectByIndex,
-  rootSizePosToAFrame,
+  rootSizePosToThreeCoords, getRootBinSizePos,
 } from "../utils/histogramUtils.js";
 import {HistogramPointerClass} from "../core/histogram-pointer-class.js";
 import {stateSubjectGet} from "../rxjs/StateSubject.js";
@@ -598,9 +597,9 @@ export class THnPainter extends TPainter {
         const binSizePos = flipLocalZAxis(
           limits.position.z,
           limits.scale.z,
-          rootSizePosToAFrame(computeAFrameBinSizePos(
+          rootSizePosToThreeCoords(getRootBinSizePos(
             obj, relPos, padding, limits?.scale, limits?.position,
-            currentLayer, _binSizePos
+            currentLayer, this.config.scale.ignoreVarBinning, _binSizePos
           )),
         );
 
@@ -890,9 +889,9 @@ export class THnPainter extends TPainter {
     flipLocalZAxis(
       limits.position.z,
       limits.scale.z,
-      rootSizePosToAFrame(computeAFrameBinSizePos(
+      rootSizePosToThreeCoords(getRootBinSizePos(
         obj, relPos, padding, limits?.scale, limits?.position,
-        currentLayer, _binSizePos
+        currentLayer, this.config.scale.ignoreVarBinning, _binSizePos
       )),
     );
 
