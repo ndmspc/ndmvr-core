@@ -1,3 +1,5 @@
+import { areAvailableAxesEqual, cropJSROOTHistogram, } from "../utils/histogramUtils.js";
+
 export class HistogramPointerClass {
 
   rootObj = undefined;
@@ -8,6 +10,7 @@ export class HistogramPointerClass {
   range = [];
   isOnSet = null;
   isHistogramFilled = true;
+  axisRanges = undefined;
 
   constructor(rootObj) {
     this.rootObj = rootObj;
@@ -95,6 +98,13 @@ export class HistogramPointerClass {
     this.setOriginToParent(steps - 1);
     this.isOnSet = null;
     this.isHistogramFilled = true;
+  }
+
+  setHistogramRanges(ranges) {
+    if (areAvailableAxesEqual(ranges, this.axisRanges)) return;
+    this.axisRanges = ranges;
+
+    this.origin = cropJSROOTHistogram(this.rootObj, ranges);
   }
 
 }

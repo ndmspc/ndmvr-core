@@ -1,11 +1,15 @@
 import { BehaviorSubject } from "rxjs";
+import { histogramSubjectGet } from "./HistogramSubject.js";
+import { computeRenderRangeIterator } from "../utils/histogramUtils.js";
 
 let stateSubjectMap = new Map();
 
 class StateSubject {
   #subject;
+  #id;
 
-  constructor () {
+  constructor (id) {
+    this.#id = id;
     this.#subject = new BehaviorSubject({
       sets: [],
       selectedSet: [],
@@ -25,13 +29,15 @@ class StateSubject {
   }
 
   next (e) {
-    this.#subject.next(e);
-    console.log("STATE: ", e);
+    histogramSubjectGet().getCurrentHistogram(this.#id).then(histo => {
+      e.axisRanges = computeRenderRangeIterator(histo?.obj, e.axisRanges);
+      this.#subject.next(e);
+    })
   }
 }
 
 export const stateSubjectGet = (id) => {
   if (!id) throw new Error("StateSubject id is undefined");
-  if (!stateSubjectMap.get(id)) stateSubjectMap.set(id, new StateSubject());
+  if (!stateSubjectMap.get(id)) stateSubjectMap.set(id, new StateSubject(id));
   return stateSubjectMap.get(id);
 };
