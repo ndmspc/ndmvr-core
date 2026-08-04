@@ -85,7 +85,7 @@
       },
       "scale": {
         "scaleBy": "value",
-        "content": "global",
+        "content": "fixed",
         "parameter": "fixed",
         "ignoreVarBinning": false,
         "sets": "relative",
@@ -150,7 +150,7 @@
         ]
       },
       "errorCross": {
-        "enabled": true,
+        "enabled": false,
         "display": {
           "start": 0,
           "end": 99

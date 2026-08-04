@@ -162,25 +162,74 @@ options.set("histo1_25", histo1_25);
 options.set("histo1_2_5", histo1_2_5);
 options.set("histo5_2_1", histo5_2_1);
 
-const selectDiv = document.createElement("div");
-selectDiv.innerHTML = `
-  <div style="position: absolute; top: 50px; right: 50px;">
-    <select name="histograms" id="histogram-select">
-      <option value="h3scat">h3scat</option>
-      <option value="test6x2x1">text6x2x1</option>
-      <option value="histo125">histo125</option>
-      <option value="histo12_5">histo12_5</option>
-      <option value="histo1_25">histo1_25</option>
-      <option value="histo1_2_5">histo1_2_5</option>
-      <option value="histo5_2_1">histo5_2_1</option>
-      <option value="custom">Set to URL</option>
-    </select>
-    <input type="text" id="custom-url-input" value="https://eos.ndmspc.io/eos/ndmspc/scratch/ndmspc/ndmvr-aframe/demo/rsn.json" placeholder="Enter custom URL" style="display: none; margin-top: 5px; width: 200px;" />
-    <button id="load-custom-url" style="display: none; margin-top: 5px;">Load</button>
+const menuDiv = document.createElement("div");
+menuDiv.innerHTML = `
+  <div style="position: fixed; top: 12px; right: 12px; left: auto; z-index: 1000; width: 280px; padding: 10px; border-radius: 8px; background: rgba(20, 20, 30, 0.9); color: #f5f5f5; font-family: Arial, sans-serif; max-height: calc(100vh - 24px); overflow-y: auto;">
+    <div style="display: flex; gap: 6px; margin-bottom: 10px;">
+      <button type="button" data-panel="histogram-panel" style="flex: 1; padding: 6px; border: 1px solid #2b4966; background: #1e3550; color: #fff; cursor: pointer; border-radius: 4px;">Histogram Select</button>
+      <button type="button" data-panel="draw-options-panel" style="flex: 1; padding: 6px; border: 1px solid #444; background: #2f2f38; color: #fff; cursor: pointer; border-radius: 4px;">Draw Options</button>
+      <button type="button" data-panel="draw-ranges-panel" style="flex: 1; padding: 6px; border: 1px solid #444; background: #2f2f38; color: #fff; cursor: pointer; border-radius: 4px;">Draw Ranges</button>
+    </div>
+
+    <div id="histogram-panel" data-menu-panel>
+      <select name="histograms" id="histogram-select" style="width: 100%; padding: 6px; margin-bottom: 6px;">
+        <option value="h3scat">h3scat</option>
+        <option value="test6x2x1">text6x2x1</option>
+        <option value="histo125">histo125</option>
+        <option value="histo12_5">histo12_5</option>
+        <option value="histo1_25">histo1_25</option>
+        <option value="histo1_2_5">histo1_2_5</option>
+        <option value="histo5_2_1">histo5_2_1</option>
+        <option value="custom">Set to URL</option>
+      </select>
+      <input type="text" id="custom-url-input" value="https://eos.ndmspc.io/eos/ndmspc/scratch/ndmspc/hp_2026/rsn.json" placeholder="Enter custom URL" style="display: none; width: 100%; padding: 6px; margin-bottom: 6px;" />
+      <button id="load-custom-url" style="display: none; width: 100%; padding: 6px;">Load</button>
+    </div>
+
+    <div id="draw-options-panel" data-menu-panel style="display: none;">
+      <label style="display: flex; align-items: center; gap: 6px; font-size: 13px; margin-bottom: 8px; cursor: pointer;">
+        <input type="checkbox" id="error-cross" style="accent-color: #00ffff;" />
+        Error cross display
+      </label>
+
+      <label for="arraySelect" style="font-size: 12px; color: #c8c8c8;">Array select</label>
+      <select id="arraySelect" aria-label="Dynamic options" style="width: 100%; padding: 6px; margin: 4px 0 10px;">
+        <option value="content">content</option>
+      </select>
+
+      <div style="font-size: 12px; color: #c8c8c8; margin-bottom: 4px;">Set select</div>
+      <div id="set-checkboxes" style="max-height: 160px; overflow-y: auto;"></div>
+    </div>
+
+    <div id="draw-ranges-panel" data-menu-panel style="display: none;">
+      <div id="draw-ranges-content" style="font-size: 13px; color: #c8c8c8;">No axis ranges available yet.</div>
+      <button id="apply-ranges-button" style="width: 100%; padding: 6px; margin-top: 8px;">Apply ranges</button>
+    </div>
   </div>
 `;
 
-document.querySelector("#app").appendChild(selectDiv);
+document.querySelector("#app").appendChild(menuDiv);
+
+const menuButtons = menuDiv.querySelectorAll("button[data-panel]");
+const menuPanels = menuDiv.querySelectorAll("[data-menu-panel]");
+
+const setMenuPanel = (panelId) => {
+  menuPanels.forEach((panel) => {
+    panel.style.display = panel.id === panelId ? "block" : "none";
+  });
+
+  menuButtons.forEach((button) => {
+    const isActive = button.dataset.panel === panelId;
+    button.style.background = isActive ? "#1e3550" : "#2f2f38";
+    button.style.borderColor = isActive ? "#2b4966" : "#444";
+  });
+};
+
+menuButtons.forEach((button) => {
+  button.addEventListener("click", () => setMenuPanel(button.dataset.panel));
+});
+
+setMenuPanel("histogram-panel");
 
 const histogramSelect = document.getElementById("histogram-select");
 const urlInput = document.getElementById("custom-url-input");
@@ -217,42 +266,390 @@ histogramSelect.addEventListener("change", (event) => {
   }
 });
 
-const setDiv = document.createElement("div");
-setDiv.innerHTML = `
-  <div style="position: absolute; top: 110px; right: 50px;">
-    <div id="set-checkboxes"></div>
-  </div>
-`;
-document.querySelector("#app").appendChild(setDiv);
-
 const checkboxContainer = document.getElementById("set-checkboxes");
-
-const arrayDiv = document.createElement("div");
-arrayDiv.innerHTML = `
-<div style="position: absolute; top: 80px; right: 50px;">
-  <select id="arraySelect" aria-label="Dynamic options">
-    <option value="content">content</option>
-  </select>
-</div>
-`;
-document.querySelector("#app").appendChild(arrayDiv);
 const arraySelect = document.getElementById("arraySelect");
+const drawRangesContainer = document.getElementById("draw-ranges-content");
+const applyRangesButton = document.getElementById("apply-ranges-button");
 
-// Error cross toggle
-const errorCrossDiv = document.createElement("div");
-errorCrossDiv.innerHTML = `
-  <div style="position: absolute; top: 20px; right: 50px;">
-    <div style="display: flex; flex-direction: column; align-items: flex-start;">
-      <label style="color: white; font-family: Arial, sans-serif; font-size: 13px; cursor: pointer; display: flex; align-items: center;">
-        <input type="checkbox" id="error-cross"
-               style="accent-color: #00ffff; vertical-align: middle; margin-right: 4px;" />
-        Error cross
-      </label>
-      <span style="color: #999; font-family: Arial, sans-serif; font-size: 11px; margin-top: 2px;">Error cross display</span>
-    </div>
-  </div>
-`;
-document.querySelector("#app").appendChild(errorCrossDiv);
+const formatAxisValue = (value) => {
+  if (!Number.isFinite(value)) return String(value);
+  if (value === 0) return "0";
+
+  const absValue = Math.abs(value);
+  if (absValue >= 1e6 || absValue < 1e-4) {
+    return value.toExponential(6).replace(/\.?(0+)(e)/, "$2");
+  }
+
+  return Number.parseFloat(value.toPrecision(12)).toString();
+};
+
+// Render Axis Ranges into provided container
+const renderAxisRangesTo = (axisRanges, targetEl) => {
+  targetEl.innerHTML = "";
+
+  if (!Array.isArray(axisRanges) || axisRanges.length === 0) {
+    targetEl.textContent = "No axis ranges available yet.";
+    return;
+  }
+
+  axisRanges.forEach((layerRanges, layerIndex) => {
+    const layerWrap = document.createElement("div");
+    layerWrap.style.marginBottom = "10px";
+    layerWrap.style.padding = "8px";
+    layerWrap.style.border = "1px solid #3a3a47";
+    layerWrap.style.borderRadius = "6px";
+
+    const layerTitle = document.createElement("div");
+    layerTitle.textContent = `Layer ${layerIndex + 1}`;
+    layerTitle.style.fontSize = "12px";
+    layerTitle.style.fontWeight = "bold";
+    layerTitle.style.marginBottom = "8px";
+    layerWrap.appendChild(layerTitle);
+
+    if (!Array.isArray(layerRanges) || layerRanges.length === 0) {
+      const empty = document.createElement("div");
+      empty.textContent = "No axes in this layer.";
+      empty.style.color = "#9e9ea7";
+      empty.style.fontSize = "12px";
+      layerWrap.appendChild(empty);
+      targetEl.appendChild(layerWrap);
+      return;
+    }
+
+    layerRanges.forEach((axisRange, axisIndex) => {
+      const minBound = Number(axisRange?.fXmin);
+      const maxBound = Number(axisRange?.fXmax);
+      const hasValidBounds = Number.isFinite(minBound) && Number.isFinite(maxBound) && minBound < maxBound;
+
+      const startMin = hasValidBounds ? Math.min(Math.max(Number(axisRange?.fXbot), minBound), maxBound) : 0;
+      const startMax = hasValidBounds ? Math.min(Math.max(Number(axisRange?.fXtop), minBound), maxBound) : 1;
+
+      const axisWrap = document.createElement("div");
+      axisWrap.style.marginBottom = "10px";
+      axisWrap.style.paddingBottom = "8px";
+      axisWrap.style.borderBottom = "1px solid #2f2f39";
+
+      const axisTitle = document.createElement("div");
+      axisTitle.textContent = `${axisRange?.fTitle || "Axis"} (${axisRange?.axis || "?"})`;
+      axisTitle.style.fontSize = "12px";
+      axisTitle.style.marginBottom = "4px";
+      axisWrap.appendChild(axisTitle);
+
+      if (!hasValidBounds) {
+        const invalid = document.createElement("div");
+        invalid.textContent = "Invalid bounds";
+        invalid.style.fontSize = "12px";
+        invalid.style.color = "#ff9a9a";
+        axisWrap.appendChild(invalid);
+        layerWrap.appendChild(axisWrap);
+        return;
+      }
+
+      const valuesInfo = document.createElement("div");
+      valuesInfo.style.fontSize = "11px";
+      valuesInfo.style.color = "#b9b9c6";
+      valuesInfo.style.marginBottom = "4px";
+      axisWrap.appendChild(valuesInfo);
+
+      const minSlider = document.createElement("input");
+      minSlider.type = "range";
+      minSlider.step = "any";
+      minSlider.min = String(minBound);
+      minSlider.max = String(maxBound);
+      minSlider.value = String(startMin);
+      minSlider.dataset.layerIndex = String(layerIndex);
+      minSlider.dataset.axisIndex = String(axisIndex);
+      minSlider.dataset.rangeRole = "min";
+      minSlider.style.width = "100%";
+      axisWrap.appendChild(minSlider);
+
+      const maxSlider = document.createElement("input");
+      maxSlider.type = "range";
+      maxSlider.step = "any";
+      maxSlider.min = String(minBound);
+      maxSlider.max = String(maxBound);
+      maxSlider.value = String(Math.max(startMin, startMax));
+      maxSlider.dataset.layerIndex = String(layerIndex);
+      maxSlider.dataset.axisIndex = String(axisIndex);
+      maxSlider.dataset.rangeRole = "max";
+      maxSlider.style.width = "100%";
+      axisWrap.appendChild(maxSlider);
+
+      const syncRangeText = () => {
+        let currentMin = Number(minSlider.value);
+        let currentMax = Number(maxSlider.value);
+
+        if (currentMin > currentMax) {
+          if (document.activeElement === minSlider) {
+            currentMax = currentMin;
+            maxSlider.value = String(currentMax);
+          } else {
+            currentMin = currentMax;
+            minSlider.value = String(currentMin);
+          }
+        }
+
+        valuesInfo.textContent = `Range: ${formatAxisValue(currentMin)} -> ${formatAxisValue(currentMax)}`;
+      };
+
+      minSlider.addEventListener("input", syncRangeText);
+      maxSlider.addEventListener("input", syncRangeText);
+      syncRangeText();
+
+      layerWrap.appendChild(axisWrap);
+    });
+
+    targetEl.appendChild(layerWrap);
+  });
+};
+
+// Render Min/Max Values (both value and error) into provided container
+const renderMinMaxValuesTo = (minMaxValue, targetEl) => {
+  targetEl.innerHTML = "";
+
+  if (!Array.isArray(minMaxValue) || minMaxValue.length === 0) {
+    targetEl.textContent = "No min/max values available yet.";
+    return;
+  }
+
+  minMaxValue.forEach((layerObj, layerIndex) => {
+    const layerWrap = document.createElement("div");
+    layerWrap.style.marginBottom = "10px";
+    layerWrap.style.padding = "8px";
+    layerWrap.style.border = "1px solid #3a3a47";
+    layerWrap.style.borderRadius = "6px";
+
+    const layerTitle = document.createElement("div");
+    layerTitle.textContent = `Layer ${layerIndex + 1}`;
+    layerTitle.style.fontSize = "12px";
+    layerTitle.style.fontWeight = "bold";
+    layerTitle.style.marginBottom = "8px";
+    layerWrap.appendChild(layerTitle);
+
+    if (!layerObj || typeof layerObj !== "object") {
+      const empty = document.createElement("div");
+      empty.textContent = "No keys in this layer.";
+      empty.style.color = "#9e9ea7";
+      empty.style.fontSize = "12px";
+      layerWrap.appendChild(empty);
+      targetEl.appendChild(layerWrap);
+      return;
+    }
+
+    Object.keys(layerObj).forEach((key) => {
+      const entry = layerObj[key] || {};
+      const valueObj = entry.value || {};
+      const errorObj = entry.error || {};
+
+      // For Min/Max Values sliders use role-specific fXmin/fXmax as read-only bounds when provided.
+      // No extra validation is performed; if values are null/Infinity/etc. it's acceptable.
+
+      const sectionWrap = document.createElement("div");
+      sectionWrap.style.marginBottom = "10px";
+      sectionWrap.style.paddingBottom = "8px";
+      sectionWrap.style.borderBottom = "1px solid #2f2f39";
+
+      const title = document.createElement("div");
+      title.textContent = String(key);
+      title.style.fontSize = "12px";
+      title.style.marginBottom = "4px";
+      sectionWrap.appendChild(title);
+
+      // Helper to build a pair of sliders (min/max) for a role (value or error)
+      const buildSliderPair = (role, current) => {
+        const box = document.createElement("div");
+        box.style.margin = "6px 0";
+
+        const label = document.createElement("div");
+        label.textContent = role === "value" ? "Value" : "Error";
+        label.style.fontSize = "11px";
+        label.style.color = "#b9b9c6";
+        label.style.marginBottom = "2px";
+        box.appendChild(label);
+
+        // Original (read-only) slider bounds taken directly from role's fXmin/fXmax
+        const roleMinBoundRaw = current?.fXmin;
+        const roleMaxBoundRaw = current?.fXmax;
+
+        // Initialize slider positions from current values without clamping
+        const startMin = Number.isFinite(Number(current?.min)) ? Number(current.min) : 0;
+        const startMax = Number.isFinite(Number(current?.max)) ? Number(current.max) : 1;
+
+        const info = document.createElement("div");
+        info.style.fontSize = "11px";
+        info.style.color = "#b9b9c6";
+        info.style.marginBottom = "4px";
+        box.appendChild(info);
+
+        const minSlider = document.createElement("input");
+        minSlider.type = "range";
+        minSlider.step = "any";
+        if (Number.isFinite(Number(roleMinBoundRaw))) minSlider.min = String(Number(roleMinBoundRaw));
+        if (Number.isFinite(Number(roleMaxBoundRaw))) minSlider.max = String(Number(roleMaxBoundRaw));
+        minSlider.value = String(startMin);
+        minSlider.dataset.mmLayerIndex = String(layerIndex);
+        minSlider.dataset.mmKey = String(key);
+        minSlider.dataset.mmRole = role; // value | error
+        minSlider.dataset.rangeRole = "min";
+        minSlider.style.width = "100%";
+        box.appendChild(minSlider);
+
+        const maxSlider = document.createElement("input");
+        maxSlider.type = "range";
+        maxSlider.step = "any";
+        if (Number.isFinite(Number(roleMinBoundRaw))) maxSlider.min = String(Number(roleMinBoundRaw));
+        if (Number.isFinite(Number(roleMaxBoundRaw))) maxSlider.max = String(Number(roleMaxBoundRaw));
+        maxSlider.value = String(Math.max(startMin, startMax));
+        maxSlider.dataset.mmLayerIndex = String(layerIndex);
+        maxSlider.dataset.mmKey = String(key);
+        maxSlider.dataset.mmRole = role;
+        maxSlider.dataset.rangeRole = "max";
+        maxSlider.style.width = "100%";
+        box.appendChild(maxSlider);
+
+        const sync = () => {
+          let cmin = Number(minSlider.value);
+          let cmax = Number(maxSlider.value);
+          if (cmin > cmax) {
+            if (document.activeElement === minSlider) {
+              cmax = cmin;
+              maxSlider.value = String(cmax);
+            } else {
+              cmin = cmax;
+              minSlider.value = String(cmin);
+            }
+          }
+          info.textContent = `${role === "value" ? "Value" : "Error"} range: ${formatAxisValue(cmin)} -> ${formatAxisValue(cmax)}`;
+        };
+        minSlider.addEventListener("input", sync);
+        maxSlider.addEventListener("input", sync);
+        sync();
+
+        return box;
+      };
+
+      sectionWrap.appendChild(buildSliderPair("value", valueObj));
+      sectionWrap.appendChild(buildSliderPair("error", errorObj));
+
+      layerWrap.appendChild(sectionWrap);
+    });
+
+    targetEl.appendChild(layerWrap);
+  });
+};
+
+// Build the two-column layout and render both Axis Ranges and Min/Max Values
+const renderRangesPanel = (state) => {
+  drawRangesContainer.innerHTML = "";
+
+  const wrap = document.createElement("div");
+  wrap.style.display = "flex";
+  wrap.style.gap = "10px";
+
+  const left = document.createElement("div");
+  left.style.flex = "1 1 0";
+  const leftTitle = document.createElement("div");
+  leftTitle.textContent = "Axis Ranges";
+  leftTitle.style.fontSize = "12px";
+  leftTitle.style.fontWeight = "bold";
+  leftTitle.style.margin = "0 0 6px 0";
+  left.appendChild(leftTitle);
+  const leftContent = document.createElement("div");
+  leftContent.id = "axis-ranges-content";
+  left.appendChild(leftContent);
+
+  const right = document.createElement("div");
+  right.style.flex = "1 1 0";
+  const rightTitle = document.createElement("div");
+  rightTitle.textContent = "Min/Max Values";
+  rightTitle.style.fontSize = "12px";
+  rightTitle.style.fontWeight = "bold";
+  rightTitle.style.margin = "0 0 6px 0";
+  right.appendChild(rightTitle);
+  const rightContent = document.createElement("div");
+  rightContent.id = "minmax-values-content";
+  right.appendChild(rightContent);
+
+  wrap.appendChild(left);
+  wrap.appendChild(right);
+  drawRangesContainer.appendChild(wrap);
+
+  renderAxisRangesTo(state?.axisRanges, leftContent);
+  renderMinMaxValuesTo(state?.minMaxValue, rightContent);
+};
+
+applyRangesButton.addEventListener("click", () => {
+  const currentValue = stateSubjectGet("pad1").getValue();
+  // Update axisRanges from sliders if present
+  if (Array.isArray(currentValue?.axisRanges)) {
+    currentValue.axisRanges = currentValue.axisRanges.map((layerRanges, layerIndex) => {
+      if (!Array.isArray(layerRanges)) return layerRanges;
+
+      return layerRanges.map((axisRange, axisIndex) => {
+        const minSlider = drawRangesContainer.querySelector(
+          `input[data-layer-index="${layerIndex}"][data-axis-index="${axisIndex}"][data-range-role="min"]`,
+        );
+        const maxSlider = drawRangesContainer.querySelector(
+          `input[data-layer-index="${layerIndex}"][data-axis-index="${axisIndex}"][data-range-role="max"]`,
+        );
+
+        if (!minSlider || !maxSlider) return axisRange;
+
+        const minValue = Number(minSlider.value);
+        const maxValue = Number(maxSlider.value);
+        const nextMin = Math.min(minValue, maxValue);
+        const nextMax = Math.max(minValue, maxValue);
+
+        return {
+          ...axisRange,
+          fXbot: nextMin,
+          fXtop: nextMax,
+        };
+      });
+    });
+  }
+  // Update minMaxValue from sliders if present
+  if (Array.isArray(currentValue?.minMaxValue)) {
+    currentValue.minMaxValue = currentValue.minMaxValue.map((layerObj, layerIndex) => {
+      if (!layerObj || typeof layerObj !== "object") return layerObj;
+      const nextLayer = { ...layerObj };
+      Object.keys(layerObj).forEach((key) => {
+        const entry = layerObj[key] || {};
+        const valMinEl = drawRangesContainer.querySelector(
+          `input[data-mm-layer-index="${layerIndex}"][data-mm-key="${key}"][data-mm-role="value"][data-range-role="min"]`,
+        );
+        const valMaxEl = drawRangesContainer.querySelector(
+          `input[data-mm-layer-index="${layerIndex}"][data-mm-key="${key}"][data-mm-role="value"][data-range-role="max"]`,
+        );
+        const errMinEl = drawRangesContainer.querySelector(
+          `input[data-mm-layer-index="${layerIndex}"][data-mm-key="${key}"][data-mm-role="error"][data-range-role="min"]`,
+        );
+        const errMaxEl = drawRangesContainer.querySelector(
+          `input[data-mm-layer-index="${layerIndex}"][data-mm-key="${key}"][data-mm-role="error"][data-range-role="max"]`,
+        );
+
+        const nextEntry = { ...entry };
+        if (valMinEl && valMaxEl) {
+          const a = Number(valMinEl.value);
+          const b = Number(valMaxEl.value);
+          // Preserve existing keys like fXmin/fXmax; update only min/max
+          nextEntry.value = { ...(entry.value || {}), min: Math.min(a, b), max: Math.max(a, b) };
+        }
+        if (errMinEl && errMaxEl) {
+          const a = Number(errMinEl.value);
+          const b = Number(errMaxEl.value);
+          // Preserve existing keys like fXmin/fXmax; update only min/max
+          nextEntry.error = { ...(entry.error || {}), min: Math.min(a, b), max: Math.max(a, b) };
+        }
+        nextLayer[key] = nextEntry;
+      });
+      return nextLayer;
+    });
+  }
+
+  stateSubjectGet("pad1").next(currentValue);
+});
+
 
 document.getElementById("error-cross").addEventListener("change", (e) => {
   configSubjectGet().next({
@@ -311,11 +708,11 @@ stateSubjectGet("pad1")
       // ph.selected = selectedValue === null; // selected if no selectedValue provided
       arraySelect.appendChild(ph);
     });
+
+    renderRangesPanel(state);
   });
 
-arraySelect.addEventListener("change", (event) => {
-  // console.log(event);
-  console.log(arraySelect.value);
+arraySelect.addEventListener("change", () => {
   const currentValue = stateSubjectGet("pad1").getValue();
   currentValue.selectedArray = arraySelect.value;
   stateSubjectGet("pad1").next(currentValue);
@@ -326,12 +723,10 @@ checkboxContainer.addEventListener("change", (event) => {
   if (event.target.type === "checkbox") {
     const currentValue = stateSubjectGet("pad1").getValue();
 
-    // Collect all checked values
     const checkedValues = Array.from(
       checkboxContainer.querySelectorAll("input[type='checkbox']:checked"),
     ).map((cb) => cb.value);
 
-    // Only update if something changed
     if (
       JSON.stringify(currentValue.selectedSet) !== JSON.stringify(checkedValues)
     ) {
@@ -427,38 +822,18 @@ loadButton.addEventListener("click", async () => {
 // histogramSubjectGet().next({ id: "histogram1", opts: { render: "jsroot" }, obj: h3scat });
 //
 
-histogramSubjectGet().next({id: "pad1", opts: {render: "ndmvr"}, obj: testNested});
+// histogramSubjectGet().next({id: "pad1", opts: {render: "ndmvr"}, obj: testNested});
+histogramSubjectGet().next({id: "pad1", opts: {render: "ndmvr"}, obj: histo125});
 // histogramSubjectGet().next({id: "pad1", opts: {render: "ndmvr"}, obj: cernstaff});
 // histogramSubjectGet().next({id: 'histogram4', opts: {render: "nested"}, histogram: h3scat});
 // histogramSubjectGet().next({id: 'histogram1', opts: {render: "jsroot"}, histogram: h3scat});
 //
 
-
-// setTimeout(()=> {
-//   histogramSubjectGet().next({id: "histogram1", opts: {render: "ndmvr"}, obj: h3scat});
-//
-// //     histogramSubjectGet().next({id: "histogram1", opts: {render: "ndmvr"}, obj: testmv});
-// }, 10000);
-// setTimeout(()=> {
-//     histogramSubjectGet().next({id: "histogram1", opts: {render: "jsroot"}, obj: h3scat});
-// }, 6000);
-// setTimeout(()=> {
-//     histogramSubjectGet().next({id: "histogram1", opts: {render: "nested"}, obj: testmv});
-// }, 8000);
-// setTimeout(()=> {
-//   histogramSubjectGet().next({id: "histogram1", opts: {render: "jsroot"}, obj: h3scat});
-// }, 10000);
-// setTimeout(()=> {
-//   histogramSubjectGet().next({id: "histogram1", opts: {render: "nested"}, obj: testmv});
-// }, 12000);
-
-
-// histogramSubjectGet().next({id: 'histogram1', histogram: histo125});
-// histogramSubjectGet().next({id: 'histogram1', histogram: histo12_5});
-
-// histogramSubjectGet().next({id: 'histogram1', histogram: parse(histo4x3x1)});
-
 configSubjectGet().next(config);
+
+
+
+
 //
 // setTimeout(() => {
 //   const v = stateSubjectGet("histogram1").getValue();
@@ -482,16 +857,16 @@ const geometry = new THREE.BoxGeometry(1, 1, 1);
 const material = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
 const cube = new THREE.Mesh(geometry, material);
 
-binInfoSubjectGet()
-  .getObservable()
-  .subscribe((event) => {
-    sceneElm.object3D.remove(cube);
-    cube.position.set(event.binPosSize.position[0], event.binPosSize.position[1], event.binPosSize.position[2]);
-    cube.scale.set(event.binPosSize.scale[0], event.binPosSize.scale[1], event.binPosSize.scale[2]);
-    sceneElm.object3D.add(cube);
-    // console.log(sceneElm.object3D);
-    console.log(event);
-  });
+// binInfoSubjectGet()
+//   .getObservable()
+//   .subscribe((event) => {
+//     sceneElm.object3D.remove(cube);
+//     cube.position.set(event.binPosSize.position[0], event.binPosSize.position[1], event.binPosSize.position[2]);
+//     cube.scale.set(event.binPosSize.scale[0], event.binPosSize.scale[1], event.binPosSize.scale[2]);
+//     sceneElm.object3D.add(cube);
+//     // console.log(sceneElm.object3D);
+//     console.log(event);
+//   });
 
 // const tools = {
 //   empty: [{
