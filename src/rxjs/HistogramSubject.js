@@ -1,4 +1,4 @@
-import { ReplaySubject } from "rxjs";
+import { firstValueFrom, ReplaySubject, take } from "rxjs";
 import FileHandler from "../service/FileHandler.js";
 import JsonHandler from "../service/JsonHandler.js";
 import { parseConfig } from "../utils/baseUtil.js";
@@ -12,12 +12,19 @@ class HistogramSubject {
     if (!this.#subjects.has(id)) {
       this.#subjects.set(id, new ReplaySubject(1));
     }
-    console.log("histogramSubjectGet with id: ", id);
     return this.#subjects.get(id).asObservable();
   }
 
+  async getCurrentHistogram (id) {
+    if (!this.#subjects.has(id)) {
+      return null;
+    }
+    return firstValueFrom(
+      this.#subjects.get(id).pipe(take(1))
+    );
+  }
+
   async next (e) {
-    console.log("histogramSubjectNext with id: ", e.id, " and event: ", e);
     if (!e.id) throw new Error("Missing id in event");
 
     // Preprocess histogram

@@ -1,5 +1,7 @@
 import RadixCounter from "./radixCounter.js";
 import {Vector3, Color} from "three";
+import {reduce} from "rxjs";
+import cloneDeep from "lodash.clonedeep";
 
 /**
  *Instead of GetBinCoord, which is added to the JSRoot object only when rendered by JSRoot.
@@ -119,6 +121,7 @@ export function areArraysEqual(arr1, arr2) {
 
 
 export function areMinMaxValuesEqual(obj1, obj2) {
+  if (!obj1 && !obj2) return true;
   if (!Array.isArray(obj1) || !Array.isArray(obj2) || obj1.length !== obj2.length) {
     return false;
   }
@@ -169,6 +172,82 @@ export function areMinMaxValuesEqual(obj1, obj2) {
   return true;
 }
 
+export function cropHistogram(hist, xRanges) {
+  const xBins = hist.fXaxis.fNbins;
+  const yBins = hist.fYaxis?.fNbins ?? 1;
+  const zBins = hist.fZaxis?.fNbins ?? 1;
+
+  const oldXSize = xBins + 2;
+
+  const newArray = [];
+  const newChildren = [];
+
+  for (let z = 0; z < zBins + 2; z++) {
+    for (let y = 0; y < yBins + 2; y++) {
+
+      const offset =
+        oldXSize * (y + (yBins + 2) * z);
+
+      for (const range of xRanges) {
+
+        // underflow
+        const underflowIndex = offset;
+        newArray.push(hist.fArray[underflowIndex]);
+        newChildren.push(hist.children?.[underflowIndex]);
+
+        // selected bins
+        for (
+          let x = range.startIndex + 1;
+          x <= range.endIndex;
+          x++
+        ) {
+          const index = offset + x;
+
+          newArray.push(hist.fArray[index]);
+          newChildren.push(hist.children?.[index]);
+        }
+
+        // overflow
+        const overflowIndex = offset + xBins + 1;
+
+        newArray.push(hist.fArray[overflowIndex]);
+        newChildren.push(hist.children?.[overflowIndex]);
+      }
+    }
+  }
+
+  hist.fArray = newArray;
+
+  // if (hist.children) {
+  //   hist.children = newChildren;
+  // }
+}
+
+export function areAvailableAxesEqual(a, b) {
+  if (a === undefined || b === undefined) {
+    return a === b;
+  }
+  if (a.length !== b.length) return false;
+
+  for (let i = 0; i < a.length; i++) {
+    if (a[i].length !== b[i].length) return false;
+
+    for (let j = 0; j < a[i].length; j++) {
+      const objA = a[i][j];
+      const objB = b[i][j];
+
+      const keys = Object.keys(objA);
+      if (keys.length !== Object.keys(objB).length) return false;
+
+      for (const key of keys) {
+        if (objA[key] !== objB[key]) return false;
+      }
+    }
+  }
+
+  return true;
+}
+
 export function easeOutQuad(t) {
   return 1 - (1 - t) * (1 - t);
 }
@@ -180,6 +259,196 @@ export function easeOutCubic(t) {
 export function stringToXYZ(str) {
   const [x, y, z] = str.split(" ").map(Number);
   return {x, y, z};
+}
+
+export function computeRenderRangeIterator(obj, ranges) {
+  const retRanges = new Array(ranges.length - 1);
+
+  function getBinIndex(value, axis, useUpperBoundary = false) {
+    const {fXmin, fXmax, fNbins, fXbins} = axis;
+    // Variable binning
+    if (Array.isArray(fXbins) && fXbins.length > 1) {
+      for (let i = 0; i < fXbins.length - 1; i++) {
+        // Upper boundaries should resolve to the previous bin on exact edges.
+        if (
+          (!useUpperBoundary && value >= fXbins[i] && value < fXbins[i + 1]) ||
+          (useUpperBoundary && value > fXbins[i] && value <= fXbins[i + 1])
+        ) {
+          return i;
+        }
+      }
+      // Include the upper edge in the last bin
+      if (value === fXbins[fXbins.length - 1]) {
+        return fXbins.length - 2;
+      }
+      return -1; // underflow/overflow
+    }
+    const binWidth = (fXmax - fXmin) / fNbins;
+    const rel = (value - fXmin) / binWidth;
+    const bin = useUpperBoundary ? Math.ceil(rel) - 1 : Math.floor(rel);
+    if (value === fXmax) {
+      return fNbins - 1;
+    }
+    if (bin < 0 || bin >= fNbins) {
+      return -1; // underflow/overflow
+    }
+    return bin;
+  }
+
+  function getBinIndexForRanges(object, currentLayer) {
+    retRanges[currentLayer] = ranges[currentLayer].map((range) => {
+      const axisObj = object[`f${range.axis.toUpperCase()}axis`];
+      const startIndex = getBinIndex(range.fXbot, axisObj, false);
+      const endIndex = getBinIndex(range.fXtop, axisObj, true) + 1;
+      return {
+        ...range,
+        startIndex: startIndex,
+        endIndex: endIndex,
+        fXbot: axisObj.GetBinLowEdge(startIndex + 1),
+        fXtop: (2 * axisObj.GetBinCenter(endIndex)) - axisObj.GetBinLowEdge(endIndex)
+      };
+    });
+    if (currentLayer < ranges.length - 1) {
+      getBinIndexForRanges(
+        object.children[Object.keys(object.children)[0]].find(x => x !== null),
+        currentLayer + 1
+      );
+    }
+  }
+
+  getBinIndexForRanges(obj, 0);
+
+  return retRanges;
+}
+
+function copyArrayRange(source, sourceFrom, sourceTo, target, targetFrom) {
+  for (let i = 0; i < sourceTo - sourceFrom; i++) {
+    target[targetFrom + i] = source[sourceFrom + i];
+  }
+}
+
+export function cropJSROOTHistogram(histogram, axesConfig) {
+  if (!histogram) throw new Error("Not a valid histogram object (missing fArray)");
+  const histogramCopy = cloneDeep(histogram);
+
+  const cropJSROOTHistogramRecursive = (histogram, axesConfig) => {
+    if (!histogram) return;
+    const axesConfigLayer = axesConfig.slice(0,1)[0];
+    const nAxes = Number.parseInt(histogram._typename.substring(2, 3), 10);
+    const offsetX = 1;
+    const offsetY = nAxes > 1 ? histogram.fXaxis.fNbins + 2 : 0;
+    const offsetZ = nAxes > 2 ? (histogram.fXaxis.fNbins + 2) * (histogram.fYaxis.fNbins + 2) : 0;
+    const childs = histogram.children ? Object.keys(histogram.children) : [];
+
+
+    const axisNames = ["X", "Y", "Z"];
+    for (let i = 0; i < axesConfigLayer.length; i++) {
+      const axis = histogram[`f${axisNames[i]}axis`];
+      axis.fNbins = axesConfigLayer[i].endIndex - axesConfigLayer[i].startIndex;
+      axis.fXmin = axesConfigLayer[i].fXbot;
+      axis.fXmax = axesConfigLayer[i].fXtop;
+      if (Array.isArray(axis.fXbins) && axis.fXbins.length > 0) {
+        axis.fXbins = axis.fXbins.slice(axesConfigLayer[i].startIndex, axesConfigLayer[i].endIndex + 1);
+      }
+      histogram[`f${axisNames[i]}axis`] = axis;
+    }
+    //vymen histo za axesConfig
+
+    const newfArray = new Array(
+      [(histogram.fXaxis.fNbins + 2), (histogram.fYaxis.fNbins + 2), (histogram.fZaxis.fNbins + 2)]
+        .slice(0, nAxes)
+        .reduce((acc, value) => acc * value, 1)
+    ).fill(0);
+    const newChildrenArray = Object.fromEntries(
+      childs.map(key => [
+        key, new Array(
+          (histogram.fXaxis.fNbins + 2) *
+          (histogram.fYaxis.fNbins + 2) *
+          (histogram.fZaxis.fNbins + 2)
+        ).fill(null)
+      ])
+    );
+    const offsetYn = nAxes > 1 ? histogram.fXaxis.fNbins + 2 : 0;
+    const offsetZn = nAxes > 2 ? (histogram.fXaxis.fNbins + 2) * (histogram.fYaxis.fNbins + 2) : 0;
+    let offset = offsetX + offsetY + offsetZ;
+    let offsetn = offsetX + offsetYn + offsetZn;
+
+    const fYbins = nAxes > 1 ? axesConfigLayer[1].fNbins : 1;
+    const fZbins = nAxes > 2 ? axesConfigLayer[2].fNbins : 1;
+
+    for (let z = 0; z < fZbins; z += 1) {
+      //if z je mimo range zStartIndex a zEndIndex - continue
+      if (z < (axesConfigLayer[2]?.startIndex ?? 0) || z >= (axesConfigLayer[2]?.endIndex ?? 1)) {
+        offset += offsetZ;
+        // offsetn += (offsetYn * 2) + histo.fYaxis.fNbins - (offsetX * 2);
+        continue;
+      }
+      for (let y = 0; y < fYbins; y += 1) {
+        //zacina na 31
+        //if y je mimo range yStartIndex a yEndIndex - continue
+        if (y < (axesConfigLayer[1]?.startIndex ?? 0) || y >= (axesConfigLayer[1]?.endIndex ?? 1)) {
+          offset += offsetY;
+          // offsetn += (offsetX * 2) + (histo.fXaxis.fNbins);
+          continue;
+        }
+        //good je offset + xStartIndex - offset + xEndIndex
+        const bot = axesConfigLayer[0].startIndex + offset;
+        const botn = axesConfigLayer[0].startIndex + offsetn;
+        const top = axesConfigLayer[0].endIndex + offset;
+        const topn = axesConfigLayer[0].endIndex + offsetn;
+        // console.log("bit: ", bot, "top: ", top);
+        // console.log("bitn: ", offsetn);
+        copyArrayRange(histogram.fArray, bot, top, newfArray, offsetn);
+        childs.forEach(child => {
+          // copyArrayRange(histo.children, bot, top, newChildrenArray, botn);
+          copyArrayRange(histogram.children[child], bot, top, newChildrenArray[child], offsetn);
+        });
+        offset += (offsetX * 2) + axesConfigLayer[0].fNbins;
+        offsetn += (offsetX * 2) + (histogram.fXaxis.fNbins);
+
+      }
+      offset += (offsetY * 2) + fYbins - (offsetX * 2);
+      offsetn += (offsetYn * 2) + fYbins - (offsetX * 2);
+    }
+    histogram.fArray = newfArray;
+    if (!(Object.keys(newChildrenArray).length === 0)){
+      histogram.children = newChildrenArray;
+    }
+
+    childs.forEach(child => {
+      // copyArrayRange(histo.children[child], bot, top, newChildrenArray[child], offsetn);
+      for (let i = 0; i < histogram.children[child].length; i++) {
+        cropJSROOTHistogramRecursive(histogram.children[child][i], axesConfig.slice(1));
+      }
+    });
+  };
+
+  cropJSROOTHistogramRecursive(histogramCopy, axesConfig);
+
+  console.log(histogramCopy);
+  return histogramCopy;
+}
+
+
+export function createXRanges(layer) {
+  const xAxis = layer[0];
+
+  const repeatCount = layer
+    .slice(1)
+    .reduce((product, axis) => product * axis.fNbins, 1);
+
+  const xSize = xAxis.endIndex - xAxis.startIndex;
+
+  const ranges = [];
+
+  for (let i = 0; i < repeatCount; i++) {
+    ranges.push({
+      startIndex: i * xAxis.fNbins + xAxis.startIndex,
+      endIndex: i * xAxis.fNbins + xAxis.endIndex
+    });
+  }
+
+  return ranges;
 }
 
 /**
@@ -493,13 +762,12 @@ export function computeMaxErrorPerLayer(obj, maxContentPerLayer) {
 
   if (obj.fArrays) {
     Object.keys(obj?.fArrays).forEach((array) => {
-      if (obj.fArrays[array].maxE){
+      if (obj.fArrays[array].maxE) {
         max[0] = {
           ...max[0],
           [array]: obj.fArrays[array].maxE,
         };
-      }
-      else {
+      } else {
         max[0] = {
           ...max[0],
           [array]: getMax(obj.fArrays[array].errors) ?? Math.sqrt(obj.fArrays[array].max),
@@ -577,13 +845,12 @@ export function computeMinErrorPerLayer(obj, minContentPerLayer) {
 
   if (obj.fArrays) {
     Object.keys(obj?.fArrays).forEach((array) => {
-      if (obj.fArrays[array].minE){
+      if (obj.fArrays[array].minE) {
         min[0] = {
           ...min[0],
           [array]: obj.fArrays[array].minE,
         };
-      }
-      else {
+      } else {
         min[0] = {
           ...min[0],
           [array]: getMin(obj.fArrays[array].errors) ?? Math.sqrt(obj.fArrays[array].min),
