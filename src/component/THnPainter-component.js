@@ -44,6 +44,7 @@ const registerTHnPainterComponent = () => {
               this.nestedHistogram.renderHistogram(0, this.nestedHistogram.totalInstances, 0).then(() => {
                 this.el.object3D.add(this.nestedHistogram.wireframe.wireframe);
                 this.el.object3D.add(this.nestedHistogram.mesh);
+                this.el.object3D.add(this.nestedHistogram.axes.axes);
                 if (this.nestedHistogram.errorCross) {
                   this.el.object3D.add(this.nestedHistogram.errorCross.lines);
                   this.el.object3D.add(this.nestedHistogram.errorCross.linesTick);

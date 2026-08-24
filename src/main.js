@@ -51,6 +51,14 @@ import { binInfoSubjectGet } from "./rxjs/BinInfoSubject.js";
 import {registerComponents} from "./core/registerComponents.js";
 import {Vector3} from "three";
 
+// import { parse } from "jsroot";
+// import { build3d } from "./modules/build/jsroot-build3d.mjs";
+//
+// console.log(h3scat);
+// build3d(parse(h3scat), '', true).then(obj3d => {
+//   console.log("OBJ3D: ", obj3d);
+// })
+
 initNdmvrAframe();
 registerComponents();
 
@@ -823,7 +831,7 @@ loadButton.addEventListener("click", async () => {
 //
 
 // histogramSubjectGet().next({id: "pad1", opts: {render: "ndmvr"}, obj: testNested});
-histogramSubjectGet().next({id: "pad1", opts: {render: "ndmvr"}, obj: histo125});
+histogramSubjectGet().next({id: "pad1", opts: {render: "ndmvr"}, obj: histo1_2_5});
 // histogramSubjectGet().next({id: "pad1", opts: {render: "ndmvr"}, obj: cernstaff});
 // histogramSubjectGet().next({id: 'histogram4', opts: {render: "nested"}, histogram: h3scat});
 // histogramSubjectGet().next({id: 'histogram1', opts: {render: "jsroot"}, histogram: h3scat});

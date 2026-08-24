@@ -37,11 +37,15 @@ import {
 import {areLimitsEqual, createHnotFilledSprite, ensureDefaultBindings} from "../utils/baseUtil.js";
 import {configSubjectGet} from "../rxjs/ConfigSubject.js";
 import {ErrorCrossClass} from "./ErrorCrossClass.js";
+import { build3d } from "jsroot";
+import HistogramAxesClass from "./histogram-axes-class.js";
 
 export class THnPainter extends TPainter {
   stateSub = undefined;
   pointer = undefined;
   wireframe = undefined;
+  axesBuildPromise = undefined;
+  axes = undefined;
   errorCross = undefined;
   BVHTree = [];
   minMaxValue = [];
@@ -82,6 +86,7 @@ export class THnPainter extends TPainter {
     let raycastHandler = undefined;
     const parent = this.mesh.parent;
     parent.remove(this.mesh);
+    parent.remove(this.axes.axes);
     if (this.pointer.isHistogramFilled) {
       raycastHandler = this.mesh.raycast;
       this.mesh.raycast = () => {
@@ -117,6 +122,7 @@ export class THnPainter extends TPainter {
 
     parent.add(this.mesh);
     parent.add(this.wireframe.wireframe);
+    parent.add(this.axes.axes);
     if (this.errorCross) {
       parent.add(this.errorCross.lines);
       if (this.errorCross.linesTick) parent.add(this.errorCross.linesTick);
@@ -185,6 +191,8 @@ export class THnPainter extends TPainter {
       this.config.wireframe,
       this.id
     );
+
+    this.axes = new HistogramAxesClass(this.id);
 
     if (this.config?.errorCross?.enabled === true) {
       this.errorCross = new ErrorCrossClass(this.config, this.id);
@@ -408,7 +416,7 @@ export class THnPainter extends TPainter {
         layer: layer,
       },
     });
-
+    console.log('RENDER_________________________');
 
     const _binSizePos = {
       x: {size: 0, pos: 0},
@@ -758,6 +766,7 @@ export class THnPainter extends TPainter {
         );
       }
       this.pushVisibleInstances();
+      this.axes.buildAxes(this.pointer.origin, this.limits);
 
       const pointerSet = this.availableSets.indexOf(this.pointer.isOnSet) === -1
         ? null
@@ -985,11 +994,21 @@ export class THnPainter extends TPainter {
   }
 
   handleStateChange(state) {
-    const axisRangesAreSame = areMinMaxValuesEqual(this.pointer.axisRanges, state.axisRanges);
-    if (areArraysEqual(state.sets, this.availableSets) &&
-      (!areArraysEqual(state.selectedSet, this.selectedSet) || this.selectedArray !== state.selectedArray
-        || !axisRangesAreSame)
-      || (this.minMaxValue.length !== 0 && !areMinMaxValuesEqual(state.minMaxValue, this.minMaxValue))) {
+    const setsAreSame = areArraysEqual(state.sets, this.availableSets);
+    const selectedSetChanged = !areArraysEqual(state.selectedSet, this.selectedSet);
+    const selectedArrayChanged = this.selectedArray !== state.selectedArray;
+    const axisRangesChanged = !areMinMaxValuesEqual(
+      this.pointer.axisRanges,
+      state.axisRanges
+    );
+    const minMaxValuesChanged =
+      this.minMaxValue.length !== 0 &&
+      !areMinMaxValuesEqual(state.minMaxValue, this.minMaxValue);
+
+    if ((setsAreSame &&
+        (selectedSetChanged || selectedArrayChanged || axisRangesChanged)) ||
+      minMaxValuesChanged
+    ) {
       this.selectedArray = state.selectedArray;
       this.selectedSet = state.selectedSet;
       this.minMaxValue = state.minMaxValue;
@@ -1001,7 +1020,7 @@ export class THnPainter extends TPainter {
         this.mesh.material.colorWrite = false;
         this.mesh.material.depthWrite = false;
       }
-      if (!axisRangesAreSame) {
+      if (axisRangesChanged) {
         this.pointer.setHistogramRanges(state.axisRanges);
         this.maxInstancesPerLayer = computeMaxInstancesPerLayer(this.pointer.origin);
         this.totalInstances = this.maxInstancesPerLayer.reduce((acc, value) => {
@@ -1016,15 +1035,17 @@ export class THnPainter extends TPainter {
         this.renderHistogramHistory();
       }
 
-    } else if (this.minMaxValue.length !== 0 && areMinMaxValuesEqual(state.minMaxValue, this.minMaxValue)) {
-      this.renderHistogramHistory();
-
-    } else {
+    }
+    // else if (this.minMaxValue.length !== 0 && areMinMaxValuesEqual(state.minMaxValue, this.minMaxValue)) {
+    //   this.renderHistogramHistory();
+    //
+    // }
+    else {
       this.availableSets = state.sets;
       this.selectedSet = state.selectedSet;
       this.minMaxValue = state.minMaxValue;
       this.availableAxes = state.availableAxes;
-      if (!axisRangesAreSame) {
+      if (axisRangesChanged) {
         this.pointer.setHistogramRanges(state.axisRanges);
         this.maxInstancesPerLayer = computeMaxInstancesPerLayer(this.pointer.origin);
         this.totalInstances = this.maxInstancesPerLayer.reduce((acc, value) => {
@@ -1304,7 +1325,7 @@ export class THnPainter extends TPainter {
 
       if (currentValue.selectedSet.length === 0 || this.selectedSet.length === 0) {
         this.selectedSet.push(currentValue.sets[0]);
-        // currentValue.selectedSet.push(currentValue.sets[0]);
+        currentValue.selectedSet.push(currentValue.sets[0]);
       } else if (!this.selectedSet.every(set =>
         currentValue.sets.find(s => s === set))) {
         currentValue.selectedSet = [currentValue.sets[0]];
