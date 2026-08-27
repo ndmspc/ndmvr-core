@@ -158,6 +158,9 @@
         "color": "0xFF0000",
         "showZArm": false,
         "minArmLength": 0.05
+      },
+      "axes": {
+        "enabled": true
       }
     }
   },
