@@ -13,6 +13,7 @@ export default class HistogramAxesClass {
   constructor (id) {
     this.id = id;
     this.axes = new Object3D();
+    this.axes.raycast = () => {};
     this.configSub = configSubjectGet().getObservable()
       .pipe(filter(e =>
         ((e.target.id.includes("*")) || (e.target.id.includes(this.id)))))
@@ -24,6 +25,7 @@ export default class HistogramAxesClass {
 
   buildAxes(obj, limits, opts) {
     this.axesBuildPromise = build3d(obj, opts, true).then((axes) => {
+      while (this.axes.children.length > 0) this.axes.remove(this.axes.children[0]);
       const matrixScale = this.config.environment.histogramPads.find(el => el.id === this.id)?.scale;
       const Th1Factor = obj._typename.substring(2, 3) === '1'
        ? this.config.histogram.TH1ZScale.layer[0] ?? this.config.histogram.TH1ZScale.default
@@ -44,6 +46,9 @@ export default class HistogramAxesClass {
       axes.rotateX(-Math.PI / 2);
       axes.translateX(matrixScale.x / 2);
       axes.translateY(matrixScale.y);
+      axes.traverse(obj => {
+        obj.raycast = () => {};
+      });
       this.axes.add(axes);
       //13 => x
       //16 => z
