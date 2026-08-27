@@ -72,6 +72,7 @@ export class THnPainter extends TPainter {
   constructor(histo, id, opts) {
     super(histo, id, opts);
     this.pointer = new HistogramPointerClass(this.rootObj);
+    this.axes = new HistogramAxesClass(this.id);
 
     this.handleStateChange = this.handleStateChange.bind(this);
     this.stateSub = stateSubjectGet(this.id)
@@ -86,7 +87,7 @@ export class THnPainter extends TPainter {
     let raycastHandler = undefined;
     const parent = this.mesh.parent;
     parent.remove(this.mesh);
-    parent.remove(this.axes.axes);
+    // parent.remove(this.axes.axes);
     if (this.pointer.isHistogramFilled) {
       raycastHandler = this.mesh.raycast;
       this.mesh.raycast = () => {
@@ -122,7 +123,7 @@ export class THnPainter extends TPainter {
 
     parent.add(this.mesh);
     parent.add(this.wireframe.wireframe);
-    parent.add(this.axes.axes);
+    // parent.add(this.axes.axes);
     if (this.errorCross) {
       parent.add(this.errorCross.lines);
       if (this.errorCross.linesTick) parent.add(this.errorCross.linesTick);
@@ -191,8 +192,6 @@ export class THnPainter extends TPainter {
       this.config.wireframe,
       this.id
     );
-
-    this.axes = new HistogramAxesClass(this.id);
 
     if (this.config?.errorCross?.enabled === true) {
       this.errorCross = new ErrorCrossClass(this.config, this.id);
@@ -416,7 +415,7 @@ export class THnPainter extends TPainter {
         layer: layer,
       },
     });
-    console.log('RENDER_________________________');
+    // console.log('RENDER_________________________');
 
     const _binSizePos = {
       x: {size: 0, pos: 0},
@@ -1325,7 +1324,7 @@ export class THnPainter extends TPainter {
 
       if (currentValue.selectedSet.length === 0 || this.selectedSet.length === 0) {
         this.selectedSet.push(currentValue.sets[0]);
-        currentValue.selectedSet.push(currentValue.sets[0]);
+        // currentValue.selectedSet.push(currentValue.sets[0]);
       } else if (!this.selectedSet.every(set =>
         currentValue.sets.find(s => s === set))) {
         currentValue.selectedSet = [currentValue.sets[0]];
