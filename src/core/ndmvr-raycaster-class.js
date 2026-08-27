@@ -102,12 +102,17 @@ export class NdmvrRaycaster {
       }, this.dbClickTimeout);
     }
 
-    this.lastClick = currentTime;  }
+    this.lastClick = currentTime;
+  }
 
   handleRaycast () {
-    const hits = this.raycaster.intersectObjects(this.sceneElement.children, true);
-    if (hits.length > 0) {
-      // console.log(`${this.raycaster._triggerSource}:`, hits);
+    try {
+      const hits = this.raycaster.intersectObjects(this.sceneElement.children, true);
+      // if (hits.length > 0) {
+        // console.log(`${this.raycaster._triggerSource}:`, hits);
+      // }
+    } catch (e) {
+      console.warn("Error while checking intersection: ", e);
     }
   }
 
