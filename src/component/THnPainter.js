@@ -87,7 +87,6 @@ export class THnPainter extends TPainter {
     let raycastHandler = undefined;
     const parent = this.mesh.parent;
     parent.remove(this.mesh);
-    // parent.remove(this.axes.axes);
     if (this.pointer.isHistogramFilled) {
       raycastHandler = this.mesh.raycast;
       this.mesh.raycast = () => {
@@ -123,7 +122,6 @@ export class THnPainter extends TPainter {
 
     parent.add(this.mesh);
     parent.add(this.wireframe.wireframe);
-    // parent.add(this.axes.axes);
     if (this.errorCross) {
       parent.add(this.errorCross.lines);
       if (this.errorCross.linesTick) parent.add(this.errorCross.linesTick);
@@ -765,7 +763,8 @@ export class THnPainter extends TPainter {
         );
       }
       this.pushVisibleInstances();
-      this.axes.buildAxes(this.pointer.origin, this.limits);
+      if (this.config.axes.enabled)
+        this.axes.buildAxes(this.pointer.origin, this.limits);
 
       const pointerSet = this.availableSets.indexOf(this.pointer.isOnSet) === -1
         ? null
