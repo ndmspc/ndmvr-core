@@ -20,6 +20,8 @@ export default class HistogramAxesClass {
       .subscribe((v) => {
         this.config = {...v.config};
         const matrix = this.config.environment.histogramPads.find(el => el.id === this.id);
+        const pos = matrix.position;
+        this.axes.position.set(pos.x, pos.y, pos.z);
       });
   }
 
@@ -44,8 +46,7 @@ export default class HistogramAxesClass {
       );
 
       axes.rotateX(-Math.PI / 2);
-      axes.translateX(matrixScale.x / 2);
-      axes.translateY(matrixScale.y);
+      axes.translateZ(-matrixScale.z / 2);
       axes.traverse(obj => {
         obj.raycast = () => {};
       });
