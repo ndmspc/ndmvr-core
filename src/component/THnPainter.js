@@ -68,6 +68,8 @@ export class THnPainter extends TPainter {
   instanceScales = undefined;
   instanceColors = undefined;
   colorArray = undefined;
+  previousAxesOffset = { scaleFactor: new Vector3(1, 1, 1), translateFactorZ: 0 };
+  currentAxesOffset = { scaleFactor: new Vector3(1, 1, 1), translateFactorZ: 0 };
 
   constructor(histo, id, opts) {
     super(histo, id, opts);
@@ -421,6 +423,26 @@ export class THnPainter extends TPainter {
       z: {size: 0, pos: 0}
     };
 
+    if (this.config.axes.enabled){
+      const param = this.selectedSet[0] ?? this.selectedArray;
+      const value = Object.keys(this.minMaxValue[layer])
+        .includes(param)
+        ? this.minMaxValue[layer][param][this.config.scale.scaleBy]
+        : this.minMaxValue[layer]["content"][this.config.scale.scaleBy]
+
+      this.limits.scale.divide(this.previousAxesOffset.scaleFactor);
+      this.limits.position.y -= (this.previousAxesOffset.translateFactorZ / 2)
+      this.currentAxesOffset = await this.axes.buildAxes(this.pointer.origin, this.limits, value)
+      this.previousAxesOffset = this.currentAxesOffset;
+      this.limits.scale.multiply(this.currentAxesOffset.scaleFactor);
+      this.limits.position.y += (this.currentAxesOffset.translateFactorZ / 2)
+    }
+
+    // if (this.config.histogram.axes.enabled === true){
+    //   this.axes.buildAxes(this.pointer.origin, this.limits, )
+    //   this.limits.scale.multiplyScalar(0.81221860557736548831917);
+    // }
+
     const render = async (startIndex, endIndex, currentLayer, obj, limits, set) => {
       if (currentLayer > layer) return;
       if (!obj) return;
@@ -763,8 +785,6 @@ export class THnPainter extends TPainter {
         );
       }
       this.pushVisibleInstances();
-      if (this.config.axes.enabled)
-        this.axes.buildAxes(this.pointer.origin, this.limits);
 
       const pointerSet = this.availableSets.indexOf(this.pointer.isOnSet) === -1
         ? null
@@ -1323,6 +1343,7 @@ export class THnPainter extends TPainter {
 
       if (currentValue.selectedSet.length === 0 || this.selectedSet.length === 0) {
         this.selectedSet.push(currentValue.sets[0]);
+        currentValue.selectedSet = this.selectedSet;
         // currentValue.selectedSet.push(currentValue.sets[0]);
       } else if (!this.selectedSet.every(set =>
         currentValue.sets.find(s => s === set))) {

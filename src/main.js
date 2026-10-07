@@ -17,10 +17,12 @@ import config from "./config-aframe.json";
 
 import histo125 from "./assets/histograms/nested/test_125.json";
 import histo12_5 from "./assets/histograms/nested/test_12_5.json";
-// import rsn from "./assets/histograms/nested/rsn.json";
+import rsn from "./assets/histograms/nested/rsn.json";
 import histo1_25 from "./assets/histograms/nested/test_1_25.json";
 import histo1_2_5 from "./assets/histograms/nested/test_1_2_5.json";
 import histo5_2_1 from "./assets/histograms/nested/test_5_2_1.json";
+import histo2Level from "./assets/histograms/nested/nested_2lvl.json";
+import histo3Level from "./assets/histograms/nested/nested_3lvl.json";
 import testNested from "./assets/histograms/nested/test_nested.json";
 // import rsnNested from "./assets/histograms/nested/rsn_nested.json";
 // import veronika from "./assets/histograms/nested/veronika.json";
@@ -49,7 +51,7 @@ import { stateSubjectGet } from "./rxjs/StateSubject.js";
 import { configSubjectGet } from "./rxjs/ConfigSubject.js";
 import { binInfoSubjectGet } from "./rxjs/BinInfoSubject.js";
 import {registerComponents} from "./core/registerComponents.js";
-import {Vector3} from "three";
+import {Box3} from "three";
 
 // import { parse } from "jsroot";
 // import { build3d } from "./modules/build/jsroot-build3d.mjs";
@@ -70,12 +72,23 @@ document.querySelector("#app").appendChild(sceneElm);
 // cube.position.set(0, 0, -5);
 // sceneElm.object3D.add(cube);
 
-
-// const geom = new THREE.BoxGeometry(0.2, 10, 2);
+// const geom = new THREE.BoxGeometry(10, 10, 10);
 // const mate = new THREE.MeshNormalMaterial();
 // const cube = new THREE.Mesh(geom, mate);
-// cube.position.set(0.1, 5, -7);
+// cube.position.set(5, 5, -10);
 // sceneElm.object3D.add(cube);
+
+const geom = new THREE.BoxGeometry(10, 10, 10);
+const edges = new THREE.EdgesGeometry(geom);
+
+const material = new THREE.LineBasicMaterial({
+  color: 0x000000
+});
+
+const cube = new THREE.LineSegments(edges, material);
+cube.position.set(5, 5, -10);
+
+sceneElm.object3D.add(cube);
 
 // const geom2 = new THREE.BoxGeometry(10, 2.333333333, 10);
 // const mate2 = new THREE.MeshPhongMaterial();
@@ -830,8 +843,8 @@ loadButton.addEventListener("click", async () => {
 // histogramSubjectGet().next({ id: "histogram1", opts: { render: "jsroot" }, obj: h3scat });
 //
 
-// histogramSubjectGet().next({id: "pad1", opts: {render: "ndmvr"}, obj: testNested});
-histogramSubjectGet().next({id: "pad1", opts: {render: "ndmvr"}, obj: histo1_2_5});
+// histogramSubjectGet().next({id: "pad1", opts: {render: "ndmvr"}, obj: h3scat});
+histogramSubjectGet().next({id: "pad1", opts: {render: "ndmvr"}, obj: histo3Level});
 // histogramSubjectGet().next({id: "pad1", opts: {render: "ndmvr"}, obj: cernstaff});
 // histogramSubjectGet().next({id: 'histogram4', opts: {render: "nested"}, histogram: h3scat});
 // histogramSubjectGet().next({id: 'histogram1', opts: {render: "jsroot"}, histogram: h3scat});
@@ -861,9 +874,9 @@ configSubjectGet().next(config);
 // }, 5000);
 //
 
-const geometry = new THREE.BoxGeometry(1, 1, 1);
-const material = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
-const cube = new THREE.Mesh(geometry, material);
+// const geometry = new THREE.BoxGeometry(1, 1, 1);
+// const material = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
+// const cube = new THREE.Mesh(geometry, material);
 
 // binInfoSubjectGet()
 //   .getObservable()
