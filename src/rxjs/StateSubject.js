@@ -31,6 +31,7 @@ class StateSubject {
   next (e) {
     histogramSubjectGet().getCurrentHistogram(this.#id).then(histo => {
       e.axisRanges = computeRenderRangeIterator(histo?.obj, e.axisRanges);
+      console.log(e)
       this.#subject.next(e);
     })
   }
