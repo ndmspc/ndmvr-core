@@ -1,14 +1,17 @@
 import { BehaviorSubject } from "rxjs";
-import { parseConfig, appendPads } from "../utils/baseUtil.js";
+import { parseConfig, appendPads, resolveHistogramGridConfig } from "../utils/baseUtil.js";
 import {Vector3, Color} from "three";
+import cloneDeep from "lodash.clonedeep";
 import defaultConfig from "../config-default.json";
 
 let configSubject;
 
 class ConfigSubject {
   #subject;
+  #histogramGridConfig;
 
   constructor () {
+    this.#histogramGridConfig = resolveHistogramGridConfig(defaultConfig.config.environment.histogramPads);
     this.#subject = new BehaviorSubject(parseConfig(defaultConfig, {}));
   }
 
@@ -20,16 +23,57 @@ class ConfigSubject {
     return this.#subject.getValue();
   }
 
+  // Metadata for the currently applied grid, not an editable configuration mirror.
+  getHistogramGridConfig () {
+    return cloneDeep(this.#histogramGridConfig);
+  }
+
   next (e) {
-    // console.log(this.parseConfig(e));
-    const parsed = parseConfig(e, this.#subject.getValue());
+    const input = typeof e === "string" ? JSON.parse(e) : e;
+    const parsed = parseConfig(input, this.#subject.getValue());
+    const environment = input?.config?.environment;
+    let grid = this.#histogramGridConfig;
+    if (environment && Object.hasOwn(environment, "histogramPads")) {
+      grid = resolveHistogramGridConfig(environment.histogramPads);
+    } else if (!Array.isArray(parsed?.config?.environment?.histogramPads)) {
+      grid = null;
+    }
+    // Commit metadata only after parsing succeeds, before notifying subscribers.
+    this.#histogramGridConfig = grid;
     this.#subject.next(parsed);
     return parsed;
   }
 
   appendPads(ids, disp_kind, settings) {
     const updated = appendPads(this.#subject.getValue(), ids, disp_kind, settings);
+    if (ids.length > 0) this.#histogramGridConfig = null;
     this.#subject.next(updated);
+  }
+
+  updateHistogramPad(id, bounds) {
+    const supplied = ["position", "scale"].filter(key => bounds[key] !== undefined);
+    for (const key of supplied) {
+      const vector = bounds[key];
+      if (!vector || !["x", "y", "z"].every(axis => Number.isFinite(vector[axis]))) {
+        throw new TypeError(key + " requires complete finite XYZ values");
+      }
+    }
+    const pads = this.#subject.getValue()?.config?.environment?.histogramPads;
+    const index = Array.isArray(pads) ? pads.findIndex(pad => pad.id === id) : -1;
+    if (index < 0 || supplied.length === 0) return false;
+    const pad = pads[index];
+    if (supplied.every(key => ["x", "y", "z"].every(axis => pad[key]?.[axis] === bounds[key][axis]))) {
+      return false;
+    }
+    const updated = { ...pad };
+    for (const key of supplied) {
+      const { x, y, z } = bounds[key];
+      updated[key] = new Vector3(x, y, z);
+    }
+    const replacement = pads.slice();
+    replacement[index] = updated;
+    this.next({ config: { environment: { histogramPads: replacement } } });
+    return true;
   }
 
   mergeHistogramConfig (partialConfig, currentConfig = this.#subject.value.config.histogram) {

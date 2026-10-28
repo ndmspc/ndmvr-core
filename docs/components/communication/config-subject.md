@@ -9,6 +9,7 @@ The Config Subject is a singleton RxJS-based communication channel for managing 
 ```javascript
 class ConfigSubject {
   #subject;  // Private BehaviorSubject with default config
+  #histogramGridConfig;  // Effective recipe for the currently applied grid, or null
 }
 ```
 
@@ -52,18 +53,58 @@ const currentConfig = configSubjectGet().getValue();
 console.log('Current config:', currentConfig);
 ```
 
+### getHistogramGridConfig()
+
+Returns an independent copy of the effective recipe for the currently applied
+grid, or `null` for a manual layout. It includes `type`, `prefix`, total `scale`,
+`padding`, and `origin`, including defaults used by the parser. Initially it
+describes Core's default grid. An omitted field in a new recipe uses the parser's
+fallback, rather than inheriting the old recipe.
+
+Unrelated patches preserve this metadata. Explicit pad arrays (including arrays
+from `getValue()`), actual pad edits, nonempty appends, and removal of the layout
+clear it. Empty appends still notify subscribers and preserve the active grid.
+Core never infers a recipe from pad geometry.
+
+```javascript
+const subject = configSubjectGet();
+const grid = subject.getHistogramGridConfig();
+if (grid) console.log(grid.type, grid.origin);
+```
+
+The existing observable emits parsed configurations. Grid metadata is committed
+before notifying subscribers; failed parsing leaves both unchanged. Treat
+`getValue()` and emitted objects as read-only. Submit partial patches for settings
+changes instead of resubmitting the entire parsed configuration.
+
+### updateHistogramPad(id, bounds)
+
+Updates the first matching pad using `position`, `scale`, or both. Each supplied
+vector must contain complete finite numeric `x`, `y`, and `z` values; invalid
+vectors throw before any change. Core copies supplied vectors, preserves other
+pad fields and other pads, and publishes one layout-only update on a change.
+An actual edit clears the active grid metadata.
+
+Returns `true` on a change, or `false` without notification for an unknown ID,
+empty update, or unchanged bounds.
+
+```javascript
+subject.updateHistogramPad('pad1', { position: { x: 1, y: 2, z: -5 } });
+```
+
 ### next(e)
 
 Updates the configuration by parsing and merging new values with existing config.
 
 **Parameters:**
-- `e` - New configuration object to merge
+- `e` - New configuration object or JSON string to merge
 
 **Returns:** Parsed and merged configuration object
 
 **Behavior:**
 - Parses the new configuration using `parseConfig()`
 - Merges with existing configuration
+- Updates active-grid metadata before publishing, without changing parsing behavior
 - Broadcasts the updated configuration to all subscribers
 
 **Usage:**
