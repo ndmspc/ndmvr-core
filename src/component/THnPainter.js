@@ -34,7 +34,7 @@ import {
   ShaderMaterial,
   Vector3
 } from "three";
-import {areLimitsEqual, createHnotFilledSprite, ensureDefaultBindings} from "../utils/baseUtil.js";
+import {createHnotFilledSprite, ensureDefaultBindings} from "../utils/baseUtil.js";
 import {configSubjectGet} from "../rxjs/ConfigSubject.js";
 import {ErrorCrossClass} from "./ErrorCrossClass.js";
 import { build3d } from "jsroot";
@@ -1460,13 +1460,15 @@ export class THnPainter extends TPainter {
     const newLimits = event.config.environment.histogramPads.find(
       (el) => el.id === this.id
     );
+    this.limits = { ...newLimits };
     if (newLimits) {
-      if (!areLimitsEqual(this.limits, newLimits) && this.renderHistory.length > 0) {
-        this.limits = {...newLimits};
-        // this.renderHistogramHistory();
-      }
+      // Rendering applies axes offsets to working bounds; never share stored vectors.
+      const { position, scale } = newLimits;
+      this.limits.position = new Vector3(position.x, position.y, position.z);
+      this.limits.scale = new Vector3(scale.x, scale.y, scale.z);
+      this.previousAxesOffset = { scaleFactor: new Vector3(1, 1, 1), translateFactorZ: 0 };
+      this.currentAxesOffset = { scaleFactor: new Vector3(1, 1, 1), translateFactorZ: 0 };
     }
-    this.limits = {...newLimits};
     if (this.wireframe) this.wireframe.updateConfig(this.config.wireframe);
     this.renderHistogramHistory();
   }

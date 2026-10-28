@@ -110,6 +110,20 @@ export function ensureDefaultBindings(config) {
 
 
 
+// Resolve only the defaults used when expanding a grid recipe.
+export function resolveHistogramGridConfig(pads) {
+  if (!pads || typeof pads !== "object" || Array.isArray(pads) || !("type" in pads)) return null;
+  if (!pads.type.match(/grid(\d+)x(\d+)x(\d+)/)) return null;
+  const xyz = (value) => ({ x: value.x, y: value.y, z: value.z });
+  return {
+    type: pads.type,
+    prefix: pads.prefix ?? "histogram",
+    scale: xyz(pads.scale || { x: 1, y: 1, z: 1 }),
+    padding: xyz(pads.padding || { x: 0, y: 0, z: 0 }),
+    origin: xyz(pads.origin || { x: 0, y: 0, z: 0 }),
+  };
+}
+
 export function parseConfig(json, existingConfig = null) {
   const data = typeof json === "string" ? JSON.parse(json) : json;
 
@@ -117,7 +131,6 @@ export function parseConfig(json, existingConfig = null) {
     if (Array.isArray(pads)) return pads;
 
     if (pads && typeof pads === "object" && "type" in pads) {
-      const prefix = pads.prefix ?? "histogram";
       const match = pads.type.match(/grid(\d+)x(\d+)x(\d+)/);
       if (!match) return [pads];
 
@@ -125,9 +138,7 @@ export function parseConfig(json, existingConfig = null) {
       const ny = +match[2];
       const nz = +match[3];
 
-      const totalScale = pads.scale || { x: 1, y: 1, z: 1 };
-      const padding = pads.padding || { x: 0, y: 0, z: 0 };
-      const origin = pads.origin || { x: 0, y: 0, z: 0 };
+      const { prefix, scale: totalScale, padding, origin } = resolveHistogramGridConfig(pads);
 
       const padScale = new Vector3(
         (totalScale.x - padding.x * (nx - 1)) / nx,
