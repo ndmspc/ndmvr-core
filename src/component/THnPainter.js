@@ -70,6 +70,9 @@ export class THnPainter extends TPainter {
   colorArray = undefined;
   previousAxesOffset = { scaleFactor: new Vector3(1, 1, 1), translateFactorZ: 0 };
   currentAxesOffset = { scaleFactor: new Vector3(1, 1, 1), translateFactorZ: 0 };
+  renderPromise = undefined;
+  renderHistoryPromise = undefined;
+  renderHistoryPending = false;
 
   constructor(histo, id, opts) {
     super(histo, id, opts);
@@ -405,8 +408,8 @@ export class THnPainter extends TPainter {
    *  Bins of the deepest layer are offset by 1.
    *  Bins from each upward layer are offset by maximum number of layer beneath.
    * */
-  async renderHistogram(startIndex, endIndex, layer) {
-    if (!this.pointer || layer >= this.maxInstancesPerLayer.length - 1) return;
+  renderHistogram(startIndex, endIndex, layer) {
+    if (!this.pointer || layer >= this.maxInstancesPerLayer.length - 1) return Promise.resolve();
     this.logRender({
       procedure: "render",
       value: {
@@ -415,6 +418,15 @@ export class THnPainter extends TPainter {
         layer: layer,
       },
     });
+    // Keep partial renders ordered as well as configuration-driven replays.
+    const renderPromise = (this.renderPromise ?? Promise.resolve()).then(() =>
+      this._renderHistogram(startIndex, endIndex, layer));
+    this.renderPromise = renderPromise.catch(() => {});
+    return renderPromise;
+  }
+
+  async _renderHistogram(startIndex, endIndex, layer) {
+    if (!this.pointer || layer >= this.maxInstancesPerLayer.length - 1) return;
     // console.log('RENDER_________________________');
 
     const _binSizePos = {
@@ -430,12 +442,21 @@ export class THnPainter extends TPainter {
         ? this.minMaxValue[layer][param][this.config.scale.scaleBy]
         : this.minMaxValue[layer]["content"][this.config.scale.scaleBy]
 
-      this.limits.scale.divide(this.previousAxesOffset.scaleFactor);
-      this.limits.position.y -= (this.previousAxesOffset.translateFactorZ / 2)
-      this.currentAxesOffset = await this.axes.buildAxes(this.pointer.origin, this.limits, value)
+      const limits = this.limits;
+      const origin = this.pointer.origin;
+      const axesLimits = {
+        scale: limits.scale.clone().divide(this.previousAxesOffset.scaleFactor),
+        position: limits.position.clone()
+      };
+      axesLimits.position.y -= this.previousAxesOffset.translateFactorZ / 2;
+      const offset = await this.axes.buildAxes(origin, axesLimits, value);
+      // Configuration and histogram replacement can invalidate a pending build.
+      if (!offset || this.limits !== limits || this.pointer.origin !== origin) return;
+      this.currentAxesOffset = offset;
       this.previousAxesOffset = this.currentAxesOffset;
-      this.limits.scale.multiply(this.currentAxesOffset.scaleFactor);
-      this.limits.position.y += (this.currentAxesOffset.translateFactorZ / 2)
+      limits.scale.copy(axesLimits.scale).multiply(offset.scaleFactor);
+      limits.position.copy(axesLimits.position);
+      limits.position.y += offset.translateFactorZ / 2;
     }
 
     // if (this.config.histogram.axes.enabled === true){
@@ -1074,19 +1095,31 @@ export class THnPainter extends TPainter {
     }
   }
 
-  async renderHistogramHistory() {
-    const renderHistoryCopy = this.renderHistory;
-    this.renderHistory = [];
+  renderHistogramHistory() {
+    if (!this.renderHistory.length && !this.renderHistoryPromise) return Promise.resolve();
+    this.renderHistoryPending = true;
+    if (this.renderHistoryPromise) return this.renderHistoryPromise;
 
-    for (const call of renderHistoryCopy) {
-      if (call.procedure === "render") {
-        await this.renderHistogram(
-          call.value.startIndex, call.value.endIndex, call.value.layer
-        );
-      } else if (call.procedure === "hide") {
-        this.hideChildHistogram(call.value);
-      }
-    }
+    // Finish rebuilding the history before replaying a newer configuration.
+    this.renderHistoryPromise = (async () => {
+      do {
+        this.renderHistoryPending = false;
+        const renderHistoryCopy = this.renderHistory;
+        this.renderHistory = [];
+        for (const call of renderHistoryCopy) {
+          if (call.procedure === "render") {
+            await this.renderHistogram(
+              call.value.startIndex, call.value.endIndex, call.value.layer
+            );
+          } else if (call.procedure === "hide") {
+            this.hideChildHistogram(call.value);
+          }
+        }
+      } while (this.renderHistoryPending);
+    })().finally(() => {
+      this.renderHistoryPromise = undefined;
+    });
+    return this.renderHistoryPromise;
   }
 
   /**
