@@ -884,7 +884,7 @@ export function computeMinErrorPerLayer(obj, minContentPerLayer) {
               min[layer][array] = Math.min(
                 min[layer][array],
                 getMin(child.fArrays[array]?.errors?.filter((v) => v > 0))
-                ?? Math.sqrt(obj.fArrays[array].min)
+                ?? Math.sqrt(child.fArrays[array].min)
               );
             }
           });
