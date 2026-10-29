@@ -2,6 +2,7 @@ import { build3d } from "../modules/build/jsroot-build3d.mjs";
 import { Box3, Object3D, Vector3 } from "three";
 import { configSubjectGet } from "../rxjs/ConfigSubject.js";
 import { filter } from "rxjs";
+import cloneDeep from "lodash.clonedeep";
 
 export default class HistogramAxesClass {
   id = undefined;
@@ -9,6 +10,7 @@ export default class HistogramAxesClass {
   config = undefined;
   axes = undefined;
   axesBuildPromise = undefined;
+  axesBuildVersion = 0;
 
   constructor (id) {
     this.id = id;
@@ -18,6 +20,7 @@ export default class HistogramAxesClass {
       .pipe(filter(e =>
         ((e.target.id.includes("*")) || (e.target.id.includes(this.id)))))
       .subscribe((v) => {
+        this.axesBuildVersion++;
         this.config = {...v.config};
         const matrix = this.config.environment.histogramPads.find(el => el.id === this.id);
         const pos = matrix.position;
@@ -26,25 +29,29 @@ export default class HistogramAxesClass {
   }
 
   buildAxes(obj, limits, valueAxis, opts) {
+    const buildVersion = ++this.axesBuildVersion;
+    const matrixScale = new Vector3(limits.scale.x, limits.scale.y, limits.scale.z);
     const type = obj._typename;
+    // JSROOT may annotate nested axes too; keep its input separate from bin data.
+    const axesObj = cloneDeep(obj);
+    const Th1Factor = type.substring(2, 3) === '1'
+      ? this.config.histogram.TH1ZScale.layer[0] ?? this.config.histogram.TH1ZScale.default
+      : 1;
     if (type.substring(2, 3) !== '3') {
       const sameMinMax = valueAxis.min === valueAxis.max;
-      obj.fMaximum = valueAxis.max;
+      axesObj.fMaximum = valueAxis.max;
       if (!sameMinMax) {
-        obj.fMinimum = valueAxis.min;
+        axesObj.fMinimum = valueAxis.min;
       } else if (Math.abs(valueAxis.max) < Number.MAX_VALUE) {
-        obj.fMinimum = valueAxis.min - (Math.abs(valueAxis.max) * 0.1)
+        axesObj.fMinimum = valueAxis.min - (Math.abs(valueAxis.max) * 0.1)
       }
-      obj._typename = "TH2D";
+      axesObj._typename = "TH2D";
     }
 
-    this.axesBuildPromise = build3d(obj, opts, true).then((axes) => {
-      obj._typename = type;
+    this.axesBuildPromise = build3d(axesObj, opts, true).then((axes) => {
+      // A newer build or configuration owns the displayed axes now.
+      if (buildVersion !== this.axesBuildVersion) return;
       while (this.axes.children.length > 0) this.axes.remove(this.axes.children[0]);
-      const matrixScale = this.config.environment.histogramPads.find(el => el.id === this.id)?.scale;
-      const Th1Factor = type.substring(2, 3) === '1'
-       ? this.config.histogram.TH1ZScale.layer[0] ?? this.config.histogram.TH1ZScale.default
-       : 1;
       const boundBox = new Box3()
         .expandByObject(axes.children[0].children[13])
         .expandByObject(axes.children[0].children[16])
@@ -69,8 +76,8 @@ export default class HistogramAxesClass {
       )
 
       axes.rotateX(-Math.PI / 2);
-      axes.translateZ((-matrixScale.z / 2) +
-        (((boundBox2.max.z - boundBox2.min.z) - (boundBox.max.z - boundBox.min.z)) * (matrixScale.z / size.z)));
+      const translateFactorZ = (size.z - (boundBox.max.z - boundBox.min.z)) * (matrixScale.y / size.z);
+      axes.translateZ((-matrixScale.y / 2) + translateFactorZ);
       axes.traverse(obj => {
         obj.raycast = () => {};
       });
@@ -79,7 +86,7 @@ export default class HistogramAxesClass {
       //13 => x
       //16 => z
       //20 => y
-      return { scaleFactor: factor, translateFactorZ: (((boundBox2.max.z - boundBox2.min.z) - (boundBox.max.z - boundBox.min.z)) * (matrixScale.z / size.z)) };
+      return { scaleFactor: factor, translateFactorZ };
     });
     return this.axesBuildPromise;
   }
