@@ -34,6 +34,11 @@ export class HistogramPointerClass {
       this.parentPath.push({origin: this.origin, range: range.splice(0, 1), bin: currentIndex});
       this.origin = this.origin.children.content[currentIndex];
       this.isOnSet = null;
+      if (!this.origin) {
+        this.isHistogramFilled = false;
+        this.path = this.path + "/empty";
+        return;
+      }
     } else if (Object.keys(this.origin.children).includes(set)) {
       this.parentPath.push({origin: this.origin, range: range.splice(0, 1), bin: currentIndex});
       if (!this.origin.children[set][currentIndex]) {

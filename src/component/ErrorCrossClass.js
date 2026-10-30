@@ -7,6 +7,7 @@ import {
   LineSegments,
   ShaderMaterial,
 } from "three";
+import { disposeObject3D } from "../utils/disposeObject3D.js";
 
 // Combined base geometry: all three arms in one draw call.
 // Y arm: (0,-0.5,0) → (0,+0.5,0)
@@ -47,9 +48,14 @@ export class ErrorCrossClass {
     this.instGeom = undefined;
     this.material = undefined;
     this.config    = this._mergeConfig(histogramConfig && histogramConfig.errorCross);
-    this.material  = this._createMaterial();
-    this._buildGeometry(0, null);
-    this.lines.visible = this.config.enabled;
+    try {
+      this.material  = this._createMaterial();
+      this._buildGeometry(0, null);
+      this.lines.visible = this.config.enabled;
+    } catch (error) {
+      this.dispose();
+      throw error;
+    }
   }
 
   // Public API
@@ -113,9 +119,12 @@ export class ErrorCrossClass {
   }
 
   dispose() {
-    if (this.lines && this.lines.parent) this.lines.parent.remove(this.lines);
-    if (this.instGeom) this.instGeom.dispose();
-    if (this.material) this.material.dispose();
+    const disposed = new Set();
+    disposeObject3D(this.lines, disposed);
+    if (this.instGeom && !disposed.has(this.instGeom)) this.instGeom.dispose();
+    if (this.material && !disposed.has(this.material)) this.material.dispose();
+    this.instGeom = undefined;
+    this.material = undefined;
   }
 
   // Private

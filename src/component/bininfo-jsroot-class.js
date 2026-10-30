@@ -3,8 +3,9 @@ import {DoubleSide, Group, Mesh, MeshBasicMaterial, PlaneGeometry, Vector3} from
 import { TextGeometry } from "three/addons/geometries/TextGeometry.js";
 import { FontLoader } from "three/addons/loaders/FontLoader.js";
 import { canvasSubjectGet } from "../rxjs/CanvasSubject.js";
-import { concatMap, EMPTY, finalize, from, Subject } from "rxjs";
+import { Subject } from "rxjs";
 import { create, build3d } from "jsroot";
+import { disposeObject3D } from "../utils/disposeObject3D.js";
 
 /**
  * Class to visualize bin information as a 3D panel in THREE.js
@@ -12,6 +13,9 @@ import { create, build3d } from "jsroot";
  * Subscribes to RxJS subject for bin data updates
  */
 export class BinInfoVisualizer {
+  _version = 0;
+  _disposed = false;
+
   constructor (camera, options = {}) {
     // Configuration
     this.camera = camera;
@@ -27,34 +31,16 @@ export class BinInfoVisualizer {
     };
     this.loader = new FontLoader();
     this.queue = new Subject();
-    let busy = false;
-    let latest = null;
-
-    this.queueSub = this.queue
-      .pipe(
-        concatMap(event => {
-          if (busy) {
-            // if already processing, remember only the latest event
-            latest = event;
-            return EMPTY;
-          }
-          busy = true;
-          return from(this.updateVisualization(event)).pipe(
-            finalize(() => {
-              busy = false;
-              if (latest) {
-                const next = latest;
-                latest = null;
-                this.queue.next(next);
-              }
-            })
-          );
-        })
-      )
-      .subscribe();
-
     // THREE.js group to hold the visualization
     this.group = new Group();
+    this.queueSub = this.queue.subscribe(event => {
+      const version = this._version + 1;
+      this.updateVisualization(event).catch(error => {
+        if (!this._disposed && version === this._version) {
+          console.error("Error updating bin information:", error);
+        }
+      });
+    });
 
     // Current bin data
     // this.currentData = null;
@@ -150,15 +136,11 @@ export class BinInfoVisualizer {
    * @important DO NOT CALL THIS! Should only be called by queue subject!
    */
   async updateVisualization (data) {
-    if (data === null) { this.clear(); return; }
-    // this.currentData = data;
-
-    while (this.group.children.length > 0) {
-      const child = this.group.children[0];
-      if (child.geometry) child.geometry.dispose();
-      if (child.material) child.material.dispose();
-      this.group.remove(child);
-    }
+    if (this._disposed) return;
+    const version = ++this._version;
+    const isCurrent = () => !this._disposed && version === this._version;
+    this._clearChildren();
+    if (!isCurrent() || data === null) return;
 
     const lines = this.parseData(data);
 
@@ -181,11 +163,21 @@ export class BinInfoVisualizer {
       .copy(this.camera.position)
       .addScaledVector(dir, distance);
 
+    if (!isCurrent()) return;
     this.group.position.copy(pos);
     this.camera.add(this.group);
+    if (!isCurrent()) return;
 
     const panel = this.createBackgroundPanel(panelHeight);
+    if (!isCurrent()) {
+      disposeObject3D(panel);
+      return;
+    }
     this.group.add(panel);
+    if (!isCurrent()) {
+      disposeObject3D(panel);
+      return;
+    }
 
     const startY = (panelHeight / 2) - padding - (lineHeight / 2);
 
@@ -210,9 +202,11 @@ export class BinInfoVisualizer {
     //   }
     // });
     for (let i = 0; i < lines.length; i++) {
+      if (!isCurrent()) return;
       const line = lines[i];
       const y = startY - (i * lineHeight);
 
+      let textGroup;
       try {
         const latex = create("TLatex");
         latex.fTitle = line.text;
@@ -223,7 +217,11 @@ export class BinInfoVisualizer {
         latex.fTextColor = line.isTitle ? titleColor : textColor;
         latex.fTextSize = line.isTitle ? textSize + 2 : textSize;
 
-        const textGroup = await build3d(latex, "p", y * 100, "", "");
+        textGroup = await build3d(latex, "p", y * 100, "", "");
+        if (!isCurrent()) {
+          disposeObject3D(textGroup);
+          return;
+        }
         textGroup.scale.set(0.00016, 0.00016, 0.00016);
 
         textGroup.position.x = -(width / 2) + padding;
@@ -231,8 +229,14 @@ export class BinInfoVisualizer {
         textGroup.position.z = 0.001;
 
         this.group.add(textGroup);
+        if (!isCurrent()) {
+          disposeObject3D(textGroup);
+          return;
+        }
 
       } catch (error) {
+        disposeObject3D(textGroup);
+        if (!isCurrent()) return;
         console.error("Error creating text line:", error);
       }
     }
@@ -283,29 +287,24 @@ export class BinInfoVisualizer {
    * Clear panel
    */
   clear () {
-    while (this.group.children.length > 0) {
-      const child = this.group.children[0];
-      if (child.geometry) child.geometry.dispose();
-      if (child.material) child.material.dispose();
-      this.group.remove(child);
-    }
+    this._version++;
+    this._clearChildren();
+  }
+
+  _clearChildren () {
+    const disposed = new Set();
+    for (const child of [...(this.group?.children ?? [])]) disposeObject3D(child, disposed);
   }
 
   /**
    * Clean up resources
    */
   dispose () {
-    // if (this.subscription) {
-    //   this.subscription.unsubscribe();
-    // }
-    this.queueSub.unsubscribe();
-
-    while (this.group.children.length > 0) {
-      const child = this.group.children[0];
-      if (child.geometry) child.geometry.dispose();
-      if (child.material) child.material.dispose();
-      this.group.remove(child);
-    }
+    this._disposed = true;
+    this._version++;
+    this.queueSub?.unsubscribe();
+    this.queue?.complete();
+    disposeObject3D(this.group);
   }
 }
 

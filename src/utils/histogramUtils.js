@@ -126,50 +126,19 @@ export function areMinMaxValuesEqual(obj1, obj2) {
     return false;
   }
 
-  for (let i = 0; i < obj1.length; i++) {
-    const keys1 = Object.keys(obj1[i]);
-    const keys2 = Object.keys(obj2[i]);
-
-    if (keys1.length !== keys2.length) {
+  const equal = (first, second) => {
+    if (first === second || (Number.isNaN(first) && Number.isNaN(second))) return true;
+    if (!first || !second || typeof first !== "object" || typeof second !== "object") {
       return false;
     }
+    if (Array.isArray(first) !== Array.isArray(second)) return false;
+    if (Array.isArray(first) && first.length !== second.length) return false;
+    const keys = Object.keys(first);
+    return keys.length === Object.keys(second).length && keys.every(key =>
+      Object.hasOwn(second, key) && equal(first[key], second[key]));
+  };
 
-    for (const key of keys1) {
-      if (!obj2[i].hasOwnProperty(key)) {
-        return false;
-      }
-
-      const val1 = obj1[i][key];
-      const val2 = obj2[i][key];
-
-      if (typeof val1 !== typeof val2) {
-        return false;
-      }
-
-      if (typeof val1 === "object") {
-        if (!val1 || !val2) {
-          if (val1 !== val2) return false;
-          continue;
-        }
-
-        const subKeys1 = Object.keys(val1);
-        const subKeys2 = Object.keys(val2);
-
-        if (subKeys1.length !== subKeys2.length) {
-          return false;
-        }
-
-        for (const subKey of subKeys1) {
-          if (!val2.hasOwnProperty(subKey) || val1[subKey] !== val2[subKey]) {
-            return false;
-          }
-        }
-      } else if (val1 !== val2) {
-        return false;
-      }
-    }
-  }
-  return true;
+  return equal(obj1, obj2);
 }
 
 export function cropHistogram(hist, xRanges) {
