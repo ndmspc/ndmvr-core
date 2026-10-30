@@ -15,7 +15,7 @@ import {
   getGradientColorInst,
   getRangeByPosition,
   getChildObjectByIndex,
-  rootSizePosToThreeCoords, getRootBinSizePos, areAvailableAxesEqual, computeRenderRangeIterator,
+  rootSizePosToThreeCoords, getRootBinSizePos, computeRenderRangeIterator,
 } from "../utils/histogramUtils.js";
 import {HistogramPointerClass} from "../core/histogram-pointer-class.js";
 import {stateSubjectGet} from "../rxjs/StateSubject.js";
@@ -30,15 +30,14 @@ import {
   InstancedBufferAttribute,
   InstancedBufferGeometry,
   Mesh,
-  Object3D,
   ShaderMaterial,
   Vector3
 } from "three";
 import {createHnotFilledSprite, ensureDefaultBindings} from "../utils/baseUtil.js";
 import {configSubjectGet} from "../rxjs/ConfigSubject.js";
 import {ErrorCrossClass} from "./ErrorCrossClass.js";
-import { build3d } from "jsroot";
 import HistogramAxesClass from "./histogram-axes-class.js";
+import { disposeObject3D } from "../utils/disposeObject3D.js";
 
 export class THnPainter extends TPainter {
   stateSub = undefined;
@@ -71,81 +70,93 @@ export class THnPainter extends TPainter {
   previousAxesOffset = { scaleFactor: new Vector3(1, 1, 1), translateFactorZ: 0 };
   currentAxesOffset = { scaleFactor: new Vector3(1, 1, 1), translateFactorZ: 0 };
   renderPromise = undefined;
-  renderHistoryPromise = undefined;
-  renderHistoryPending = false;
+  _removed = false;
+  _ready = false;
+  _histogramVersion = 0;
 
   constructor(histo, id, opts) {
-    super(histo, id, opts);
-    this.pointer = new HistogramPointerClass(this.rootObj);
-    this.axes = new HistogramAxesClass(this.id);
-
-    this.handleStateChange = this.handleStateChange.bind(this);
-    this.stateSub = stateSubjectGet(this.id)
-      .getObservable()
-      .subscribe(this.handleStateChange);
-
-    this.init(true);
-    // this.renderHistogram(0, this.totalInstances, 0);
+    super(histo, id, opts, true);
+    try {
+      this.configSubjectHandler(configSubjectGet().getValue());
+      if (!this.limits?.position?.isVector3) throw new Error(`Histogram pad "${id}" is not configured`);
+      this.pointer = new HistogramPointerClass(this.rootObj);
+      this.axes = new HistogramAxesClass(this.id);
+      this.init(true);
+      this.stateSub = stateSubjectGet(this.id).getObservable()
+        .subscribe(state => this.handleStateChange(state));
+      this.connect();
+      this.mesh.raycast = this.raycastHandler;
+      this._ready = true;
+    } catch (error) {
+      this.remove();
+      throw error;
+    }
   }
 
-  async updateHistogram(histo) {
-    let raycastHandler = undefined;
-    const parent = this.mesh.parent;
-    parent.remove(this.mesh);
-    if (this.pointer.isHistogramFilled) {
-      raycastHandler = this.mesh.raycast;
-      this.mesh.raycast = () => {
-      };
-      this.wireframe.dispose();
-      this.instGeom.dispose();
-    }
-
-    if (this.errorCross) {
-      this.errorCross.dispose();
-      this.errorCross = undefined;
-    }
-
-    this.matrixCache = [];
-    this.BVHTree = [];
-    this.availableSets = [];
-    this.selectedSet = [];
-    this.availableAxes = [];
-    this.minMaxValue = [];
-    // stateSubjectGet(this.id).next({
-    //   sets: [],
-    //   selectedSet: [],
-    //   arrays: ["content"],
-    //   selectedArray: "content",
-    //   minMaxValue: []
-    // });
-
-    this.rootObj = histo.obj;
-    this.pointer = new HistogramPointerClass(this.rootObj);
-    this.init(true);
-    await this.renderHistogram(0, this.totalInstances, 0);
-    this.mesh.raycast = raycastHandler;
-
-    parent.add(this.mesh);
-    parent.add(this.wireframe.wireframe);
-    if (this.errorCross) {
-      parent.add(this.errorCross.lines);
-      if (this.errorCross.linesTick) parent.add(this.errorCross.linesTick);
-    }
+  updateHistogram(histo) {
+    if (this._removed) return Promise.resolve();
+    if (!histo?.obj?._typename) return Promise.reject(new Error("Invalid histogram"));
+    this._histogramVersion++;
+    this.axes.axesBuildVersion++;
+    return this._queueRender(async () => {
+      const parent = this.mesh?.parent;
+      this._disposeHistogram();
+      this.rootObj = histo.obj;
+      this.pointer = new HistogramPointerClass(this.rootObj);
+      this.availableSets = [];
+      this.selectedSet = [];
+      this.availableAxes = [];
+      this.minMaxValue = [];
+      this.renderHistory = [];
+      this.init(true);
+      const version = this._histogramVersion;
+      await this._renderHistogram(0, this.totalInstances, 0);
+      if (this._removed || version !== this._histogramVersion) return;
+      parent?.add(this.mesh, this.wireframe.wireframe);
+      if (this.errorCross) parent?.add(this.errorCross.lines);
+    });
   }
 
   remove() {
+    if (this._removed) return;
+    this._removed = true;
+    this._histogramVersion++;
     super.remove();
+    this.stateSub?.unsubscribe();
+    if (this.id) stateSubjectGet(this.id)._release(this);
+    this.axes?.dispose();
+    this._disposeHistogram();
+  }
+
+  _disposeHistogram() {
+    this.wireframe?.dispose();
+    this.errorCross?.dispose();
+    const disposed = new Set();
+    disposeObject3D(this.mesh, disposed);
+    if (this.instGeom && !disposed.has(this.instGeom)) this.instGeom.dispose();
+    if (this.material && !disposed.has(this.material)) this.material.dispose();
+    this.mesh = undefined;
+    this.instGeom = undefined;
+    this.material = undefined;
+    this.instancePositions = undefined;
+    this.instanceScales = undefined;
+    this.instanceColors = undefined;
+    this.colorArray = undefined;
     this.matrixCache = [];
-    this.instGeom.dispose();
-    if (this.mesh.parent) {
-      this.mesh.parent.remove(this.mesh);
-      this.wireframe.dispose();
-    }
-    if (this.errorCross) {
-      this.errorCross.dispose();
-      this.errorCross = undefined;
-    }
-    this.stateSub.unsubscribe();
+    this.BVHTree = [];
+    this.wireframe = undefined;
+    this.errorCross = undefined;
+  }
+
+  // Serialize mutations of the live buffers; replacement/removal cancels old work.
+  _queueRender(action) {
+    if (this._removed) return Promise.resolve();
+    const version = this._histogramVersion;
+    const task = (this.renderPromise ?? Promise.resolve()).then(() => {
+      if (!this._removed && version === this._histogramVersion) return action();
+    });
+    this.renderPromise = task.catch(() => {});
+    return task;
   }
 
   /**
@@ -158,11 +169,14 @@ export class THnPainter extends TPainter {
       this.minContentPerLayer = computeMinContentPerLayer(this.pointer.origin);
       this.maxErrorPerLayer = computeMaxErrorPerLayer(this.pointer.origin, this.maxContentPerLayer);
       this.minErrorPerLayer = computeMinErrorPerLayer(this.pointer.origin, this.minContentPerLayer);
-      let state = stateSubjectGet(this.id).getValue();
+      let state = structuredClone(stateSubjectGet(this.id).getValue());
       state = this.setAvailableSets(this.pointer.origin, state);
       state = this.setAvailableArrays(this.pointer.origin, state);
       state = this.setAvailableAxes(this.pointer.origin, state);
       state = this.setAvailableAxisRanges(this.pointer.origin, state.availableAxes, state);
+      this.selectedSet = [...state.selectedSet];
+      this.selectedArray = state.arrays.includes(state.selectedArray) ? state.selectedArray : "content";
+      state.selectedArray = this.selectedArray;
       // stateSubjectGet(this.id).next(state);
       // this.setCorrectWireframeEnd();
 
@@ -180,7 +194,7 @@ export class THnPainter extends TPainter {
       }
       this.minMaxValue = minMaxValues;
       state.minMaxValue = minMaxValues;
-      stateSubjectGet(this.id).next(state);
+      stateSubjectGet(this.id)._bind(this, this.rootObj, state);
     }
 
     this.totalInstances = this.maxInstancesPerLayer.reduce((acc, value) => {
@@ -282,11 +296,10 @@ export class THnPainter extends TPainter {
   }
 
   pushVisibleInstances() {
-    let parent = this.mesh.parent;
-    if (parent) {
-      parent.remove(this.mesh);
-      this.instGeom.dispose();
-    }
+    if (this._removed || !this.mesh || !this.pointer.isHistogramFilled) return;
+    const parent = this.mesh.parent;
+    this.mesh.removeFromParent();
+    this.instGeom?.dispose();
 
     let count = 0;
 
@@ -409,24 +422,19 @@ export class THnPainter extends TPainter {
    *  Bins from each upward layer are offset by maximum number of layer beneath.
    * */
   renderHistogram(startIndex, endIndex, layer) {
-    if (!this.pointer || layer >= this.maxInstancesPerLayer.length - 1) return Promise.resolve();
-    this.logRender({
-      procedure: "render",
-      value: {
-        startIndex: startIndex,
-        endIndex: endIndex,
-        layer: layer,
-      },
+    if (this._removed || !this.pointer?.isHistogramFilled ||
+      layer < 0 || layer >= this.maxInstancesPerLayer.length - 1) return Promise.resolve();
+    const origin = this.pointer.origin;
+    return this._queueRender(() => {
+      if (this.pointer.origin === origin) return this._renderHistogram(startIndex, endIndex, layer);
     });
-    // Keep partial renders ordered as well as configuration-driven replays.
-    const renderPromise = (this.renderPromise ?? Promise.resolve()).then(() =>
-      this._renderHistogram(startIndex, endIndex, layer));
-    this.renderPromise = renderPromise.catch(() => {});
-    return renderPromise;
   }
 
-  async _renderHistogram(startIndex, endIndex, layer) {
-    if (!this.pointer || layer >= this.maxInstancesPerLayer.length - 1) return;
+  async _renderHistogram(startIndex, endIndex, layer, log = true) {
+    if (this._removed || !this.pointer?.isHistogramFilled ||
+      layer < 0 || layer >= this.maxInstancesPerLayer.length - 1) return;
+    const version = this._histogramVersion;
+    if (log) this.logRender({ procedure: "render", value: { startIndex, endIndex, layer } });
     // console.log('RENDER_________________________');
 
     const _binSizePos = {
@@ -451,7 +459,8 @@ export class THnPainter extends TPainter {
       axesLimits.position.y -= this.previousAxesOffset.translateFactorZ / 2;
       const offset = await this.axes.buildAxes(origin, axesLimits, value);
       // Configuration and histogram replacement can invalidate a pending build.
-      if (!offset || this.limits !== limits || this.pointer.origin !== origin) return;
+      if (!offset || this._removed || version !== this._histogramVersion ||
+        this.limits !== limits || this.pointer.origin !== origin) return;
       this.currentAxesOffset = offset;
       this.previousAxesOffset = this.currentAxesOffset;
       limits.scale.copy(axesLimits.scale).multiply(offset.scaleFactor);
@@ -464,7 +473,7 @@ export class THnPainter extends TPainter {
     //   this.limits.scale.multiplyScalar(0.81221860557736548831917);
     // }
 
-    const render = async (startIndex, endIndex, currentLayer, obj, limits, set) => {
+    const render = (startIndex, endIndex, currentLayer, obj, limits, set) => {
       if (currentLayer > layer) return;
       if (!obj) return;
       // console.log("maxinstnces: ", this.maxInstancesPerLayer);
@@ -792,30 +801,32 @@ export class THnPainter extends TPainter {
       }
     };
 
-    return (this.pointer.isOnSet
-      ? Promise.all(this.selectedSet.map(set =>
+    if (this._removed || version !== this._histogramVersion) return;
+    if (this.pointer.isOnSet) {
+      for (const set of this.selectedSet) {
         render(startIndex, endIndex, 0,
           getChildObjectByIndex(this.pointer.rootObj,
-            this.pointer.parentPath.map(v => v.bin[0]), set), this.limits, set)))
-      : render(startIndex, endIndex, 0, this.pointer.origin, this.limits)
-    ).then(() => {
-      if (!this.pointer.isOnSet) {
-        this.wireframe.pushVisibleInstances(
-          this.matrixCache, this.maxInstancesPerLayer,
-          this.availableSets.indexOf(this.selectedSet[0])
-        );
+            this.pointer.parentPath.map(v => v.bin[0]), set), this.limits, set);
       }
-      this.pushVisibleInstances();
-
-      const pointerSet = this.availableSets.indexOf(this.pointer.isOnSet) === -1
-        ? null
-        : this.availableSets.indexOf(this.pointer.isOnSet);
-      this.BVHTree = createBVHTreeRecursive(
-        this.matrixCache, this.pointer.origin, 0, this.selectedSet,
-        pointerSet,
-        this.availableSets, this.mesh.matrixWorld, this.maxInstancesPerLayer
+    } else {
+      render(startIndex, endIndex, 0, this.pointer.origin, this.limits);
+    }
+    if (!this.pointer.isOnSet) {
+      this.wireframe.pushVisibleInstances(
+        this.matrixCache, this.maxInstancesPerLayer,
+        this.availableSets.indexOf(this.selectedSet[0])
       );
-    });
+      if (!this.wireframe.visibility) this.wireframe.clearWireframe();
+    }
+    this.pushVisibleInstances();
+
+    const pointerSet = this.availableSets.indexOf(this.pointer.isOnSet) === -1
+      ? null
+      : this.availableSets.indexOf(this.pointer.isOnSet);
+    this.BVHTree = createBVHTreeRecursive(
+      this.matrixCache, this.pointer.origin, 0, this.selectedSet, pointerSet,
+      this.availableSets, this.mesh.matrixWorld, this.maxInstancesPerLayer
+    );
   }
 
   createMaterial() {
@@ -871,7 +882,9 @@ export class THnPainter extends TPainter {
       point: event.target,
     });
 
-    this.showChildHistogram(event.index);
+    this.showChildHistogram(event.index).catch(error => {
+      if (!this._removed) console.error("Native histogram expansion failed:", error);
+    });
     if (event.selectedArray !== "content" && event.jsrootObj?.fArrays[event.selectedArray]?.values) {
       event.jsrootObj.fArray = event.jsrootObj.fArrays[event.selectedArray]?.values;
       event.jsrootObj.fSumw2 = event.jsrootObj.fArrays[event.selectedArray]?.errors;
@@ -960,7 +973,7 @@ export class THnPainter extends TPainter {
 
   mousemoveDefault(event) {
     const areIndexesEqual = (index1, index2) => {
-      if (index1.length !== index2.length) return false;
+      if (index1.length !== index2?.length) return false;
       for (let i = 0; i < index1.length; i++) {
         const a = index1[i],
           b = index2[i];
@@ -995,17 +1008,21 @@ export class THnPainter extends TPainter {
   }
 
   shiftMouseClickDefault(event) {
-    this.hideChildHistogram(event.index);
+    this.hideChildHistogram(event.index).catch(error => {
+      if (!this._removed) console.error("Native histogram collapse failed:", error);
+    });
   }
 
   mouseDBClickDefault(event) {
-    event.set
-      ? this.setPointerToChild(event.index, event.set)
-      : this.setPointerToChild(event.index, this.selectedSet[0]);
+    this.setPointerToChild(event.index, event.set || this.selectedSet[0]).catch(error => {
+      if (!this._removed) console.error("Native histogram navigation failed:", error);
+    });
   }
 
   shiftMouseDBClickDefault(event) {
-    this.setPointerToParent();
+    this.setPointerToParent().catch(error => {
+      if (!this._removed) console.error("Native histogram navigation failed:", error);
+    });
   }
 
   intersectionHandler(intersection, triggerSource) {
@@ -1033,93 +1050,53 @@ export class THnPainter extends TPainter {
   }
 
   handleStateChange(state) {
-    const setsAreSame = areArraysEqual(state.sets, this.availableSets);
-    const selectedSetChanged = !areArraysEqual(state.selectedSet, this.selectedSet);
-    const selectedArrayChanged = this.selectedArray !== state.selectedArray;
-    const axisRangesChanged = !areMinMaxValuesEqual(
-      this.pointer.axisRanges,
-      state.axisRanges
-    );
-    const minMaxValuesChanged =
-      this.minMaxValue.length !== 0 &&
-      !areMinMaxValuesEqual(state.minMaxValue, this.minMaxValue);
-
-    if ((setsAreSame &&
-        (selectedSetChanged || selectedArrayChanged || axisRangesChanged)) ||
-      minMaxValuesChanged
-    ) {
+    if (!this._ready || this._removed) return;
+    this._queueRender(async () => {
+      if (!areArraysEqual(state.sets, this.availableSets) || !this.pointer.isHistogramFilled) return;
+      const rangesChanged = !areMinMaxValuesEqual(this.pointer.axisRanges, state.axisRanges);
+      const changed = rangesChanged || this.selectedArray !== state.selectedArray ||
+        !areArraysEqual(this.selectedSet, state.selectedSet) ||
+        !areMinMaxValuesEqual(this.minMaxValue, state.minMaxValue) ||
+        !areMinMaxValuesEqual(this.availableAxes, state.availableAxes);
+      if (!changed) return;
       this.selectedArray = state.selectedArray;
-      this.selectedSet = state.selectedSet;
-      this.minMaxValue = state.minMaxValue;
-
-      const parent = this.mesh.parent;
-      this.instGeom.dispose();
-      parent.remove(this.mesh);
-      if (this.errorCross && this.errorCross.config.enabled) {
-        this.mesh.material.colorWrite = false;
-        this.mesh.material.depthWrite = false;
-      }
-      if (axisRangesChanged) {
-        this.pointer.setHistogramRanges(state.axisRanges);
-        this.maxInstancesPerLayer = computeMaxInstancesPerLayer(this.pointer.origin);
-        this.totalInstances = this.maxInstancesPerLayer.reduce((acc, value) => {
-          return acc * value;
-        }, 1);
-        this.setupInsBufGeom();
-        this.renderHistogram(0, this.totalInstances, 0);
-        parent.add(this.mesh);
-      } else {
-        this.setupInsBufGeom();
-        parent.add(this.mesh);
-        this.renderHistogramHistory();
-      }
-
-    }
-    // else if (this.minMaxValue.length !== 0 && areMinMaxValuesEqual(state.minMaxValue, this.minMaxValue)) {
-    //   this.renderHistogramHistory();
-    //
-    // }
-    else {
-      this.availableSets = state.sets;
-      this.selectedSet = state.selectedSet;
+      this.selectedSet = [...state.selectedSet];
       this.minMaxValue = state.minMaxValue;
       this.availableAxes = state.availableAxes;
-      if (axisRangesChanged) {
+      if (rangesChanged) {
+        this.pointer = new HistogramPointerClass(this.rootObj);
         this.pointer.setHistogramRanges(state.axisRanges);
         this.maxInstancesPerLayer = computeMaxInstancesPerLayer(this.pointer.origin);
-        this.totalInstances = this.maxInstancesPerLayer.reduce((acc, value) => {
-          return acc * value;
-        }, 1);
-
+        this.totalInstances = this.maxInstancesPerLayer.reduce((a, b) => a * b, 1);
+        this.renderHistory = [{ procedure: "render", value: {
+          startIndex: 0, endIndex: this.totalInstances, layer: 0
+        } }];
       }
-    }
+      await this._replayHistory();
+    }).catch(error => {
+      if (!this._removed) console.error("Native histogram state update failed:", error);
+    });
   }
 
   renderHistogramHistory() {
-    if (!this.renderHistory.length && !this.renderHistoryPromise) return Promise.resolve();
-    this.renderHistoryPending = true;
-    if (this.renderHistoryPromise) return this.renderHistoryPromise;
+    if (this._removed || !this.renderHistory.length) return Promise.resolve();
+    return this._queueRender(() => this._replayHistory());
+  }
 
-    // Finish rebuilding the history before replaying a newer configuration.
-    this.renderHistoryPromise = (async () => {
-      do {
-        this.renderHistoryPending = false;
-        const renderHistoryCopy = this.renderHistory;
-        this.renderHistory = [];
-        for (const call of renderHistoryCopy) {
-          if (call.procedure === "render") {
-            await this.renderHistogram(
-              call.value.startIndex, call.value.endIndex, call.value.layer
-            );
-          } else if (call.procedure === "hide") {
-            this.hideChildHistogram(call.value);
-          }
-        }
-      } while (this.renderHistoryPending);
-    })().finally(() => {
-      this.renderHistoryPromise = undefined;
-    });
-    return this.renderHistoryPromise;
+  async _replayHistory() {
+    if (!this.pointer.isHistogramFilled || !this.renderHistory.length) return;
+    const version = this._histogramVersion;
+    const history = this.renderHistory;
+    this.renderHistory = [];
+    this.setupMatrixCache();
+    for (const call of history) {
+      if (this._removed || version !== this._histogramVersion) return;
+      if (call.procedure === "render") {
+        await this._renderHistogram(call.value.startIndex, call.value.endIndex, call.value.layer);
+      } else if (call.procedure === "hide") {
+        await this._hideChildHistogram(call.value);
+      }
+    }
   }
 
   /**
@@ -1130,78 +1107,65 @@ export class THnPainter extends TPainter {
    * @param set Specifies from which set should child be chosen.
    * If children contains sets, parameter need to be specified.
    * */
-  async setPointerToChild(position, set) {
-    const parent = this.mesh.parent;
-
-    this.matrixCache = [];
-    this.instGeom.dispose();
-    this.wireframe.dispose();
-    parent.remove(this.mesh);
-
-    if (this.errorCross) {
-      this.errorCross.dispose();
-      this.errorCross = undefined;
-    }
-
-    const range = getRangeByPosition(
-      position, set, this.pointer.origin,
-      this.wireframe, this.selectedSet
-    );
-
-    this.pointer.setOriginToChild(
-      computeJsRootIndexFromPosition(position, this.pointer.origin, this.selectedSet),
-      set, range);
-
-    if (!this.pointer.isHistogramFilled) {
-      this.mesh = createHnotFilledSprite(this.limits, this.setPointerToParent.bind(this));
-      parent.add(this.mesh);
-      return;
-    }
-
-    this.init(false);
-    console.log("path: ", this.pointer.path);
-    console.log("title: ", this.pointer.title);
-    await this.renderHistogram(0, this.totalInstances, 0);
-    parent.add(this.mesh);
-    parent.add(this.wireframe.wireframe);
-    if (this.errorCross) {
-      parent.add(this.errorCross.lines);
-      if (this.errorCross.linesTick) parent.add(this.errorCross.linesTick);
-    }
-
-    if (this.pointer.isOnSet) {
-      this.wireframe.toggleVisibility(this.matrixCache, this.maxInstancesPerLayer, this.availableSets.indexOf(set));
-    }
+  setPointerToChild(position, set) {
+    if (this._removed || !position?.length || !this.pointer?.isHistogramFilled ||
+      position.length >= this.maxInstancesPerLayer.length - 1) return Promise.resolve();
+    const indices = computeJsRootIndexFromPosition(position.slice(0, -1), this.pointer.origin, this.selectedSet);
+    const containingHistogram = this.pointer.getChildByPosition(indices, set || this.selectedSet[0]);
+    if (!containingHistogram?.children || !Object.keys(containingHistogram.children).length) return Promise.resolve();
+    const expectedOrigin = this.pointer.origin;
+    return this._queueRender(async () => {
+      if (this.pointer.origin !== expectedOrigin) return;
+      const range = getRangeByPosition(position, set, this.pointer.origin,
+        this.wireframe, this.selectedSet);
+      const indices = computeJsRootIndexFromPosition(position, this.pointer.origin, this.selectedSet);
+      const origin = this.pointer.origin;
+      this.pointer.setOriginToChild(indices, set, range);
+      if (this.pointer.origin === origin) return;
+      const parent = this.mesh?.parent;
+      this._disposeHistogram();
+      this.renderHistory = [];
+      if (!this.pointer.isHistogramFilled) {
+        this.mesh = createHnotFilledSprite(this.limits, () => {
+          this.setPointerToParent().catch(error => {
+            if (!this._removed) console.error("Native histogram navigation failed:", error);
+          });
+        });
+        parent?.add(this.mesh);
+        this.pushVisibleInstances();
+        return;
+      }
+      this.init(false);
+      const version = this._histogramVersion;
+      await this._renderHistogram(0, this.totalInstances, 0);
+      if (this._removed || version !== this._histogramVersion) return;
+      parent?.add(this.mesh, this.wireframe.wireframe);
+      if (this.errorCross) parent?.add(this.errorCross.lines);
+      if (this.pointer.isOnSet) {
+        this.wireframe.toggleVisibility(this.matrixCache, this.maxInstancesPerLayer,
+          this.availableSets.indexOf(set));
+      }
+    });
   }
 
   /**
    * @desc Method to set pointers origin to its parent.
    * * */
-  async setPointerToParent() {
-    const parent = this.mesh.parent;
-    parent.remove(this.mesh);
-    if (this.pointer.isHistogramFilled) {
-      this.matrixCache = [];
-      this.instGeom.dispose();
-      this.wireframe.dispose();
-    }
-
-    if (this.errorCross) {
-      this.errorCross.dispose();
-      this.errorCross = undefined;
-    }
-
-    this.pointer.setOriginToParent(1);
-    console.log("path: ", this.pointer.path);
-    console.log("title: ", this.pointer.title);
-    this.init(false);
-    await this.renderHistogram(0, this.totalInstances, 0);
-    parent.add(this.mesh);
-    parent.add(this.wireframe.wireframe);
-    if (this.errorCross) {
-      parent.add(this.errorCross.lines);
-      if (this.errorCross.linesTick) parent.add(this.errorCross.linesTick);
-    }
+  setPointerToParent() {
+    if (this._removed || !this.pointer?.parentPath.length) return Promise.resolve();
+    return this._queueRender(async () => {
+      if (!this.pointer.parentPath.length) return;
+      const parent = this.mesh?.parent;
+      this._disposeHistogram();
+      this.pointer.setOriginToParent(1);
+      this.renderHistory = [];
+      this.init(false);
+      const version = this._histogramVersion;
+      await this._renderHistogram(0, this.totalInstances, 0);
+      if (this._removed || version !== this._histogramVersion) return;
+      parent?.add(this.mesh, this.wireframe.wireframe);
+      if (this.errorCross) parent?.add(this.errorCross.lines);
+    });
   }
 
   /**
@@ -1210,6 +1174,11 @@ export class THnPainter extends TPainter {
    * e.g. ([{x: 1, y: 3, z: 2}, {x: 89, 0, 0}])
    * */
   showChildHistogram(position) {
+    if (this._removed || !position?.length || !this.pointer?.isHistogramFilled ||
+      position.length >= this.maxInstancesPerLayer.length - 1) return Promise.resolve();
+    const indices = computeJsRootIndexFromPosition(position.slice(0, -1), this.pointer.origin, this.selectedSet);
+    const containingHistogram = this.pointer.getChildByPosition(indices, this.selectedSet[0]);
+    if (!containingHistogram?.children || !Object.keys(containingHistogram.children).length) return Promise.resolve();
     const ind = computeIndexFromPosition(
       position, this.pointer.origin,
       this.maxInstancesPerLayer, this.selectedSet
@@ -1222,7 +1191,7 @@ export class THnPainter extends TPainter {
       return acc * value;
     }, 1);
 
-    this.renderHistogram(
+    return this.renderHistogram(
       ind.slice(-1)[0],
       ind.slice(-1)[0] + multiplier,
       position.length,
@@ -1235,7 +1204,15 @@ export class THnPainter extends TPainter {
    * e.g. ([{x: 1, y: 3, z: 2}, {x: 89, 0, 0}])
    * */
   hideChildHistogram(position) {
-    if (position.length === 1) return;
+    if (this._removed || !this.pointer?.isHistogramFilled || !position || position.length <= 1) return Promise.resolve();
+    const origin = this.pointer.origin;
+    return this._queueRender(() => {
+      if (this.pointer.origin === origin) return this._hideChildHistogram(position);
+    });
+  }
+
+  async _hideChildHistogram(position) {
+    if (position.length <= 1) return;
 
     const layerDimensions = this.maxInstancesPerLayer.slice(
       position.length - 1,
@@ -1263,12 +1240,9 @@ export class THnPainter extends TPainter {
       procedure: "hide",
       value: position,
     });
-    this.renderHistogram(
-      startIndexFloored,
-      startIndexFloored + totalMultiplier,
-      position.length - 2,
+    await this._renderHistogram(
+      startIndexFloored, startIndexFloored + totalMultiplier, position.length - 2, false
     );
-    this.renderHistory.pop(); //removes duplicit renderHistogram call
   }
 
   /**
@@ -1327,6 +1301,7 @@ export class THnPainter extends TPainter {
     const axisNames = ["x", "y", "z"];
 
     const setAxesForObj = (obj) => {
+      if (!obj) return;
       const layerAxes = [];
       layerAxes.push({size: "linear", color: "linear"});
       const nAxes = Number.parseInt(obj._typename.substring(2, 3), 10);
@@ -1362,11 +1337,12 @@ export class THnPainter extends TPainter {
    * @return is null. Sets that are found are set in stateSubject.
    * */
   setAvailableSets(origin, currentValue) {
-    if (origin.children?.content) {
+    if (!currentValue) currentValue = structuredClone(stateSubjectGet(this.id).getValue());
+    if (origin?.children?.content) {
       const firstChild = origin.children.content.find((child) => {
         return child;
       });
-      this.setAvailableSets(firstChild, currentValue);
+      return this.setAvailableSets(firstChild, currentValue);
     } else if (origin?.children) {
       if (!currentValue) currentValue = stateSubjectGet(this.id).getValue();
       // const currentValue = stateSubjectGet(this.id).getValue();
@@ -1386,9 +1362,11 @@ export class THnPainter extends TPainter {
       return currentValue;
       // stateSubjectGet(this.id).next(currentValue);
     } else {
-      const currentValue = stateSubjectGet(this.id).getValue();
       currentValue.sets = [];
       currentValue.selectedSet = [];
+      this.availableSets = [];
+      this.selectedSet = [];
+      return currentValue;
     }
   }
 
@@ -1400,6 +1378,7 @@ export class THnPainter extends TPainter {
 
     const appendChildArrays = (children) => {
       const firstChild = children.find(s => s);
+      if (!firstChild) return;
       if (firstChild.fArrays) {
         currentValue.arrays = currentValue.arrays.concat(Object.keys(firstChild.fArrays));
       }
@@ -1483,27 +1462,30 @@ export class THnPainter extends TPainter {
   }
 
   configSubjectHandler(event) {
+    if (this._removed) return;
+    const pad = event.config.environment.histogramPads.find(el => el.id === this.id);
+    if (!pad) return;
     this.config = configSubjectGet().mergeHistogramConfig(this?.opts?.config);
     this.keyBindings = ensureDefaultBindings(event.config).bindings;
-
-    if (event?.config?.histogram?.errorCross) {
-      this._handleErrorCrossConfig(event.config.histogram.errorCross);
+    this.limits = {
+      ...pad,
+      position: new Vector3(pad.position.x, pad.position.y, pad.position.z),
+      scale: new Vector3(pad.scale.x, pad.scale.y, pad.scale.z)
+    };
+    this.previousAxesOffset = { scaleFactor: new Vector3(1, 1, 1), translateFactorZ: 0 };
+    this.currentAxesOffset = { scaleFactor: new Vector3(1, 1, 1), translateFactorZ: 0 };
+    if (this.mesh?.material && event.config.histogram.errorCross) {
+      this._handleErrorCrossConfig(this.config.errorCross);
     }
-
-    const newLimits = event.config.environment.histogramPads.find(
-      (el) => el.id === this.id
-    );
-    this.limits = { ...newLimits };
-    if (newLimits) {
-      // Rendering applies axes offsets to working bounds; never share stored vectors.
-      const { position, scale } = newLimits;
-      this.limits.position = new Vector3(position.x, position.y, position.z);
-      this.limits.scale = new Vector3(scale.x, scale.y, scale.z);
-      this.previousAxesOffset = { scaleFactor: new Vector3(1, 1, 1), translateFactorZ: 0 };
-      this.currentAxesOffset = { scaleFactor: new Vector3(1, 1, 1), translateFactorZ: 0 };
+    this.wireframe?.updateConfig(this.config.wireframe);
+    this.wireframe?.fillColorArray();
+    if (this.material?.uniforms && this.colorArray) {
+      fillColorArray(this.config, this.material, this.colorArray);
+      this.material.uniformsNeedUpdate = true;
     }
-    if (this.wireframe) this.wireframe.updateConfig(this.config.wireframe);
-    this.renderHistogramHistory();
+    if (this._ready) this.renderHistogramHistory().catch(error => {
+      if (!this._removed) console.error("Native histogram configuration update failed:", error);
+    });
   }
 
   /**
@@ -1512,37 +1494,32 @@ export class THnPainter extends TPainter {
    * @param event Defines incoming event which will be put against regex.
    * */
   keyDownHandler(event) {
-    const regex = /^(?:Digit|Numpad)(\d+)$/;
-    const match = event.code.match(regex);
-    if (match) {
-      if (parseInt(match[1]) > this.matrixCache.length) return;
-      const dummy = new Object3D();
-      dummy.scale.set(0, 0, 0);
-      dummy.updateMatrix();
-
-      let totalInst = this.maxInstancesPerLayer.reduce((acc, value) => {
-        return acc * value;
-      }, 1);
-      if (this.selectedSet.length > 1) {
-        totalInst *= this.selectedSet.length;
-      }
-
-      this.setupMatrixCache();
-
-      this.wireframe.clearWireframe();
-      this.renderHistogram(
-        0, this.totalInstances, parseInt(match[1]) - 1
-      );
-
-    } else if (event.key === this.keyBindings.hideOutlines) {
-      this.wireframe.toggleVisibility(
-        this.matrixCache, this.maxInstancesPerLayer,
-        this.availableSets.indexOf(this.selectedSet[0])
-      );
-    } else if (event.key === this.keyBindings.resetHistogram) {
+    if (this._removed) return;
+    if (event.key === this.keyBindings.resetHistogram) {
       this.resetHistogram();
-    } else if (event.key === this.keyBindings.goToPreviousLayer) {
-      this.setPointerToParent();
+      return;
+    }
+    if (event.key === this.keyBindings.goToPreviousLayer) {
+      this.setPointerToParent().catch(error => {
+        if (!this._removed) console.error("Native histogram navigation failed:", error);
+      });
+      return;
+    }
+    if (!this.pointer?.isHistogramFilled) return;
+    const match = event.code.match(/^(?:Digit|Numpad)(\d+)$/);
+    if (match) {
+      const layer = Number.parseInt(match[1], 10) - 1;
+      if (layer < 0 || layer >= this.matrixCache.length) return;
+      this._queueRender(async () => {
+        this.setupMatrixCache();
+        this.wireframe.clearWireframe();
+        await this._renderHistogram(0, this.totalInstances, layer);
+      }).catch(error => {
+        if (!this._removed) console.error("Native histogram layer update failed:", error);
+      });
+    } else if (event.key === this.keyBindings.hideOutlines) {
+      this.wireframe.toggleVisibility(this.matrixCache, this.maxInstancesPerLayer,
+        this.availableSets.indexOf(this.selectedSet[0]));
     }
   }
 
@@ -1551,7 +1528,9 @@ export class THnPainter extends TPainter {
   }
 
   resetHistogram() {
-    this.updateHistogram({obj: this.rootObj});
+    return this.updateHistogram({obj: this.rootObj}).catch(error => {
+      if (!this._removed) console.error("Native histogram reset failed:", error);
+    });
   }
 
   /**

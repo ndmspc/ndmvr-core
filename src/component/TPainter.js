@@ -24,47 +24,58 @@ export class TPainter {
   renderHistory = [];
   opts = undefined;
   //
-  constructor ( rootObj, id, opts) {
+  constructor ( rootObj, id, opts, deferSubscriptions = false) {
     this.rootObj = rootObj.obj;
     this.id = id;
     this.opts = opts;
     this.config = configSubjectGet().mergeHistogramConfig(this?.opts?.config);
+    if (!deferSubscriptions) this.connect();
+  }
 
-    this.functionSub = functionSubjectGet()
-      .getObservable()
-      .pipe(
-        filter(
-          (e) =>
-            e.target.entity === "nested-histogram" &&
-            (e.target.id.includes("*") || e.target.id.includes(this.id)),
-        ),
-      )
-      .subscribe(event => this.functionSubjectHandler(event));
+  connect() {
+    try {
+      this.functionSub = functionSubjectGet()
+        .getObservable()
+        .pipe(
+          filter(
+            (e) =>
+              e.target.entity === "nested-histogram" &&
+              (e.target.id.includes("*") || e.target.id.includes(this.id)),
+          ),
+        )
+        .subscribe(event => this.functionSubjectHandler(event));
 
-    this.configSub = configSubjectGet()
-      .getObservable()
-      .pipe(
-        filter(
-          (e) => e.target.id.includes("*") || e.target.id.includes(this.id),
-        ),
-      )
-      .subscribe((event) => this.configSubjectHandler(event));
+      this.configSub = configSubjectGet()
+        .getObservable()
+        .pipe(
+          filter(
+            (e) => e.target.id.includes("*") || e.target.id.includes(this.id),
+          ),
+        )
+        .subscribe((event) => this.configSubjectHandler(event));
 
-    this.dispatchSub = dispatchSubjectGet().getObservable()
-      .pipe(
-        filter((event) =>
-          (event.target.id === "*" || event.target.id === this.id)))
-      .subscribe((event) => this.dispatchSubjectHandler(event));
+      this.dispatchSub = dispatchSubjectGet().getObservable()
+        .pipe(
+          filter((event) =>
+            (event.target.id === "*" || event.target.id === this.id)))
+        .subscribe((event) => this.dispatchSubjectHandler(event));
 
-    this.initDefaultFunctions();
+      this.initDefaultFunctions();
+    } catch (error) {
+      TPainter.prototype.remove.call(this);
+      throw error;
+    }
   }
 
   remove() {
-    this.functionSub.unsubscribe();
-    this.configSub.unsubscribe();
-    this.dispatchSub.unsubscribe();
+    this.functionSub?.unsubscribe();
+    this.configSub?.unsubscribe();
+    this.dispatchSub?.unsubscribe();
     window.removeEventListener("keydown", this.keyDownHandler);
-    window.removeEventListener("keydown", this.keyUpHandler);
+    window.removeEventListener("keyup", this.keyUpHandler);
+    this.mouseEvents = [];
+    this.keydownEvents = [];
+    this.keyupEvents = [];
   }
 
   initDefaultFunctions() {
@@ -78,7 +89,7 @@ export class TPainter {
     this.shiftMouseDBClickDefault = this.shiftMouseDBClickDefault.bind(this);
 
     window.addEventListener("keydown", this.keyDownHandler);
-    window.addEventListener("keydown", this.keyUpHandler);
+    window.addEventListener("keyup", this.keyUpHandler);
 
     this.addEvent("mouseclick", this.mouseClickDefault);
     this.addEvent("mousemove", this.mousemoveDefault);

@@ -9,6 +9,7 @@ import {
   LineSegments, ShaderMaterial
 } from "three";
 import {stateSubjectGet} from "../rxjs/StateSubject.js";
+import {disposeObject3D} from "../utils/disposeObject3D.js";
 
 export default class HistogramWireframeClass {
 
@@ -33,52 +34,55 @@ export default class HistogramWireframeClass {
     this.maxInstancesPerLayer = maxInstancesPerLayer;
     this.id = id;
 
-    const baseBox = new BoxGeometry(1, 1, 1);
-    const baseEdges = new EdgesGeometry(baseBox);
-    this.instGeom = new InstancedBufferGeometry();
-    this.instGeom.instanceCount = 0;
-    this.instGeom.frustumCulled = false;
-    this.instGeom.index = baseEdges.index;
+    try {
+      const baseBox = new BoxGeometry(1, 1, 1);
+      const baseEdges = new EdgesGeometry(baseBox);
+      this.instGeom = new InstancedBufferGeometry();
+      this.instGeom.instanceCount = 0;
+      this.instGeom.frustumCulled = false;
+      this.instGeom.index = baseEdges.index;
 
-    for (const name in baseEdges.attributes) {
-      this.instGeom.setAttribute(name, baseEdges.attributes[name]);
+      for (const name in baseEdges.attributes) {
+        this.instGeom.setAttribute(name, baseEdges.attributes[name]);
+      }
+
+      this.material = this.createMaterial();
+      this.colorArray = new Float32Array(32 * 3);
+      this.fillColorArray();
+
+      this.instancePositions = new Float32Array(3);
+      this.instanceScales = new Float32Array(3);
+      this.instanceColors = new Float32Array(1);
+
+      this.instGeom.setAttribute(
+        "instancePosition",
+        new InstancedBufferAttribute(this.instancePositions, 3)
+      );
+      this.instGeom.setAttribute(
+        "instanceScale",
+        new InstancedBufferAttribute(this.instanceScales, 3)
+      );
+      this.instGeom.setAttribute(
+        "instanceColorIndex",
+        new InstancedBufferAttribute(this.instanceColors, 1)
+      );
+
+      this.wireframe = new LineSegments(this.instGeom, this.material);
+      this.wireframe.frustumCulled = false;
+
+      this.stateSub = stateSubjectGet(this.id).getObservable().subscribe(v => {
+        this.numOfavailableSets = v.sets.length;
+      });
+    } catch (error) {
+      this.dispose();
+      throw error;
     }
-
-    this.material = this.createMaterial();
-    this.colorArray = new Float32Array(32 * 3);
-    this.fillColorArray();
-
-    this.instancePositions = new Float32Array(3);
-    this.instanceScales = new Float32Array(3);
-    this.instanceColors = new Float32Array(1);
-
-    this.instGeom.setAttribute(
-      "instancePosition",
-      new InstancedBufferAttribute(this.instancePositions, 3)
-    );
-    this.instGeom.setAttribute(
-      "instanceScale",
-      new InstancedBufferAttribute(this.instanceScales, 3)
-    );
-    this.instGeom.setAttribute(
-      "instanceColorIndex",
-      new InstancedBufferAttribute(this.instanceColors, 1)
-    );
-
-    this.wireframe = new LineSegments(this.instGeom, this.material);
-    this.wireframe.frustumCulled = false;
-
-    this.stateSub = stateSubjectGet(this.id).getObservable().subscribe(v => {
-      this.numOfavailableSets = v.sets.length;
-    });
   }
 
   pushVisibleInstances(matrixCache, maxInstancesPerLayer, setIndex) {
     let parent = this.wireframe.parent;
-    if (parent) {
-      parent.remove(this.wireframe);
-      this.instGeom.dispose();
-    }
+    this.wireframe.removeFromParent();
+    this.instGeom?.dispose();
 
     const startLayer = this.config.display.start ?? 0;
     const endLayer = this.config.display.end ?? matrixCache.length - 1;
@@ -220,10 +224,18 @@ export default class HistogramWireframeClass {
 
   //TODO cool
   dispose() {
+    this.stateSub?.unsubscribe();
+    this.configSub?.unsubscribe();
+    const disposed = new Set();
+    disposeObject3D(this.wireframe, disposed);
+    if (this.instGeom && !disposed.has(this.instGeom)) this.instGeom.dispose();
+    if (this.material && !disposed.has(this.material)) this.material.dispose();
+    this.instGeom = undefined;
+    this.material = undefined;
     this.instancePositions = [];
     this.instanceScales = [];
-    this.wireframe.parent.remove(this.wireframe);
-    this.instGeom.dispose();
+    this.instanceColors = [];
+    this.colorArray = undefined;
   }
 
   //TODO cool
