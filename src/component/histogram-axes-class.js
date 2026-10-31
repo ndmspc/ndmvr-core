@@ -1,4 +1,4 @@
-import { build3d } from "../modules/build/jsroot-build3d.mjs";
+import { build3d } from "jsroot";
 import { Box3, Object3D, Vector3 } from "three";
 import { configSubjectGet } from "../rxjs/ConfigSubject.js";
 import { filter } from "rxjs";
@@ -57,7 +57,10 @@ export default class HistogramAxesClass {
       axesObj._typename = "TH2D";
     }
 
-    this.axesBuildPromise = build3d(axesObj, opts, true).then((axes) => {
+    // AXIS suppresses TH2 bins; TH3 uses an empty copy for its coordinate axes.
+    const axesOpts = type.substring(2, 3) === "3" ? opts : `${opts ?? ""} AXIS`;
+    if (type.substring(2, 3) === "3") axesObj.fArray.fill(0);
+    this.axesBuildPromise = build3d(axesObj, axesOpts).then((axes) => {
       // A newer build or configuration owns the displayed axes now.
       if (this._disposed || buildVersion !== this.axesBuildVersion) {
         disposeObject3D(axes);
