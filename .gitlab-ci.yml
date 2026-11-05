@@ -47,7 +47,8 @@ pages:
     - npm run build -- --mode pages --base=$PUBLIC_URL
     - cp -a dist/. public/
     - dnf install -y zip
-    - mkdocs build -d public/docs
+    - zensical build --clean --strict
+    - mv site public/docs
     - mkdir public/docs/downloads
     - cd docs/components/tutorial
     - zip -r ../../../public/docs/downloads/first-visualization.zip three-scene.js h3scat.json firstVisualization/firstVisualization.html firstVisualization/config.json

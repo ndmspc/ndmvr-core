@@ -1,22 +1,24 @@
 site_name: NDMVR CORE
+site_url: https://ndmspc.gitlab.io/ndmvr-core/docs
 repo_name: ndmspc/ndmvr-core
-repo_url: https://gitlab.com/ndmspc/ndmvr-core/docs
-edit_uri: edit/main/docs/
+repo_url: https://gitlab.com/ndmspc/ndmvr-core
+edit_uri: edit/develop/docs/
+
 nav:
   - "Home": index.md
   - "Tutorial":
       - "Introduction": components/tutorial/tutorial.md
       - "First visualization": components/tutorial/firstVisualization/first-visualization.md
       - "Configuration": components/tutorial/configurationChapter/configuration-chapter.md
-      - "interactions": components/tutorial/interactions/interactions.md
+      - "Interactions": components/tutorial/interactions/interactions.md
       - "Canvas": components/tutorial/canvas/canvas.md
       - "Error Cross": components/tutorial/error-cross-tutorial.md
   - "Components":
-          - "Bin info jsroot": components/visualization/bin-info-jsroot.md
-          - "Canvas": components/visualization/canvas.md
-          - "Histogram JSROOT": components/visualization/histogram-jsroot.md
-          - "NDMVR raycaster": components/visualization/ndmvr-raycaster.md
-          - "THnPainter": components/visualization/thnpainter.md
+      - "Bin info jsroot": components/visualization/bin-info-jsroot.md
+      - "Canvas": components/visualization/canvas.md
+      - "Histogram JSROOT": components/visualization/histogram-jsroot.md
+      - "NDMVR raycaster": components/visualization/ndmvr-raycaster.md
+      - "THnPainter": components/visualization/thnpainter.md
   - "Communication":
       - "Bin info subject": components/communication/bin-info-subject.md
       - "Canvas subject": components/communication/canvas-subject.md
@@ -27,31 +29,36 @@ nav:
       - "Input device subject": components/communication/input-device-subject.md
       - "State subject": components/communication/state-subject.md
   - "Configuration": components/configuration/configuration.md
-extra:
-  version: v1.0.0
-  ndmspc:
-    name: NDMSPC
-    comming_soon: Comming soon ...
-    version: v1.0.0-rc4
+  - "Demo": https://ndmspc.gitlab.io/ndmvr-core/
+  - "React layer": https://ndmspc.gitlab.io/ndmvr/docs/
+  - "User guide": https://ndmspc.gitlab.io/docs/
 
 theme:
-  name: material
+  variant: classic
   features:
-    - navigation.instant
-    - navigation.tabs
-    - navigation.tabs.sticky
-    - navigation.sections
-    - navigation.expand
-    - navigation.path
-    - content.code.copy
     - toc.follow
+    - navigation.sections
+    - navigation.top
+    - content.code.copy
+  palette:
+    - scheme: default
+      primary: white
+      accent: blue
+      toggle:
+        icon: lucide/moon
+        name: Switch to dark mode
+    - scheme: slate
+      primary: black
+      accent: blue
+      toggle:
+        icon: lucide/sun
+        name: Switch to light mode
 
 extra_css:
   - stylesheets/extra.css
 
 plugins:
   - search
-  - mermaid2
   - glightbox:
       touchNavigation: true
       loop: false
@@ -68,15 +75,15 @@ plugins:
       background: white
       shadow: true
   - macros
-  - git-revision-date-localized:
-      fallback_to_build_date: false
 
 markdown_extensions:
   - admonition
-  - codehilite
   - footnotes
   - meta
-  - pymdownx.arithmatex
+  - attr_list
+  - md_in_html
+  - pymdownx.arithmatex:
+      generic: true
   - pymdownx.highlight:
       anchor_linenums: true
       line_spans: __span
@@ -84,12 +91,9 @@ markdown_extensions:
   - pymdownx.inlinehilite
   - pymdownx.snippets
   - pymdownx.superfences
-  - pymdownx.tabbed
-  - admonition
+  - pymdownx.tabbed:
+      alternate_style: true
   - pymdownx.details
-  - pymdownx.superfences
-  - attr_list
-  - md_in_html
   - toc:
       toc_depth: 2
       permalink: true
@@ -99,7 +103,7 @@ markdown_extensions:
   - pymdownx.keys
   - pymdownx.mark
   - pymdownx.tilde
-  - pymdownx.extra
 
 extra_javascript:
-  - https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.0/MathJax.js?config=TeX-MML-AM_CHTML
+  - javascripts/mathjax.js
+  - https://unpkg.com/mathjax@3/es5/tex-mml-chtml.js
