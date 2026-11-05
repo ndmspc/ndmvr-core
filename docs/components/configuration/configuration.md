@@ -265,7 +265,7 @@ Defines how maximum scale for either content parameter, or set is determined acr
 |------|----------------------------------------------------------------------------------------------------------|
 | `relative` | Each histogram's maximum is based on its own data                                                        |
 | `global` | All histograms share the same maximum (the global maximum across all histograms in that layer)           |
-| `fixed` | Starts as `global`, but allows user-defined min/max via [stateSubject](../communication/state-suject.md) |
+| `fixed` | Starts as `global`, but allows user-defined min/max via [stateSubject](../communication/state-subject.md) |
 ```json
 "content": "global",
 "parameter": "fixed",

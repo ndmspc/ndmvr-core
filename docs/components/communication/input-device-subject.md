@@ -296,9 +296,6 @@ scene.addEventListener('exit-vr', () => {
 
 ## Related Components
 
-- [Camera Component](../../component/camera.component.md)
-- [Device Detector Component](../../component/device-detector-component.md)
-- [Screen Controls Component](../../component/screen-controls-component.md)
 - [State Subject](state-subject.md)
 
 ## Best Practices

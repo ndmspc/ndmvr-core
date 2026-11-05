@@ -9,12 +9,12 @@ No prior Three.js experience is required, but you should be comfortable with Jav
 ## Table of Contents
 1. [What Is an Error Cross?](#1-what-is-an-error-cross)
 2. [What Tools Does the Code Use?](#2-what-tools-does-the-code-use)
-3. [Step 1 — Define All Three Arms in One Shape](#step-1--define-all-three-arms-in-one-shape)
-4. [Step 2 — Scale the Arms to Show Error Values](#step-2--scale-the-arms-to-show-error-values)
-5. [Step 3 — Draw Thousands of Crosses in One Go](#step-3--draw-thousands-of-crosses-in-one-go)
-6. [Step 4 — Add the GPU Shader](#step-4--add-the-gpu-shader)
-7. [Step 5 — Put It All Together as ErrorCrossClass](#step-5--put-it-all-together-as-errorcrossclass)
-8. [Step 6 — Wire It Up to a Histogram](#step-6--wire-it-up-to-a-histogram)
+3. [Step 1 — Define All Three Arms in One Shape](#step-1-define-all-three-arms-in-one-shape)
+4. [Step 2 — Scale the Arms to Show Error Values](#step-2-scale-the-arms-to-show-error-values)
+5. [Step 3 — Draw Thousands of Crosses in One Go](#step-3-draw-thousands-of-crosses-in-one-go)
+6. [Step 4 — Add the GPU Shader](#step-4-add-the-gpu-shader)
+7. [Step 5 — Put It All Together as ErrorCrossClass](#step-5-put-it-all-together-as-errorcrossclass)
+8. [Step 6 — Wire It Up to a Histogram](#step-6-wire-it-up-to-a-histogram)
 9. [Configuration Reference](#configuration-reference)
 10. [Common Problems and Fixes](#common-problems-and-fixes)
 
