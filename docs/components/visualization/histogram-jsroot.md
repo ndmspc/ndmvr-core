@@ -260,9 +260,9 @@ configSubjectGet().next({
 
 ## Export to STL
 
-`exportHistogramStl` accepts a `HistogramJsrootClass` instance and converts its
-`getHistogramMesh()` group: bin meshes are kept, axis drawing, frames, labels and helper meshes are
-skipped. See [THnPainter](thnpainter.md#export-to-stl) for the options and the returned model.
+`exportHistogramStl` accepts a `HistogramJsrootClass` instance and builds a printable solid: a height
+field for TH1/TH2, and bins + connectors + cage for TH3 (the rendered group is used for the bin
+geometry). See [THnPainter](thnpainter.md#export-to-stl) for the options and the returned model.
 
 ## Related Components
 

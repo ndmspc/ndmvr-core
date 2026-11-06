@@ -563,24 +563,72 @@ The painter accepts extensive configuration through `opts`:
 
 ## Export to STL
 
-The painted histogram can be written out as a binary STL for 3D printing. Only the bin solids are
-exported — axes, wireframe, error crosses, frames and labels are left out — and the model is scaled
-uniformly so its longest side is `maxSizeMm` (default `100`), rotated so the scene's Y-up becomes the
-slicer's Z-up, and placed on the print bed (`min Z = 0`).
+The histogram can be written out as a binary STL for 3D printing. The export builds a **print model**
+rather than copying the rendered mesh, because slicers reject the visual geometry (touching bins have
+coincident internal walls, and TH3 bins are loose cubes):
+
+- **TH1 / TH2** — a height-field solid: one bar per bin on a shared base plate, heights scaled by bin
+  content. No internal walls, one watertight body.
+- **TH3** — solid bin cubes, connectors between grid neighbours, and an open wireframe cage around the
+  model, fused on a voxel grid into one watertight body.
+- **anything else** (nested THn, raw objects) — falls back to the mesh export.
 
 ```javascript
 import { exportHistogramStl } from '@ndmspc/ndmvr-core';
 
-const result = exportHistogramStl(painter /* or painter.getHistogramMesh() */, { maxSizeMm: 100 });
+const result = exportHistogramStl(painter /* or painter.getHistogramMesh() */, {
+  maxSizeMm: 100,
+});
 if (result) {
   // result.bytes: Uint8Array (binary STL)
   // result.triangleCount, result.sizeMm, result.fileStem
 }
 ```
 
+Options:
+
+| Option | Default | Applies to |
+| --- | --- | --- |
+| `maxSizeMm` | `100` | all — longest model dimension |
+| `mode` | `"auto"` | `"mesh"` skips the print models and exports the rendered triangles |
+| `baseFraction` / `barFraction` | `0.02` / `0.6` | TH1/TH2 base plate and tallest bar |
+| `depthFraction` | `0.4` | TH1 bar depth (TH2 uses its y axis) |
+| `connectorWidthMm` | `0.8` | TH3 connectors between neighbouring bins |
+| `edgeWidthMm` | `0.8` | TH3 cage edges |
+| `voxelMm` | `0.5` | TH3 fusion resolution (lower = smoother, larger file) |
+| `cage` | `true` | TH3 open wireframe cube around the model |
+| `label` | off | `true` (or an options object) writes the label plate into the same STL, in front of the model |
+
 The same call accepts a `HistogramJsrootClass` instance (its `getHistogramMesh()` group is used) or
-any `THREE.Object3D` containing meshes. Degenerate bins (zero content or zero size) are skipped, so
-an empty histogram returns `null`.
+any `THREE.Object3D` containing meshes. A histogram with no bins returns `null`.
+
+## Label plate
+
+`exportHistogramLabelStl` writes a separate plate carrying the histogram title, type, entries and the
+per-axis mean/RMS, embossed with a built-in single-stroke font (no DOM, works in tests and Node):
+
+```javascript
+import { exportHistogramLabelStl } from '@ndmspc/ndmvr-core';
+
+const plate = exportHistogramLabelStl(painter, { maxWidthMm: 100 });
+// plate.bytes, plate.triangleCount, plate.sizeMm, plate.fileStem (e.g. "TH2D-label"), plate.lines
+```
+
+`histogramLabelLines(hist)` and `histogramStats(hist)` expose the text and the computed statistics if
+you want to print the same values elsewhere.
+
+Content toggles (all on by default): `title` (histogram title), `name` (ROOT name), `type` (TH1D…),
+`axes` (axis names and titles), `stats` (entries N). Layout options:
+`maxWidthMm`, `charHeightMm` (≤ 4), `plateThicknessMm` (1.5), `reliefMm` (0.6), `strokeWidthMm` (0.8),
+`voxelMm` (0.3), `wrapChars` (34), `mirror` — or pass your own `lines`.
+
+Passing `label: true` to `exportHistogramStl` writes the plate into the same file, in front of the
+model (`labelGapMm`, default 1, keeps a clearance so both parts stay closed). The text is written
+unmirrored; pass `label: { mirror: true }` to flip it. The two parts are separate closed bodies in one
+STL, which slicers print as one object.
+
+Add `labelFused: true` to merge them into a **single watertight body** instead: both are rasterised onto
+the same voxel grid, so the plate and the histogram share one surface.
 
 ## Related Components
 
