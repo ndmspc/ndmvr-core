@@ -1,3 +1,6 @@
+import { buildFusedSolid, buildHeightField, buildMatrixSolid, collectBoxes } from "./print.js";
+import { buildLabelPlate } from "./label.js";
+
 const BOX_TRIANGLES = [
   0, 3, 2, 0, 2, 1,
   4, 5, 6, 4, 6, 7,
@@ -234,17 +237,98 @@ export function trianglesToBinaryStl(positions) {
   return new Uint8Array(buffer);
 }
 
-export function exportHistogramStl(source, { maxSizeMm = 100 } = {}) {
+export function exportHistogramStl(source, options = {}) {
+  const { maxSizeMm = 100, mode = "auto" } = options;
+  const typename = source?.rootObj?._typename ?? "";
+  const fileStem = typeof typename === "string" && typename.length > 0 ? typename : "histogram";
+
+  if (mode !== "mesh") {
+    const fused = options.label && options.labelFused === true;
+    const print = fused
+      ? buildFusedSolid(source, { ...options, maxSizeMm })
+      : withLabel(buildPrintSolid(source, { ...options, maxSizeMm }), source, options);
+    if (print) {
+      return {
+        bytes: trianglesToBinaryStl(print.positions),
+        triangleCount: print.positions.length / 9,
+        sizeMm: print.sizeMm,
+        fileStem,
+      };
+    }
+  }
+
   const triangles = collectHistogramTriangles(source);
   if (!triangles || triangles.length === 0) return null;
   const fitted = fitForPrinting(triangles, maxSizeMm);
   if (!fitted) return null;
-  const bytes = trianglesToBinaryStl(fitted.positions);
-  const typename = source?.rootObj?._typename;
   return {
-    bytes,
+    bytes: trianglesToBinaryStl(fitted.positions),
     triangleCount: fitted.positions.length / 9,
     sizeMm: fitted.sizeMm,
-    fileStem: typeof typename === "string" && typename.length > 0 ? typename : "histogram",
+    fileStem,
   };
+}
+
+function withLabel(print, source, options) {
+  if (!options.label || !print) return print;
+  const hist = source?.rootObj ?? source;
+  const labelOptions = typeof options.label === "object"
+    ? { ...options, ...options.label }
+    : { ...options };
+  const plate = buildLabelPlate(hist, {
+    ...labelOptions,
+    mirror: labelOptions.mirror === true,
+  });
+  if (!plate) return print;
+
+  const gap = labelOptions.labelGapMm ?? 1;
+  const shiftY = plate.sizeMm.y + gap;
+  const offsetX = Math.max(0, (print.sizeMm.x - plate.sizeMm.x) / 2);
+  const total = print.positions.length + plate.positions.length;
+  const positions = new Float32Array(total);
+
+  for (let i = 0; i < print.positions.length; i += 3) {
+    positions[i] = print.positions[i];
+    positions[i + 1] = print.positions[i + 1] + shiftY;
+    positions[i + 2] = print.positions[i + 2];
+  }
+  for (let i = 0; i < plate.positions.length; i += 3) {
+    const target = print.positions.length + i;
+    positions[target] = plate.positions[i] + offsetX;
+    positions[target + 1] = plate.positions[i + 1];
+    positions[target + 2] = plate.positions[i + 2];
+  }
+
+  return {
+    positions,
+    sizeMm: {
+      x: Math.max(print.sizeMm.x, plate.sizeMm.x),
+      y: shiftY + print.sizeMm.y,
+      z: Math.max(print.sizeMm.z, plate.sizeMm.z),
+    },
+  };
+}
+
+export function exportHistogramLabelStl(source, options = {}) {
+  const hist = source?.rootObj ?? source;
+  const plate = buildLabelPlate(hist, options);
+  if (!plate) return null;
+  const typename = hist?._typename;
+  return {
+    bytes: trianglesToBinaryStl(plate.positions),
+    triangleCount: plate.positions.length / 9,
+    sizeMm: plate.sizeMm,
+    fileStem: `${typeof typename === "string" && typename.length > 0 ? typename : "histogram"}-label`,
+    lines: plate.lines,
+  };
+}
+
+function buildPrintSolid(source, options) {
+  const hist = source?.rootObj;
+  if (hist && !/^TH3/.test(hist._typename ?? "") && /^TH[12]/.test(hist._typename ?? "")) {
+    return buildHeightField(hist, options);
+  }
+  const boxes = collectBoxes(source);
+  if (boxes) return buildMatrixSolid(boxes, options);
+  return null;
 }
