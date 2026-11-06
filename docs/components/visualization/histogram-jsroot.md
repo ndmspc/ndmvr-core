@@ -258,6 +258,12 @@ configSubjectGet().next({
   - `canvasSubjectGet` from `../rxjs/CanvasSubject.js`
   - `binInfoSubjectGet` from `../rxjs/BinInfoSubject.js`
 
+## Export to STL
+
+`exportHistogramStl` accepts a `HistogramJsrootClass` instance and converts its
+`getHistogramMesh()` group: bin meshes are kept, axis drawing, frames, labels and helper meshes are
+skipped. See [THnPainter](thnpainter.md#export-to-stl) for the options and the returned model.
+
 ## Related Components
 
 - [BinInfoVisualizer](bin-info-jsroot.md) - Bin information display

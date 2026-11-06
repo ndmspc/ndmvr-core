@@ -20,3 +20,4 @@ export * from "./src/component/THnPainter.js";
 export * from "./src/core/histogram-pointer-class";
 export * from "./src/component/canvas-class.js";
 export * from "./src/component/histogram-jsroot-class.js";
+export * from "./src/export/stl.js";
