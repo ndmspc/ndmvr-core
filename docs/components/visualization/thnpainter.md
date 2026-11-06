@@ -561,6 +561,27 @@ The painter accepts extensive configuration through `opts`:
   - `binInfoSubjectGet` from `../rxjs/BinInfoSubject.js`
 - **Utilities**: Extensive histogram utilities from `../utils/histogramUtils.js`
 
+## Export to STL
+
+The painted histogram can be written out as a binary STL for 3D printing. Only the bin solids are
+exported — axes, wireframe, error crosses, frames and labels are left out — and the model is scaled
+uniformly so its longest side is `maxSizeMm` (default `100`), rotated so the scene's Y-up becomes the
+slicer's Z-up, and placed on the print bed (`min Z = 0`).
+
+```javascript
+import { exportHistogramStl } from '@ndmspc/ndmvr-core';
+
+const result = exportHistogramStl(painter /* or painter.getHistogramMesh() */, { maxSizeMm: 100 });
+if (result) {
+  // result.bytes: Uint8Array (binary STL)
+  // result.triangleCount, result.sizeMm, result.fileStem
+}
+```
+
+The same call accepts a `HistogramJsrootClass` instance (its `getHistogramMesh()` group is used) or
+any `THREE.Object3D` containing meshes. Degenerate bins (zero content or zero size) are skipped, so
+an empty histogram returns `null`.
+
 ## Related Components
 
 - [HistogramJsrootClass](histogram-jsroot.md) - JSROOT-based alternative renderer

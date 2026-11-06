@@ -36,6 +36,7 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
+    "test": "node --test test/*.test.js",
     "preview": "vite preview",
     "prepack": "npmignore --auto"
   },
