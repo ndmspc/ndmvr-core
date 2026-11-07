@@ -1,5 +1,6 @@
 import { BehaviorSubject } from "rxjs";
 import { parseConfig, appendPads, resolveHistogramGridConfig } from "../utils/baseUtil.js";
+import { histogramPadIdsOf } from "../utils/padIds.js";
 import {Vector3, Color} from "three";
 import cloneDeep from "lodash.clonedeep";
 import defaultConfig from "../config-default.json";
@@ -26,6 +27,15 @@ class ConfigSubject {
   // Metadata for the currently applied grid, not an editable configuration mirror.
   getHistogramGridConfig () {
     return cloneDeep(this.#histogramGridConfig);
+  }
+
+  /**
+   * The ids of the configured histogram pads, in configuration order. The value is the **parsed**
+   * configuration, so a grid recipe (`grid2x2x1`) is already the pads it expands to and an explicit
+   * array is passed through as written.
+   */
+  getHistogramPadIds () {
+    return histogramPadIdsOf(this.#subject.getValue()?.config?.environment?.histogramPads);
   }
 
   next (e) {
@@ -144,4 +154,7 @@ export const configSubjectGet = () => {
   if (!configSubject) configSubject = new ConfigSubject();
   return configSubject;
 };
+
+/** The ids of the configured histogram pads — what a caller may ask for by name. */
+export const histogramPadIdsGet = () => configSubjectGet().getHistogramPadIds();
 
