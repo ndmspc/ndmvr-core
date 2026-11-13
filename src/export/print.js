@@ -60,33 +60,103 @@ export function heightFieldModel(hist, options = {}) {
   );
 
   const maxSizeMm = options.maxSizeMm ?? 100;
-  const scale = maxSizeMm / extent;
-  return { xEdges, yEdges, heights, width, depth, scale, nx, ny, baseHeight, barHeight, maxSizeMm };
+  /**
+   * The footprint the model is fitted into, in millimetres.
+   *
+   * `maxSizeMm` alone fits the **longest** side, so a histogram that is long and thin (142 bins against
+   * 10) comes out as a sliver: 100 mm along the long axis and a few along the short one. Naming `sizeMm`
+   * gives one number per axis instead, so a print can be asked for a 100 × 100 mm footprint; the model
+   * is then stretched to fill it, each axis independently.
+   *
+   * Height still follows the bars' own proportion to the footprint, and is reported back, so a model
+   * never arrives at a height nobody asked for.
+   */
+  const requested = options.sizeMm;
+  const scaleX =
+    requested?.x !== undefined && requested.x > 0 ? requested.x / width : maxSizeMm / extent;
+  const scaleY =
+    requested?.y !== undefined && requested.y > 0 ? requested.y / depth : maxSizeMm / extent;
+  // Height keeps the proportion the bars have always had to the footprint (`maxSizeMm`), so stretching
+  // the footprint flattens or widens the bars rather than secretly making the model taller. Without a
+  // per-axis request every axis shares one scale, exactly as before.
+  const scaleZ = maxSizeMm / extent;
+
+  return {
+    xEdges,
+    yEdges,
+    heights,
+    width,
+    depth,
+    scale: scaleZ,
+    scaleX,
+    scaleY,
+    nx,
+    ny,
+    baseHeight,
+    barHeight,
+    maxSizeMm,
+  };
+}
+
+/**
+ * Whether two bins that share only a **corner** are both solid, with nothing joining them.
+ *
+ * Each bin is built as its own closed column, so two of them meeting at a corner touch along a single
+ * vertical edge — an edge shared by four faces, which is not a solid a slicer will accept (it offers
+ * to "repair" it). It only happens on the diagonal (the bin above-left and the one below-right are
+ * solid while the other two are not); a shared *face* between neighbours is handled by the ladder
+ * walls, which break the edge at the same heights from both sides.
+ */
+export function hasDiagonalContact(heights, nx, ny) {
+  for (let i = 1; i < nx; i++) {
+    for (let j = 1; j < ny; j++) {
+      const a = heights[i - 1][j - 1];
+      const b = heights[i][j];
+      const c = heights[i - 1][j];
+      const d = heights[i][j - 1];
+      if (a !== c && b !== c && a === b) return true;
+      if (c !== a && d !== a && c === d) return true;
+    }
+  }
+  return false;
 }
 
 export function buildHeightField(hist, options = {}) {
   const model = heightFieldModel(hist, options);
   if (!model) return null;
-  const { xEdges, yEdges, heights, width, depth, scale, nx, ny, baseHeight, barHeight } = model;
+  const { xEdges, yEdges, heights, width, depth, scale, scaleX, scaleY, nx, ny, baseHeight, barHeight } = model;
   const positions = [];
 
-  const X = (value) => (value - xEdges[0]) * scale;
-  const Y = (value) => (value - yEdges[0]) * scale;
+  const X = (value) => (value - xEdges[0]) * scaleX;
+  const Y = (value) => (value - yEdges[0]) * scaleY;
   const Z = (value) => value * scale;
 
   const heightAt = (i, j) =>
     i >= 0 && i < nx && j >= 0 && j < ny ? heights[i][j] : undefined;
 
-  const cornerLevels = (iEdge, jEdge, min, max) => {
-    const levels = new Set([min, max]);
+  /**
+   * The z levels at a bin corner, canonical for the corner rather than for one wall.
+   *
+   * Both the x-wall and the y-wall meet at a corner's vertical edge, so they must break that edge at
+   * the **same** heights or the edge ends up shared by four triangles (non-manifold — what a slicer
+   * offers to "repair"). The four bins around the corner and the base are what can change height
+   * there, so that set is the answer for either wall; each wall then keeps the levels inside its own
+   * span.
+   */
+  const cornerLevels = (iEdge, jEdge) => {
+    const levels = new Set([0]);
     for (const value of [
       heightAt(iEdge - 1, jEdge - 1), heightAt(iEdge, jEdge - 1),
       heightAt(iEdge - 1, jEdge), heightAt(iEdge, jEdge),
     ]) {
-      if (value !== undefined && value > min && value < max) levels.add(value);
+      if (value !== undefined) levels.add(value);
     }
     return [...levels].sort((a, b) => a - b);
   };
+
+  /** The corner's canonical levels that fall inside one wall's span, ends included. */
+  const levelsWithin = (iEdge, jEdge, min, max) =>
+    cornerLevels(iEdge, jEdge).filter((value) => value >= min && value <= max);
 
   const ladder = (axis, fixed, u0, u1, left, right, normal) => {
     const point = (u, z) =>
@@ -122,7 +192,7 @@ export function buildHeightField(hist, options = {}) {
       const min = Math.min(left, right), max = Math.max(left, right);
       ladder(
         "x", xEdges[i], yEdges[j], yEdges[j + 1],
-        cornerLevels(i, j, min, max), cornerLevels(i, j + 1, min, max),
+        levelsWithin(i, j, min, max), levelsWithin(i, j + 1, min, max),
         left > right ? [1, 0, 0] : [-1, 0, 0],
       );
     }
@@ -135,33 +205,35 @@ export function buildHeightField(hist, options = {}) {
       const min = Math.min(lower, upper), max = Math.max(lower, upper);
       ladder(
         "y", yEdges[j], xEdges[i], xEdges[i + 1],
-        cornerLevels(i, j, min, max), cornerLevels(i + 1, j, min, max),
+        levelsWithin(i, j, min, max), levelsWithin(i + 1, j, min, max),
         lower > upper ? [0, 1, 0] : [0, -1, 0],
       );
     }
   }
 
   for (let j = 0; j < ny; j++) {
+    const leftTop = heights[0][j];
     ladder(
       "x", xEdges[0], yEdges[j], yEdges[j + 1],
-      cornerLevels(0, j, 0, heights[0][j]), cornerLevels(0, j + 1, 0, heights[0][j]), [-1, 0, 0],
+      levelsWithin(0, j, 0, leftTop), levelsWithin(0, j + 1, 0, leftTop), [-1, 0, 0],
     );
+    const rightTop = heights[nx - 1][j];
     ladder(
       "x", xEdges[nx], yEdges[j], yEdges[j + 1],
-      cornerLevels(nx, j, 0, heights[nx - 1][j]),
-      cornerLevels(nx, j + 1, 0, heights[nx - 1][j]), [1, 0, 0],
+      levelsWithin(nx, j, 0, rightTop), levelsWithin(nx, j + 1, 0, rightTop), [1, 0, 0],
     );
   }
 
   for (let i = 0; i < nx; i++) {
+    const nearTop = heights[i][0];
     ladder(
       "y", yEdges[0], xEdges[i], xEdges[i + 1],
-      cornerLevels(i, 0, 0, heights[i][0]), cornerLevels(i + 1, 0, 0, heights[i][0]), [0, -1, 0],
+      levelsWithin(i, 0, 0, nearTop), levelsWithin(i + 1, 0, 0, nearTop), [0, -1, 0],
     );
+    const farTop = heights[i][ny - 1];
     ladder(
       "y", yEdges[ny], xEdges[i], xEdges[i + 1],
-      cornerLevels(i, ny, 0, heights[i][ny - 1]),
-      cornerLevels(i + 1, ny, 0, heights[i][ny - 1]), [0, 1, 0],
+      levelsWithin(i, ny, 0, farTop), levelsWithin(i + 1, ny, 0, farTop), [0, 1, 0],
     );
   }
 
@@ -169,8 +241,8 @@ export function buildHeightField(hist, options = {}) {
   return {
     positions: new Float32Array(positions),
     sizeMm: {
-      x: width * scale,
-      y: depth * scale,
+      x: width * scaleX,
+      y: depth * scaleY,
       z: (baseHeight + barHeight) * scale,
     },
   };
@@ -452,11 +524,11 @@ export function buildMatrixSolid(boxes, options = {}) {
 export function buildHeightFieldGrid(hist, options = {}) {
   const model = heightFieldModel(hist, options);
   if (!model) return null;
-  const { xEdges, yEdges, heights, width, depth, scale, nx, ny } = model;
+  const { xEdges, yEdges, heights, width, depth, scale, scaleX, scaleY, nx, ny } = model;
 
   const voxelMm = Math.max(options.voxelMm ?? 0.5, (options.maxSizeMm ?? 100) / 400);
-  const widthMm = width * scale;
-  const depthMm = depth * scale;
+  const widthMm = width * scaleX;
+  const depthMm = depth * scaleY;
   let maxHeightMm = 0;
   for (const column of heights) {
     for (const value of column) maxHeightMm = Math.max(maxHeightMm, value * scale);
@@ -471,11 +543,11 @@ export function buildHeightFieldGrid(hist, options = {}) {
   const cell = (x, y, z) => (x * gy + y) * gz + z;
 
   for (let i = 0; i < nx; i++) {
-    const x0 = (xEdges[i] - xEdges[0]) * scale;
-    const x1 = (xEdges[i + 1] - xEdges[0]) * scale;
+    const x0 = (xEdges[i] - xEdges[0]) * scaleX;
+    const x1 = (xEdges[i + 1] - xEdges[0]) * scaleX;
     for (let j = 0; j < ny; j++) {
-      const y0 = (yEdges[j] - yEdges[0]) * scale;
-      const y1 = (yEdges[j + 1] - yEdges[0]) * scale;
+      const y0 = (yEdges[j] - yEdges[0]) * scaleY;
+      const y1 = (yEdges[j + 1] - yEdges[0]) * scaleY;
       const top = heights[i][j] * scale;
       const lowX = Math.max(0, Math.floor(x0 / voxelMm));
       const highX = Math.min(gx - 1, Math.ceil(x1 / voxelMm) - 1);
@@ -501,6 +573,17 @@ export function buildHeightFieldGrid(hist, options = {}) {
   };
 }
 
+/**
+ * The height field as a watertight solid, built on a voxel grid.
+ *
+ * Slower and heavier than `buildHeightField` (which is exact and cheap for the same shape), but it
+ * **fuses bins that meet only at a corner**, so the result is one closed body a slicer accepts with no
+ * repair. Used for the histograms the exact builder cannot make watertight — see `hasDiagonalContact`.
+ */
+export function buildHeightFieldSolid(hist, options = {}) {
+  return meshBuilt(buildHeightFieldGrid(hist, options));
+}
+
 function modelOccupancy(built, point) {
   const [nx, ny, nz] = built.dims;
   const x = Math.floor((point[0] - built.origins[0]) / built.voxelMm);
@@ -522,7 +605,12 @@ export function buildFusedSolid(source, options = {}) {
   const labelOptions = typeof options.label === "object"
     ? { ...options, ...options.label }
     : { ...options };
-  const plate = labelPlateModel(hist, labelOptions);
+  // The plate takes the model's width unless one was asked for, exactly as the separate plate does
+  // (see `withLabel`): the fused body is one print, so its footprint must not grow on its own.
+  const plate = labelPlateModel(hist, {
+    ...labelOptions,
+    maxWidthMm: labelOptions.maxWidthMm ?? built.solidMax[0] - built.solidMin[0],
+  });
   if (!plate) return meshBuilt(built);
 
   const plateX = Math.max(0, (built.solidMax[0] - plate.widthMm) / 2);
