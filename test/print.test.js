@@ -4,7 +4,13 @@ import test from "node:test";
 
 import { build3d, parse } from "jsroot";
 
-import { buildHeightField, buildMatrixSolid, collectBoxes } from "../src/export/print.js";
+import {
+  buildHeightField,
+  buildMatrixSolid,
+  collectBoxes,
+  hasDiagonalContact,
+  heightFieldModel,
+} from "../src/export/print.js";
 import { buildLabelPlate, histogramLabelLines } from "../src/export/label.js";
 import { exportHistogramLabelStl, exportHistogramStl } from "../src/export/stl.js";
 
@@ -192,4 +198,90 @@ test("labelFused writes the plate and the histogram as one body", () => {
   const topology = analyze(stlPositions(result.bytes));
   assert.equal(topology.badEdges, 0);
   assert.equal(topology.bodies, 1);
+});
+
+// --- two bins meeting only at a corner, and a footprint asked for per axis -------------------------
+
+/**
+ * A TH2 built in memory: `cells[i][j]` is the content of bin (x=i+1, y=j+1).
+ *
+ * It carries no `fArray` — `getBinContent` is the only accessor the exporter uses for a TH2, and
+ * spelling the shape out here keeps the test about the geometry rather than about ROOT's global-bin
+ * layout.
+ */
+function th2of(cells) {
+  const nx = cells.length;
+  const ny = cells[0].length;
+  return {
+    _typename: "TH2D",
+    fEntries: 1,
+    fTitle: "Farm vs Node",
+    fName: "farmNode",
+    fXaxis: {
+      fNbins: nx, fXmin: 0, fXmax: nx, fTitle: "x", fName: "x",
+      GetBinLowEdge: (i) => i - 1,
+      GetBinCenter: (i) => i - 0.5,
+    },
+    fYaxis: {
+      fNbins: ny, fXmin: 0, fXmax: ny, fTitle: "y", fName: "y",
+      GetBinLowEdge: (j) => j - 1,
+      GetBinCenter: (j) => j - 0.5,
+    },
+    getBinContent(x, y) {
+      return cells[x - 1]?.[y - 1] ?? 0;
+    },
+  };
+}
+
+test("two bins meeting only at a corner are detected", () => {
+  // Solid on one diagonal, empty on the other: the corner between them is a single shared edge.
+  const model = heightFieldModel(th2of([[1, 0], [0, 1]]));
+  assert.equal(hasDiagonalContact(model.heights, model.nx, model.ny), true);
+  // Solid throughout: neighbours share a face, which the walls handle.
+  const solid = heightFieldModel(th2of([[1, 1], [1, 1]]));
+  assert.equal(hasDiagonalContact(solid.heights, solid.nx, solid.ny), false);
+});
+
+test("a histogram with a corner contact still exports as one watertight body", () => {
+  const hist = th2of([[10, 0], [0, 10]]);
+  const result = exportHistogramStl({ rootObj: hist });
+  assert.ok(result);
+  const topology = analyze(stlPositions(result.bytes));
+  // What a slicer sees: no edge shared by four faces, no holes, and one piece.
+  assert.equal(topology.badEdges, 0);
+  assert.equal(topology.bodies, 1);
+});
+
+test("a footprint asked for per axis is filled in both directions", () => {
+  const hist = th2of([[1, 2], [3, 4]]);
+  const square = exportHistogramStl({ rootObj: hist }, { sizeMm: { x: 100, y: 100 } });
+  assert.ok(square);
+  assert.equal(Math.round(square.sizeMm.x), 100);
+  assert.equal(Math.round(square.sizeMm.y), 100);
+
+  // One number alone still means the longest side, which is why the per-axis option exists.
+  const longest = exportHistogramStl({ rootObj: hist }, { maxSizeMm: 100 });
+  assert.ok(longest);
+  assert.equal(Math.round(Math.max(longest.sizeMm.x, longest.sizeMm.y)), 100);
+});
+
+test("the footprint is the whole print, so a label plate does not make it larger", () => {
+  const hist = th2of([[1, 2], [3, 4]]);
+  // The plate is stacked below the model: its height comes out of the depth, so the file measures what
+  // was asked for rather than depth + plate.
+  for (const labelFused of [false, true]) {
+    const result = exportHistogramStl(
+      { rootObj: hist },
+      { sizeMm: { x: 100, y: 100 }, label: {}, labelFused },
+    );
+    assert.ok(result, `labelFused=${labelFused}`);
+    assert.ok(result.sizeMm.y <= 101, `depth ${result.sizeMm.y} for fused=${labelFused}`);
+    assert.ok(result.sizeMm.y >= 98, `depth ${result.sizeMm.y} for fused=${labelFused}`);
+    assert.equal(Math.round(result.sizeMm.x), 100);
+  }
+
+  // Without a plate the footprint is the model alone, and the plate's room is not taken.
+  const bare = exportHistogramStl({ rootObj: hist }, { sizeMm: { x: 100, y: 100 } });
+  assert.ok(bare);
+  assert.equal(Math.round(bare.sizeMm.y), 100);
 });

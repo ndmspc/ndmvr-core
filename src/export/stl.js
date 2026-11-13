@@ -1,4 +1,12 @@
-import { buildFusedSolid, buildHeightField, buildMatrixSolid, collectBoxes } from "./print.js";
+import {
+  buildFusedSolid,
+  buildHeightField,
+  buildHeightFieldSolid,
+  buildMatrixSolid,
+  collectBoxes,
+  hasDiagonalContact,
+  heightFieldModel,
+} from "./print.js";
 import { buildLabelPlate } from "./label.js";
 
 const BOX_TRIANGLES = [
@@ -244,9 +252,17 @@ export function exportHistogramStl(source, options = {}) {
 
   if (mode !== "mesh") {
     const fused = options.label && options.labelFused === true;
+    // A footprint describes the **whole print**, plate included. The plate is stacked below the model,
+    // so its height comes out of the depth the model may use — otherwise asking for 100 × 100 hands back
+    // 100 × 130 and the number typed in said nothing about the object that comes off the printer.
+    const fittedOptions = reservePlateDepth(source, options, { maxSizeMm });
     const print = fused
-      ? buildFusedSolid(source, { ...options, maxSizeMm })
-      : withLabel(buildPrintSolid(source, { ...options, maxSizeMm }), source, options);
+      ? buildFusedSolid(source, fittedOptions)
+      : withLabel(
+          buildPrintSolid(source, fittedOptions),
+          source,
+          fittedOptions,
+        );
     if (print) {
       return {
         bytes: trianglesToBinaryStl(print.positions),
@@ -269,6 +285,41 @@ export function exportHistogramStl(source, options = {}) {
   };
 }
 
+/**
+ * The options with the model's depth reduced to leave room for the label plate.
+ *
+ * A footprint (`sizeMm`) or a single `maxSizeMm` describes the **whole print**, and the plate is stacked
+ * below the model along Y — whether it is written as a second shell or fused into one body. So the
+ * plate's height plus the gap is taken out of the depth the model is given, and the finished file
+ * measures what was asked for instead of `depth + plate`.
+ */
+function reservePlateDepth(source, options, { maxSizeMm }) {
+  const wantsPlate = options.label !== undefined && options.label !== false;
+  if (!wantsPlate) return { ...options, maxSizeMm };
+
+  const hist = source?.rootObj ?? source;
+  const labelOptions = typeof options.label === "object"
+    ? { ...options, ...options.label }
+    : { ...options };
+  const plate = buildLabelPlate(hist, {
+    ...labelOptions,
+    maxWidthMm: labelOptions.maxWidthMm ?? options.sizeMm?.x ?? maxSizeMm,
+    mirror: labelOptions.mirror === true,
+  });
+  if (!plate) return { ...options, maxSizeMm };
+
+  const gap = labelOptions.labelGapMm ?? 1;
+  // What the model may use along Y once the plate has its own room.
+  const reserved = plate.sizeMm.y + gap;
+  const footprintY = options.sizeMm?.y ?? maxSizeMm;
+  const depth = Math.max(1, footprintY - reserved);
+  return {
+    ...options,
+    maxSizeMm,
+    sizeMm: { x: options.sizeMm?.x ?? maxSizeMm, y: depth },
+  };
+}
+
 function withLabel(print, source, options) {
   if (!options.label || !print) return print;
   const hist = source?.rootObj ?? source;
@@ -277,6 +328,10 @@ function withLabel(print, source, options) {
     : { ...options };
   const plate = buildLabelPlate(hist, {
     ...labelOptions,
+    // The plate is part of the print, so it takes the model's own width unless one was asked for. Left
+    // to its own 100 mm default it widened a 60 mm model to 100 mm — the file was bigger than the size
+    // that was asked for, in the one direction nobody had mentioned.
+    maxWidthMm: labelOptions.maxWidthMm ?? print.sizeMm.x,
     mirror: labelOptions.mirror === true,
   });
   if (!plate) return print;
@@ -326,6 +381,14 @@ export function exportHistogramLabelStl(source, options = {}) {
 function buildPrintSolid(source, options) {
   const hist = source?.rootObj;
   if (hist && !/^TH3/.test(hist._typename ?? "") && /^TH[12]/.test(hist._typename ?? "")) {
+    // The column-by-column builder is exact and cheap, but two bins that meet only at a **corner**
+    // leave a vertical edge shared by four faces — a slicer offers to "repair" that. The voxel union
+    // fills such a contact, so a histogram that has one is built that way instead: more triangles, one
+    // watertight body. A histogram without one keeps the exact build.
+    const model = heightFieldModel(hist, options);
+    if (model && hasDiagonalContact(model.heights, model.nx, model.ny)) {
+      return buildHeightFieldSolid(hist, options);
+    }
     return buildHeightField(hist, options);
   }
   const boxes = collectBoxes(source);
