@@ -274,6 +274,27 @@ Defines how maximum scale for either content parameter, or set is determined acr
 
 ---
 
+### `histogram.scale.size`
+
+**Type:** `string`
+**Options:** `"linear"` (default) or `"cubeRoot"`
+
+How a cell's value becomes the size of its box (and, for a TH3, its footprint):
+
+| Mode | Description |
+|------|-------------|
+| `linear` | A straight ramp between the layer's factor bounds (`histogram.scale.default` / `.layer`). This library's own scaling. |
+| `cubeRoot` | The cube root of the value's position in the range, keeping the smallest cell on a small floor so it stays visible. This is **jsroot's TH3 box** (`∛(content/max)`), so a scene set to it draws the same cubes as a 2D pad on the same values. The factor bounds are not used in this mode. |
+
+```json
+"scale": {
+  "size": "cubeRoot",
+  "parameter": "relative"
+}
+```
+
+---
+
 ### `histogram.TH1ZScale`
 
 Z-axis scale for TH1 histograms. Normalized value (0-1).
