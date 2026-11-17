@@ -703,8 +703,11 @@ export class THnPainter extends TPainter {
             // How a cell's value becomes the size of its box. `linear` is this library's own: a straight ramp
             // between the layer's factor bounds. `cubeRoot` is jsroot's TH3 box — the cube root of the value's
             // position in the range — which is what the 2D pad draws, so a scene on it and a pad on its own
-            // values draw the same cubes (`config.histogram.scale.size`).
-            if (this.config.scale.size === "cubeRoot") {
+            // values draw the same cubes (`config.histogram.scale.size`). Only a TH3 has that box: its three
+            // sides grow together. A TH1/TH2 layer is a column whose height *is* the value, which jsroot draws
+            // with a straight ramp, so those keep the ramp in both modes — a cube root would flatten the very
+            // quantity they show.
+            if (this.config.scale.size === "cubeRoot" && isTH3) {
               const unit = Math.min(1, Math.max(0, contentPer));
               scaleFactor = Math.cbrt((unit * (1 - CUBE_ROOT_FLOOR)) + CUBE_ROOT_FLOOR);
             } else {
