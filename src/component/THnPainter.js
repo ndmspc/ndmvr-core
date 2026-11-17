@@ -658,6 +658,16 @@ export class THnPainter extends TPainter {
         ? this.config.scale?.layer[currentLayer]
         : this.config.scale.default;
 
+      // The level this pass draws, indexed the way the ranges above index it (`currentLayer` counts from the
+      // render's own origin, `parentPath` from the object's).
+      const level = currentLayer + this.pointer.parentPath.length;
+      // `cubeRoot` is jsroot's box for the level whose values are read — the deepest one. The levels above it hold
+      // averages of those values (a mean of means), and the cube root of an average says nothing about where it
+      // sits, so they keep the straight ramp over their own range. A single-level tree is all deepest, so a scene
+      // on one histogram is unaffected.
+      const cubicHere = this.config.scale.size === "cubeRoot" &&
+        level === this.maxContentPerLayer.length - 1;
+
 
       //-----------------------------------------------------------------
       //----------------MAIN FOR CYCLE-----------------------------------
@@ -706,8 +716,9 @@ export class THnPainter extends TPainter {
             // values draw the same cubes (`config.histogram.scale.size`). Only a TH3 has that box: its three
             // sides grow together. A TH1/TH2 layer is a column whose height *is* the value, which jsroot draws
             // with a straight ramp, so those keep the ramp in both modes — a cube root would flatten the very
-            // quantity they show.
-            if (this.config.scale.size === "cubeRoot" && isTH3) {
+            // quantity they show. And only the deepest level: an upper level's cells are averages of those
+            // values, so they ramp straight over their own range (`cubicHere`).
+            if (cubicHere && isTH3) {
               const unit = Math.min(1, Math.max(0, contentPer));
               scaleFactor = Math.cbrt((unit * (1 - CUBE_ROOT_FLOOR)) + CUBE_ROOT_FLOOR);
             } else {

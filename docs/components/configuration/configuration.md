@@ -284,7 +284,7 @@ How a cell's value becomes the size of its box (and, for a TH3, its footprint):
 | Mode | Description |
 |------|-------------|
 | `linear` | A straight ramp between the layer's factor bounds (`histogram.scale.default` / `.layer`), as a height for every histogram type and, for a TH3, as a footprint too. This library's own scaling. |
-| `cubeRoot` | The cube root of the value's position in the range, keeping the smallest cell on a small floor so it stays visible. This is **jsroot's TH3 box** (`∛(content/max)`): the three sides of a cell grow together, so a scene set to it draws the same cubes as a 2D pad on the same values. The factor bounds are not used in this mode. **A TH3 only**: a TH1/TH2 cell is a column whose height *is* the value, which jsroot draws with a straight ramp, so those layers keep `linear` whatever this is set to — a cube root would flatten the very quantity they show. |
+| `cubeRoot` | The cube root of the value's position in the range, keeping the smallest cell on a small floor so it stays visible. This is **jsroot's TH3 box** (`∛(content/max)`): the three sides of a cell grow together, so a scene set to it draws the same cubes as a 2D pad on the same values. The factor bounds are not used in this mode. **A TH3 only**: a TH1/TH2 cell is a column whose height *is* the value, which jsroot draws with a straight ramp, so those keep `linear` whatever this is set to — a cube root would flatten the very quantity they show. **And the deepest level only**: a nested tree's upper levels hold averages of those values, so their cells ramp straight over their own range; the cube root is what the frame you read the values from draws. A one-level histogram is all deepest, so it is unaffected. |
 
 ```json
 "scale": {
@@ -292,6 +292,11 @@ How a cell's value becomes the size of its box (and, for a TH3, its footprint):
   "parameter": "relative"
 }
 ```
+
+`histogram.scale.layer` carries a `{min, max}` pair per render layer and overrides `histogram.scale.default` for
+that layer's ramp. Setting both to the same value pins that layer's cells to one size — `{min: 1, max: 1}` draws
+every cell it has a value for at full size — which is how a view shows a nested map's upper levels as structure
+and leaves the values to the deepest frame (`linear` only: the cube-root curve ignores the bounds).
 
 ---
 
