@@ -39,6 +39,15 @@ import {ErrorCrossClass} from "./ErrorCrossClass.js";
 import HistogramAxesClass from "./histogram-axes-class.js";
 import { disposeObject3D } from "../utils/disposeObject3D.js";
 
+/**
+ * The smallest size a scaled box may keep, as a fraction of full size.
+ *
+ * A cube-root scale maps the smallest cell to 0, which would make it invisible; jsroot keeps it on this floor
+ * (a TH3 cell is drawn at `∛(content/max)`, and the pad offsets its cells by exactly this), so the same floor
+ * here makes a scene and a pad draw the smallest cell alike.
+ */
+const CUBE_ROOT_FLOOR = 1e-3;
+
 export class THnPainter extends TPainter {
   stateSub = undefined;
   pointer = undefined;
@@ -691,11 +700,16 @@ export class THnPainter extends TPainter {
             ? Math.log(1 + (scaleValue - scaleMin)) / Math.log(1 + (scaleMax - scaleMin))
             : (scaleValue - scaleMin) / (scaleMax - scaleMin);
           if (!outside) {
-            // scaleFactor =
-            //   Number.isInteger(scaleValue) && scaleValue === 0 && this.config.scale.scaleBy === "value"
-            //     ? (scaleFactor = 0)
-            //     : ((maxFactor - minFactor) * contentPer) + minFactor;
-            scaleFactor = ((maxFactor - minFactor) * contentPer) + minFactor;
+            // How a cell's value becomes the size of its box. `linear` is this library's own: a straight ramp
+            // between the layer's factor bounds. `cubeRoot` is jsroot's TH3 box — the cube root of the value's
+            // position in the range — which is what the 2D pad draws, so a scene on it and a pad on its own
+            // values draw the same cubes (`config.histogram.scale.size`).
+            if (this.config.scale.size === "cubeRoot") {
+              const unit = Math.min(1, Math.max(0, contentPer));
+              scaleFactor = Math.cbrt((unit * (1 - CUBE_ROOT_FLOOR)) + CUBE_ROOT_FLOOR);
+            } else {
+              scaleFactor = ((maxFactor - minFactor) * contentPer) + minFactor;
+            }
 
             if (scaleFactor > 1) scaleFactor = 1;
           } else {
