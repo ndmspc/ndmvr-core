@@ -283,8 +283,8 @@ How a cell's value becomes the size of its box (and, for a TH3, its footprint):
 
 | Mode | Description |
 |------|-------------|
-| `linear` | A straight ramp between the layer's factor bounds (`histogram.scale.default` / `.layer`). This library's own scaling. |
-| `cubeRoot` | The cube root of the value's position in the range, keeping the smallest cell on a small floor so it stays visible. This is **jsroot's TH3 box** (`∛(content/max)`), so a scene set to it draws the same cubes as a 2D pad on the same values. The factor bounds are not used in this mode. |
+| `linear` | A straight ramp between the layer's factor bounds (`histogram.scale.default` / `.layer`), as a height for every histogram type and, for a TH3, as a footprint too. This library's own scaling. |
+| `cubeRoot` | The cube root of the value's position in the range, keeping the smallest cell on a small floor so it stays visible. This is **jsroot's TH3 box** (`∛(content/max)`): the three sides of a cell grow together, so a scene set to it draws the same cubes as a 2D pad on the same values. The factor bounds are not used in this mode. **A TH3 only**: a TH1/TH2 cell is a column whose height *is* the value, which jsroot draws with a straight ramp, so those layers keep `linear` whatever this is set to — a cube root would flatten the very quantity they show. |
 
 ```json
 "scale": {
