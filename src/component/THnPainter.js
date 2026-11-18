@@ -109,9 +109,14 @@ export class THnPainter extends TPainter {
     this.axes.axesBuildVersion++;
     return this._queueRender(async () => {
       const parent = this.mesh?.parent;
+      // Where the reader was, before the pointer goes: a new object means a new pointer, so the level is
+      // carried across by walking the fresh pointer back down once the histogram is built. Redrawing a tree
+      // (a form field changed) must not throw the reader back to the root.
+      const drillPath = this.pointer?.exportPath?.() ?? [];
       this._disposeHistogram();
       this.rootObj = histo.obj;
       this.pointer = new HistogramPointerClass(this.rootObj);
+      this.pointer.pathTo(drillPath);
       this.availableSets = [];
       this.selectedSet = [];
       this.availableAxes = [];

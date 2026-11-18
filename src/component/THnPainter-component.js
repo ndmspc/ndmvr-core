@@ -12,16 +12,29 @@ const registerTHnPainterComponent = () => {
 
     nestedHistogram: undefined,
 
+    /**
+     * Take the native painter's meshes out of the scene without destroying the painter.
+     *
+     * The two renderers share one component, so switching to jsroot used to `remove()` the painter — and with
+     * it the pointer that holds the level the reader had drilled to. Keeping the painter alive over the jsroot
+     * interlude is what lets the switch come back to that level: on the way back it is updated in place, and
+     * the update carries the path across.
+     */
+    detachNative: function () {
+      const painter = this.nestedHistogram;
+      if (!painter) return;
+      const parts = [painter.wireframe?.wireframe, painter.mesh, painter.axes?.axes, painter.errorCross?.lines]
+        .filter(Boolean);
+      if (parts.length) this.el.object3D.remove(...parts);
+    },
+
     init: function () {
       this.nativeRevision = 0;
       this.histoSub = histogramSubjectGet().getStream(this.el.id)
         .subscribe((histo) => {
           const nativeRevision = ++this.nativeRevision;
           if (histo?.opts?.render === "jsroot") {
-            if (this.nestedHistogram) {
-              this.nestedHistogram.remove();
-              this.nestedHistogram = undefined;
-            }
+            this.detachNative();
 
             try {
               const updating = !!this.jsrootHistogram;
@@ -48,6 +61,8 @@ const registerTHnPainterComponent = () => {
             }
 
             try {
+              // A painter kept over the jsroot interlude is **updated**, not rebuilt: that is the path that
+              // carries the drill across (see `detachNative`).
               const updating = !!this.nestedHistogram;
               const painter = this.nestedHistogram ?? new THnPainter(histo, this.el.id);
               this.nestedHistogram = painter;
@@ -55,6 +70,8 @@ const registerTHnPainterComponent = () => {
                 : painter.renderHistogram(0, painter.totalInstances, 0);
               render.then(() => {
                 if (this.nativeRevision !== nativeRevision || this.nestedHistogram !== painter) return;
+                // Attached here for both cases: a fresh painter has to be put in the scene, and one that
+                // survived the jsroot interlude was detached, so its update had no parent to go back to.
                 this.el.object3D.add(painter.wireframe.wireframe, painter.mesh, painter.axes.axes);
                 if (painter.errorCross) this.el.object3D.add(painter.errorCross.lines);
               }).catch(error => {
