@@ -640,6 +640,18 @@ export function getChildObjectByIndex(obj, positionLayer, set) {
  * @desc Computes max numeric content for each layer and each set if available.
  * @return Array of content or set objects containing max value.
  * */
+/**
+ * Whether a node's `children` holds anything to descend into.
+ *
+ * A leaf may carry `children: {content: []}` — a marker that says "this is a nested export whose last level is
+ * here". Descending into it would invent a level (the per-layer bounds would then all be one short, and a viewer
+ * that picks its deepest layer from them would pick the wrong one), so an empty `children` is no children.
+ */
+function hasChildren(children) {
+  if (children === null || typeof children !== "object") return false;
+  return Object.values(children).some((list) => Array.isArray(list) && list.some((child) => child));
+}
+
 export function computeMaxContentPerLayer(obj) {
   if (!obj) return;
 
@@ -696,7 +708,7 @@ export function computeMaxContentPerLayer(obj) {
           });
         }
 
-        if (child.children) {
+        if (hasChildren(child.children)) {
           computation(child.children, layer + 1);
         }
       });
@@ -776,7 +788,7 @@ export function computeMaxErrorPerLayer(obj, maxContentPerLayer) {
           });
         }
 
-        if (child.children) {
+        if (hasChildren(child.children)) {
           computation(child.children, layer + 1);
         }
       });
@@ -859,7 +871,7 @@ export function computeMinErrorPerLayer(obj, minContentPerLayer) {
           });
         }
 
-        if (child.children) {
+        if (hasChildren(child.children)) {
           computation(child.children, layer + 1);
         }
       });
@@ -944,7 +956,7 @@ export function computeMinContentPerLayer(obj) {
           });
         }
 
-        if (child.children) {
+        if (hasChildren(child.children)) {
           computation(child.children, layer + 1);
         }
       });
@@ -984,7 +996,7 @@ export function computeMaxInstancesPerLayer(obj) {
           if (temp > max[layer]) {
             max[layer] = temp;
           }
-          if (child.children) {
+          if (hasChildren(child.children)) {
             computation(child.children, layer + 1);
           }
         }
